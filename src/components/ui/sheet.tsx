@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
@@ -74,7 +75,7 @@ function SheetContent({
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className={t("auto.k_ring_offset_background_focus_ring_ring_d_199")}>
+        <SheetPrimitive.Close className={classMap["k_ring_offset_background_focus_ring_ring_d_199"]}>
           <XIcon className="size-4" />
           <span className="sr-only">Close</span>
         </SheetPrimitive.Close>

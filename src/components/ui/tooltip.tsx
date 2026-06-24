@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
@@ -54,7 +55,7 @@ function TooltipContent({
         {...props}
       >
         {children}
-        <TooltipPrimitive.Arrow className={t("auto.k_bg_primary_fill_primary_z_50_size_2_5_tr_213")} />
+        <TooltipPrimitive.Arrow className={classMap["k_bg_primary_fill_primary_z_50_size_2_5_tr_213"]} />
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   )

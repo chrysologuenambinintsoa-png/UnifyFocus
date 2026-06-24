@@ -1,5 +1,6 @@
 "use client";
 
+import { classMap } from '@/styles/classMap';
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -149,8 +150,8 @@ export function AvatarUploadModal({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className={t("auto.k_flex_items_center_gap_2_89")}>
-            <Camera className={t("auto.k_size_5_text_gold_129")} />
+          <DialogTitle className={classMap["k_flex_items_center_gap_2_89"]}>
+            <Camera className={classMap["k_size_5_text_gold_129"]} />
             Modifier la photo de profil
           </DialogTitle>
           <DialogDescription>
@@ -187,7 +188,7 @@ export function AvatarUploadModal({
                 className="hidden"
               />
 
-              <div className={t("auto.k_flex_flex_col_items_center_gap_3_130")}>
+              <div className={classMap["k_flex_flex_col_items_center_gap_3_130"]}>
                 <div
                   className={cn(
                     "size-16 rounded-full flex items-center justify-center transition-colors",
@@ -204,17 +205,17 @@ export function AvatarUploadModal({
                 </div>
 
                 <div className="space-y-1">
-                  <p className={t("auto.k_text_sm_font_medium_35")}>
+                  <p className={classMap["k_text_sm_font_medium_35"]}>
                     {isDragging
                       ? "Relâchez le fichier ici"
                       : "Glissez-déposez votre image"}
                   </p>
-                  <p className={t("auto.k_text_xs_text_muted_foreground_131")}>
+                  <p className={classMap["k_text_xs_text_muted_foreground_131"]}>
                     ou cliquez pour parcourir
                   </p>
                 </div>
 
-                <p className={t("auto.k_text_xs_text_muted_foreground_131")}>
+                <p className={classMap["k_text_xs_text_muted_foreground_131"]}>
                   JPG, PNG, WebP • Max 5 Mo
                 </p>
               </div>
@@ -226,32 +227,32 @@ export function AvatarUploadModal({
               animate={{ opacity: 1, scale: 1 }}
               className="space-y-4"
             >
-              <div className={t("auto.k_flex_items_center_gap_4_132")}>
-                <div className={t("auto.k_relative_shrink_0_133")}>
+              <div className={classMap["k_flex_items_center_gap_4_132"]}>
+                <div className={classMap["k_relative_shrink_0_133"]}>
                   {previewUrl && (
                     <img
                       src={previewUrl}
                       alt="Preview"
-                      className={t("auto.k_size_24_rounded_full_object_cover_ring_2_134")}
+                      className={classMap["k_size_24_rounded_full_object_cover_ring_2_134"]}
                     />
                   )}
                   <button
                     onClick={handleRemoveSelected}
                     disabled={uploading}
-                    className={t("auto.k_absolute_top_2_right_2_size_6_rounded_fu_135")}
+                    className={classMap["k_absolute_top_2_right_2_size_6_rounded_fu_135"]}
                   >
                     <X className="size-3" />
                   </button>
                 </div>
 
-                <div className={t("auto.k_flex_1_min_w_0_136")}>
-                  <p className={t("auto.k_font_medium_truncate_137")}>{selectedFile.name}</p>
-                  <p className={t("auto.k_text_sm_text_muted_foreground_32")}>
+                <div className={classMap["k_flex_1_min_w_0_136"]}>
+                  <p className={classMap["k_font_medium_truncate_137"]}>{selectedFile.name}</p>
+                  <p className={classMap["k_text_sm_text_muted_foreground_32"]}>
                     {formatFileSize(selectedFile.size)}
                   </p>
-                  <div className={t("auto.k_flex_items_center_gap_1_mt_1_138")}>
-                    <CheckCircle2 className={t("auto.k_size_4_text_green_500_139")} />
-                    <span className={t("auto.k_text_xs_text_green_600_140")}>
+                  <div className={classMap["k_flex_items_center_gap_1_mt_1_138"]}>
+                    <CheckCircle2 className={classMap["k_size_4_text_green_500_139"]} />
+                    <span className={classMap["k_text_xs_text_green_600_140"]}>
                       Fichier valide
                     </span>
                   </div>
@@ -261,7 +262,7 @@ export function AvatarUploadModal({
               {/* Upload Progress */}
               {uploading && (
                 <div className="space-y-2">
-                  <div className={t("auto.k_flex_items_center_justify_between_text_s_141")}>
+                  <div className={classMap["k_flex_items_center_justify_between_text_s_141"]}>
                     <span className="text-muted-foreground">{t("auto.k_upload_en_cours_127")}</span>
                     <span className="font-medium">{uploadProgress}%</span>
                   </div>
@@ -278,9 +279,9 @@ export function AvatarUploadModal({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className={t("auto.k_flex_items_center_gap_2_p_3_rounded_lg_b_142")}
+                className={classMap["k_flex_items_center_gap_2_p_3_rounded_lg_b_142"]}
               >
-                <AlertCircle className={t("auto.k_size_4_shrink_0_143")} />
+                <AlertCircle className={classMap["k_size_4_shrink_0_143"]} />
                 <span>{error}</span>
               </motion.div>
             )}
@@ -288,24 +289,24 @@ export function AvatarUploadModal({
 
           {/* Current Avatar Info */}
           {!selectedFile && currentAvatar && (
-            <div className={t("auto.k_flex_items_center_gap_3_p_3_rounded_lg_b_144")}>
+            <div className={classMap["k_flex_items_center_gap_3_p_3_rounded_lg_b_144"]}>
               <img
                 src={currentAvatar}
                 alt={userName || "Avatar"}
-                className={t("auto.k_size_10_rounded_full_object_cover_145")}
+                className={classMap["k_size_10_rounded_full_object_cover_145"]}
               />
-              <div className={t("auto.k_flex_1_min_w_0_136")}>
-                <p className={t("auto.k_text_sm_font_medium_35")}>{t("auto.k_photo_actuelle_128")}</p>
-                <p className={t("auto.k_text_xs_text_muted_foreground_131")}>
+              <div className={classMap["k_flex_1_min_w_0_136"]}>
+                <p className={classMap["k_text_sm_font_medium_35"]}>{t("auto.k_photo_actuelle_128")}</p>
+                <p className={classMap["k_text_xs_text_muted_foreground_131"]}>
                   Sera remplacée par la nouvelle image
                 </p>
               </div>
-              <Trash2 className={t("auto.k_size_4_text_muted_foreground_146")} />
+              <Trash2 className={classMap["k_size_4_text_muted_foreground_146"]} />
             </div>
           )}
         </div>
 
-        <DialogFooter className={t("auto.k_gap_2_sm_gap_0_147")}>
+        <DialogFooter className={classMap["k_gap_2_sm_gap_0_147"]}>
           <Button
             variant="outline"
             onClick={() => handleOpenChange(false)}
@@ -316,16 +317,16 @@ export function AvatarUploadModal({
           <Button
             onClick={handleUpload}
             disabled={!selectedFile || uploading}
-            className={t("auto.k_bg_gold_text_gold_foreground_hover_bg_go_148")}
+            className={classMap["k_bg_gold_text_gold_foreground_hover_bg_go_148"]}
           >
             {uploading ? (
               <>
-                <Loader2 className={t("auto.k_size_4_animate_spin_mr_2_149")} />
+                <Loader2 className={classMap["k_size_4_animate_spin_mr_2_149"]} />
                 Upload...
               </>
             ) : (
               <>
-                <Upload className={t("auto.k_size_4_mr_2_150")} />
+                <Upload className={classMap["k_size_4_mr_2_150"]} />
                 Télécharger
               </>
             )}

@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
@@ -46,7 +47,7 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className={t("auto.k_size_4_opacity_50_197")} />
+        <ChevronDownIcon className={classMap["k_size_4_opacity_50_197"]} />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
@@ -115,7 +116,7 @@ function SelectItem({
       )}
       {...props}
     >
-      <span className={t("auto.k_absolute_right_2_flex_size_3_5_items_cen_198")}>
+      <span className={classMap["k_absolute_right_2_flex_size_3_5_items_cen_198"]}>
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />
         </SelectPrimitive.ItemIndicator>

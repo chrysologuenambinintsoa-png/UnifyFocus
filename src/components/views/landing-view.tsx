@@ -2,7 +2,8 @@
 import { useTranslation } from "@/lib/i18n";
 import { useToast } from "@/hooks/use-toast";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { acquireCheckout, isCheckoutPending, releaseCheckout } from '@/lib/checkoutLock';
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { AnimatePresence } from "framer-motion"; // Add this import
@@ -210,6 +211,7 @@ export default function LandingView() {
     mobileMenuOpen,
   } = useAppStore();
   const [upgradingPlan, setUpgradingPlan] = useState(false);
+  const pendingCheckoutRef = useRef<string | null>(null);
   const { t } = useTranslation();
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -421,6 +423,11 @@ export default function LandingView() {
       return;
     }
 
+    const key = `${user?.id}:${plan}`;
+    if (pendingCheckoutRef.current === key) return;
+    if (isCheckoutPending(key)) return;
+    if (!acquireCheckout(key)) return;
+    pendingCheckoutRef.current = key;
     setUpgradingPlan(true);
     try {
       const res = await fetch("/api/user/subscription/create-checkout-session", {
@@ -429,9 +436,24 @@ export default function LandingView() {
         body: JSON.stringify({ userId: user.id, newPlan: plan }),
       });
       const data = await res.json();
+      if (res.status === 409) {
+        toast({
+          title: "Session en cours",
+          description: "Une session de paiement est déjà en cours. Patientez quelques instants et réessayez.",
+        });
+        setUpgradingPlan(false);
+        pendingCheckoutRef.current = null;
+        releaseCheckout(key);
+        return;
+      }
+
       if (!res.ok || !data.url) {
         throw new Error(data.error || "Impossible de créer la session de paiement");
       }
+
+      // Release lock just before navigating away
+      pendingCheckoutRef.current = null;
+      releaseCheckout(key);
       window.location.assign(data.url);
     } catch {
       toast({
@@ -439,8 +461,9 @@ export default function LandingView() {
         description: "Impossible de démarrer le paiement.",
         variant: "destructive",
       });
-    } finally {
       setUpgradingPlan(false);
+      pendingCheckoutRef.current = null;
+      releaseCheckout(key);
     }
   };
 
@@ -462,19 +485,19 @@ export default function LandingView() {
 
   return (
     <>
-      <main className={t("auto.k_min_h_screen_flex_flex_col_1")}>
-      <header className={t("auto.k_sticky_top_0_z_50_w_full_border_b_border_287")}>
-        <div className={t("auto.k_mx_auto_flex_h_20_max_w_7xl_items_center_288")}>
+      <main className="min-h-screen flex flex-col">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <Logo
             markSize={44}
             textClassName="text-lg sm:text-xl"
             onClick={() => setCurrentView("landing")}
-            className={t("auto.k_hover_scale_105_transition_transform_dur_289")}
+            className="transition-transform duration-200 hover:scale-105"
           />
 
           {/* Center Nav Links (desktop) */}
-          <nav className={t("auto.k_hidden_md_flex_items_center_gap_1_bg_mut_290")}>
+          <nav className="hidden md:flex items-center gap-8">
             {[
               { id: "features", label: "Fonctionnalités" },
               { id: "pricing", label: "Tarifs" },
@@ -483,7 +506,7 @@ export default function LandingView() {
               <button
                 key={item.id}
                 onClick={() => scrollToSection(item.id)}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground px-3 py-2"
               >
                 {item.label}
               </button>
@@ -491,7 +514,7 @@ export default function LandingView() {
           </nav>
 
           {/* Right Side */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             <div className="hidden sm:flex items-center gap-4 mr-2">
                <Button
                   variant="ghost"
@@ -502,7 +525,7 @@ export default function LandingView() {
                 </Button>
             </div>
 
-            <Separator orientation="vertical" className="h-6 mx-2 hidden sm:block bg-white/10" />
+            <Separator orientation="vertical" className="h-6 mx-2 hidden sm:block" />
 
             {/* Theme Toggle */}
             <Button
@@ -1114,8 +1137,8 @@ export default function LandingView() {
       </section>
 
       {/* ─── PRICING SECTION ─── */}
-      <section id="pricing" className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+      <section id="pricing" className="px-4 py-20 sm:px-6 lg:px-8 bg-background">
+        <div className="mx-auto max-w-7xl ">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -1131,7 +1154,7 @@ export default function LandingView() {
             </motion.h2>
             <motion.p
               variants={fadeInUp}
-              className="mt-4 text-muted-foreground text-base sm:text-lg max-w-xl mx-auto"
+              className="mt-4 text-muted-foreground text-base sm:text-lg max-w-xl mx-auto "
             >
               Choisissez le plan adapté à vos besoins. Évoluez à votre rythme.
             </motion.p>
@@ -1142,7 +1165,7 @@ export default function LandingView() {
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
             variants={staggerContainer}
-            className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3 lg:gap-8 items-start"
+            className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3 lg:gap-8 items-start "
           >
             {pricingPlans.map((plan) => (
               <motion.div
@@ -1154,7 +1177,7 @@ export default function LandingView() {
                   className={`relative w-full max-w-sm ${
                     plan.highlighted
                       ? "border-gold/50 glow-gold"
-                      : "border-border"
+                      : "border-border "
                   } bg-card`}
                 >
                   {plan.highlighted && (
@@ -1164,7 +1187,7 @@ export default function LandingView() {
                       </Badge>
                     </div>
                   )}
-                  <CardHeader className="text-center pb-2">
+                  <CardHeader className="text-center pb-2 ">
                     <CardTitle className="text-xl">{plan.name}</CardTitle>
                     <div className="mt-3 flex items-baseline justify-center gap-1">
                       <span className="text-4xl font-bold">{plan.price}</span>
@@ -1172,7 +1195,7 @@ export default function LandingView() {
                     </div>
                   </CardHeader>
                   <CardContent className="flex-1">
-                    <ul className="flex flex-col gap-3">
+                    <ul className="flex flex-col gap-3 ">
                       {plan.features.map((feature) => (
                         <li key={feature} className="flex items-center gap-2.5 text-sm">
                           <Check className="size-4 shrink-0 text-gold" />
@@ -1181,7 +1204,7 @@ export default function LandingView() {
                       ))}
                     </ul>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="">
                     <Button
                       variant={plan.buttonVariant}
                       className={`w-full ${
@@ -1210,7 +1233,7 @@ export default function LandingView() {
       </section>
 
       {/* ─── CTA SECTION ─── */}
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
+      <section className="px-4 py-20 sm:px-6 lg:px-8 ">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -1245,7 +1268,7 @@ export default function LandingView() {
       </section>
 
       {/* ─── FOOTER ─── */}
-      <footer className="mt-auto border-t border-border/40 px-4 py-10 sm:px-6 lg:px-8">
+      <footer className="mt-auto border-t border-border/40 px-4 py-10 sm:px-6 lg:px-8 ">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 sm:flex-row sm:justify-between">
           {/* Logo + Copyright */}
           <div className="flex flex-col items-center gap-2 sm:items-start">
@@ -1256,7 +1279,7 @@ export default function LandingView() {
           </div>
 
           {/* Links */}
-          <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+          <nav className="flex items-center gap-6 text-sm text-muted-foreground ">
             <a href="/docs/confidentialite.html" className="transition-colors hover:text-foreground" target="_blank" rel="noopener noreferrer">Confidentialité</a>
             <a href="/docs/cgu.html" className="transition-colors hover:text-foreground" target="_blank" rel="noopener noreferrer">CGU</a>
             <a href="/docs/support.html" className="transition-colors hover:text-foreground">Contact</a>
@@ -1279,7 +1302,7 @@ export default function LandingView() {
 
       {/* Demo Modal */}
       <Dialog open={showDemoModal} onOpenChange={setShowDemoModal}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0 ">
           {/* Modal Header */}
           <div className="flex-shrink-0 p-6 pb-4 border-b border-border">
             <h2 className="text-xl font-bold">{t("auto.k_d_couvrez_unifyfocus_281")}</h2>
@@ -1289,7 +1312,7 @@ export default function LandingView() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex-shrink-0 flex gap-1 p-2 border-b border-border">
+          <div className="flex-shrink-0 flex gap-1 p-2 border-b border-border ">
             {[
               { id: 0, label: "Texte", icon: Type },
               { id: 1, label: "Images", icon: ImageIcon },
@@ -1311,7 +1334,7 @@ export default function LandingView() {
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 ">
             {/* Text Generation Demo */}
             {demoTab === 0 && (
               <motion.div
@@ -1592,7 +1615,7 @@ export default function LandingView() {
           </div>
 
           {/* Modal Footer */}
-          <div className="flex-shrink-0 flex items-center justify-between p-6 border-t border-border">
+          <div className="flex-shrink-0 flex items-center justify-between p-6 border-t border-border ">
             <p className="text-xs text-muted-foreground">
               Prêt à créer ?
             </p>

@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import {
   ChevronDownIcon,
@@ -161,7 +162,7 @@ function Calendar({
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>
-              <div className={t("auto.k_flex_size_cell_size_items_center_justify_151")}>
+              <div className={classMap["k_flex_size_cell_size_items_center_justify_151"]}>
                 {children}
               </div>
             </td>

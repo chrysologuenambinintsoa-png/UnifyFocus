@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import { ChevronDownIcon } from "lucide-react"
@@ -43,7 +44,7 @@ function AccordionTrigger({
         {...props}
       >
         {children}
-        <ChevronDownIcon className={t("auto.k_text_muted_foreground_pointer_events_non_124")} />
+        <ChevronDownIcon className={classMap["k_text_muted_foreground_pointer_events_non_124"]} />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   )
@@ -58,7 +59,7 @@ function AccordionContent({
   return (
     <AccordionPrimitive.Content
       data-slot="accordion-content"
-      className={t("auto.k_data_state_closed_animate_accordion_up_d_125")}
+      className={classMap["k_data_state_closed_animate_accordion_up_d_125"]}
       {...props}
     >
       <div className={cn("pt-0 pb-4", className)}>{children}</div>

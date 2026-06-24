@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -180,7 +181,7 @@ function ChartTooltipContent({
       )}
     >
       {!nestLabel ? tooltipLabel : null}
-      <div className={t("auto.k_grid_gap_1_5_154")}>
+      <div className={classMap["k_grid_gap_1_5_154"]}>
         {payload.map((item, index) => {
           const key = `${nameKey || item.name || item.dataKey || "value"}`
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
@@ -228,14 +229,14 @@ function ChartTooltipContent({
                       nestLabel ? "items-end" : "items-center"
                     )}
                   >
-                    <div className={t("auto.k_grid_gap_1_5_154")}>
+                    <div className={classMap["k_grid_gap_1_5_154"]}>
                       {nestLabel ? tooltipLabel : null}
                       <span className="text-muted-foreground">
                         {itemConfig?.label || item.name}
                       </span>
                     </div>
                     {item.value && (
-                      <span className={t("auto.k_text_foreground_font_mono_font_medium_ta_155")}>
+                      <span className={classMap["k_text_foreground_font_mono_font_medium_ta_155"]}>
                         {item.value.toLocaleString()}
                       </span>
                     )}
@@ -293,7 +294,7 @@ function ChartLegendContent({
               <itemConfig.icon />
             ) : (
               <div
-                className={t("auto.k_h_2_w_2_shrink_0_rounded_2px_156")}
+                className={classMap["k_h_2_w_2_shrink_0_rounded_2px_156"]}
                 style={{
                   backgroundColor: item.color,
                 }}

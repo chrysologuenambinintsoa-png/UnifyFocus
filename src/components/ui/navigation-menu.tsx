@@ -1,3 +1,4 @@
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu"
 import { cva } from "class-variance-authority"
@@ -77,7 +78,7 @@ function NavigationMenuTrigger({
     >
       {children}{" "}
       <ChevronDownIcon
-        className={t("auto.k_relative_top_1px_ml_1_size_3_transition__185")}
+        className={classMap["k_relative_top_1px_ml_1_size_3_transition__185"]}
         aria-hidden="true"
       />
     </NavigationMenuPrimitive.Trigger>
@@ -153,7 +154,7 @@ function NavigationMenuIndicator({
       )}
       {...props}
     >
-      <div className={t("auto.k_bg_border_relative_top_60_h_2_w_2_rotate_186")} />
+      <div className={classMap["k_bg_border_relative_top_60_h_2_w_2_rotate_186"]} />
     </NavigationMenuPrimitive.Indicator>
   )
 }

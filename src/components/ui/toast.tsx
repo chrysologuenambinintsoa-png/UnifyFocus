@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -86,7 +87,7 @@ const ToastClose = React.forwardRef<
       toast-close=""
       {...props}
     >
-      <X className={t("auto.k_h_4_w_4_211")} />
+      <X className={classMap["k_h_4_w_4_211"]} />
     </ToastPrimitives.Close>
   )
 })

@@ -1,4 +1,5 @@
 "use client";
+import { classMap } from '@/styles/classMap';
 import { useTranslation } from "@/lib/i18n";
 
 import { cn } from "@/lib/utils";
@@ -172,10 +173,10 @@ export function Logo({
             textClassName
           )}
         >
-          <span className={t("auto.k_bg_gradient_to_r_from_slate_700_to_slate_181")}>
+          <span className={classMap["k_bg_gradient_to_r_from_slate_700_to_slate_181"]}>
             Unify
           </span>
-          <span className={t("auto.k_bg_gradient_to_r_from_sky_500_via_violet_182")}>
+          <span className={classMap["k_bg_gradient_to_r_from_sky_500_via_violet_182"]}>
             Focus
           </span>
         </span>

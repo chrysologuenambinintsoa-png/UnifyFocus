@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as SliderPrimitive from "@radix-ui/react-slider"
 
@@ -55,7 +56,7 @@ function Slider({
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
-          className={t("auto.k_border_primary_bg_background_ring_ring_5_208")}
+          className={classMap["k_border_primary_bg_background_ring_ring_5_208"]}
         />
       ))}
     </SliderPrimitive.Root>

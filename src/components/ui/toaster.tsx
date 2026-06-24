@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/lib/i18n";
 import {
@@ -20,7 +21,7 @@ export function Toaster() {
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>
-            <div className={t("auto.k_grid_gap_1_212")}>
+            <div className={classMap["k_grid_gap_1_212"]}>
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
                 <ToastDescription>{description}</ToastDescription>

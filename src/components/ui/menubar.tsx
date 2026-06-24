@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as MenubarPrimitive from "@radix-ui/react-menubar"
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
@@ -129,7 +130,7 @@ function MenubarCheckboxItem({
       checked={checked}
       {...props}
     >
-      <span className={t("auto.k_pointer_events_none_absolute_left_2_flex_162")}>
+      <span className={classMap["k_pointer_events_none_absolute_left_2_flex_162"]}>
         <MenubarPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />
         </MenubarPrimitive.ItemIndicator>
@@ -154,9 +155,9 @@ function MenubarRadioItem({
       )}
       {...props}
     >
-      <span className={t("auto.k_pointer_events_none_absolute_left_2_flex_162")}>
+      <span className={classMap["k_pointer_events_none_absolute_left_2_flex_162"]}>
         <MenubarPrimitive.ItemIndicator>
-          <CircleIcon className={t("auto.k_size_2_fill_current_163")} />
+          <CircleIcon className={classMap["k_size_2_fill_current_163"]} />
         </MenubarPrimitive.ItemIndicator>
       </span>
       {children}
@@ -239,7 +240,7 @@ function MenubarSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className={t("auto.k_ml_auto_h_4_w_4_184")} />
+      <ChevronRightIcon className={classMap["k_ml_auto_h_4_w_4_184"]} />
     </MenubarPrimitive.SubTrigger>
   )
 }

@@ -108,25 +108,25 @@ export default function HelpView() {
   const [contactLoading, setContactLoading] = useState(false);
 
   return (
-    <div className={t("auto.k_max_w_4xl_mx_auto_px_4_py_8_456")}>
+    <div className="max-w-4xl mx-auto px-4 py-8">
       {/* ── Header ── */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className={t("auto.k_flex_items_center_justify_center_mb_8_re_457")}
+        className="flex items-center justify-center mb-8 relative"
       >
         <Button
           variant="ghost"
           size="icon"
           onClick={() => router.push("/")}
-          className={t("auto.k_absolute_left_0_458")}
+          className="absolute left-0"
           aria-label={t("auto.k_retour_au_tableau_de_bord_108")}
         >
           <ArrowLeft className="size-5" />
         </Button>
 
-        <h1 className={t("auto.k_text_2xl_font_bold_tracking_tight_459")}>
+        <h1 className="text-2xl font-bold tracking-tight">
           Centre d'aide
         </h1>
       </motion.div>

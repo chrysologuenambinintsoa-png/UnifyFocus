@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 import { SearchIcon } from "lucide-react"
@@ -54,7 +55,7 @@ function CommandDialog({
         className={cn("overflow-hidden p-0", className)}
         showCloseButton={showCloseButton}
       >
-        <Command className={t("auto.k_cmdk_group_heading_text_muted_foreground_158")}>
+        <Command className={classMap["k_cmdk_group_heading_text_muted_foreground_158"]}>
           {children}
         </Command>
       </DialogContent>
@@ -70,9 +71,9 @@ function CommandInput({
   return (
     <div
       data-slot="command-input-wrapper"
-      className={t("auto.k_flex_h_9_items_center_gap_2_border_b_px__159")}
+      className={classMap["k_flex_h_9_items_center_gap_2_border_b_px__159"]}
     >
-      <SearchIcon className={t("auto.k_size_4_shrink_0_opacity_50_160")} />
+      <SearchIcon className={classMap["k_size_4_shrink_0_opacity_50_160"]} />
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
@@ -108,7 +109,7 @@ function CommandEmpty({
   return (
     <CommandPrimitive.Empty
       data-slot="command-empty"
-      className={t("auto.k_py_6_text_center_text_sm_161")}
+      className={classMap["k_py_6_text_center_text_sm_161"]}
       {...props}
     />
   )

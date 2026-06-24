@@ -1,5 +1,6 @@
  "use client";
 
+import { classMap } from '@/styles/classMap';
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
@@ -305,7 +306,7 @@ export default function SettingsView() {
                   <Label htmlFor="notifications" className="text-base">
                       {t("settings.notifications.title")}
                     </Label>
-                    <p className={t("auto.k_text_sm_text_muted_foreground_32")}>
+                    <p className={classMap["k_text_sm_text_muted_foreground_32"]}>
                       {t("settings.notifications.description")}
                     </p>
                 </div>
@@ -324,7 +325,7 @@ export default function SettingsView() {
                   <Label htmlFor="emailAlerts" className="text-base">
                       {t("settings.notifications.title")}
                     </Label>
-                    <p className={t("auto.k_text_sm_text_muted_foreground_32")}>
+                    <p className={classMap["k_text_sm_text_muted_foreground_32"]}>
                       {t("settings.notifications.description")}
                     </p>
                 </div>
@@ -343,7 +344,7 @@ export default function SettingsView() {
                   <Label htmlFor="autoSave" className="text-base">
                     Sauvegarde automatique
                   </Label>
-                  <p className={t("auto.k_text_sm_text_muted_foreground_32")}>
+                  <p className={classMap["k_text_sm_text_muted_foreground_32"]}>
                     Sauvegarder automatiquement les projets
                   </p>
                 </div>
@@ -403,10 +404,10 @@ export default function SettingsView() {
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className={t("auto.k_w_full_bg_gold_text_gold_foreground_hove_309")}
+                className={classMap["k_w_full_bg_gold_text_gold_foreground_hove_309"]}
               >
                 {saving ? (
-                  <Loader2 className={t("auto.k_size_4_animate_spin_473")} />
+                  <Loader2 className={classMap["k_size_4_animate_spin_473"]} />
                 ) : (
                   <Save className="size-4" />
                 )}

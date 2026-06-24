@@ -1,4 +1,5 @@
 "use client";
+import { classMap } from '@/styles/classMap';
 import { useTranslation } from "@/lib/i18n";
 
 import { useState } from "react";
@@ -29,16 +30,16 @@ function OAuthIcon({ provider }: { provider: Provider }) {
     case "google":
       return (
         <svg className="size-4" viewBox={t("auto.k_0_0_24_24_4")} xmlns="http://www.w3.org/2000/svg">
-          <path d={t("auto.k_m22_56_12_25c0_78_07_1_53_2_2_25h12v4_26_5")} fill="#4285F4"/>
-          <path d={t("auto.k_m12_23c2_97_0_5_46_98_7_28_2_66l_3_57_2__6")} fill="#34A853"/>
-          <path d={t("auto.k_m5_84_14_13c_22_66_35_1_36_35_2_09s_13_1_7")} fill="#FBBC05"/>
-          <path d={t("auto.k_m12_5_38c1_62_0_3_06_56_4_21_1_64l3_15_3_8")} fill="#EA4335"/>
+          <path d={classMap["k_m22_56_12_25c0_78_07_1_53_2_2_25h12v4_26_5"]} fill="#4285F4"/>
+          <path d={classMap["k_m12_23c2_97_0_5_46_98_7_28_2_66l_3_57_2__6"]} fill="#34A853"/>
+          <path d={classMap["k_m5_84_14_13c_22_66_35_1_36_35_2_09s_13_1_7"]} fill="#FBBC05"/>
+          <path d={classMap["k_m12_5_38c1_62_0_3_06_56_4_21_1_64l3_15_3_8"]} fill="#EA4335"/>
         </svg>
       );
     case "facebook":
       return (
         <svg className="size-4" viewBox={t("auto.k_0_0_24_24_4")} fill="#1877F2" xmlns="http://www.w3.org/2000/svg">
-          <path d={t("auto.k_m24_12_073c0_6_627_5_373_12_12_12s_12_5__9")}/>
+          <path d={classMap["k_m24_12_073c0_6_627_5_373_12_12_12s_12_5__9"]}/>
         </svg>
       );
   }
@@ -48,10 +49,10 @@ function OAuthIcon({ provider }: { provider: Provider }) {
 function FloatingShapes() {
   const { t } = useTranslation();
   return (
-    <div className={t("auto.k_absolute_inset_0_overflow_hidden_pointer_10")}>
-      <div className={t("auto.k_absolute_top_8_right_8_w_24_h_24_bg_gold_11")} />
-      <div className={t("auto.k_absolute_bottom_6_left_6_w_20_h_20_bg_go_12")} style={{ animationDelay: "1s" }} />
-      <div className={t("auto.k_absolute_top_1_2_right_12_w_16_h_16_bg_p_13")} style={{ animationDelay: "0.5s" }} />
+    <div className={classMap["k_absolute_inset_0_overflow_hidden_pointer_10"]}>
+      <div className={classMap["k_absolute_top_8_right_8_w_24_h_24_bg_gold_11"]} />
+      <div className={classMap["k_absolute_bottom_6_left_6_w_20_h_20_bg_go_12"]} style={{ animationDelay: "1s" }} />
+      <div className={classMap["k_absolute_top_1_2_right_12_w_16_h_16_bg_p_13"]} style={{ animationDelay: "0.5s" }} />
     </div>
   );
 }
@@ -136,15 +137,15 @@ function OAuthButtons({ loading, onOAuth }: OAuthButtonsProps) {
   const { t } = useTranslation();
   return (
     <>
-      <div className={t("auto.k_relative_my_5_flex_items_center_gap_3_14")}>
-        <Separator className={t("auto.k_flex_1_bg_gradient_to_r_from_transparent_15")} />
-        <span className={t("auto.k_text_muted_foreground_text_xs_font_mediu_16")}>
+      <div className={classMap["k_relative_my_5_flex_items_center_gap_3_14"]}>
+        <Separator className={classMap["k_flex_1_bg_gradient_to_r_from_transparent_15"]} />
+        <span className={classMap["k_text_muted_foreground_text_xs_font_mediu_16"]}>
           ou continuer avec
         </span>
-        <Separator className={t("auto.k_flex_1_bg_gradient_to_r_from_transparent_15")} />
+        <Separator className={classMap["k_flex_1_bg_gradient_to_r_from_transparent_15"]} />
       </div>
 
-      <div className={t("auto.k_grid_grid_cols_2_gap_2_5_17")}>
+      <div className={classMap["k_grid_grid_cols_2_gap_2_5_17"]}>
         {(["google", "facebook"] as Provider[]).map((provider) => (
           <Button
             key={provider}
@@ -162,7 +163,7 @@ function OAuthButtons({ loading, onOAuth }: OAuthButtonsProps) {
             onClick={() => onOAuth(provider)}
           >
             <OAuthIcon provider={provider} />
-            <span className={t("auto.k_truncate_text_10px_font_semibold_upperca_18")}>
+            <span className={classMap["k_truncate_text_10px_font_semibold_upperca_18"]}>
               {provider}
             </span>
           </Button>
@@ -206,18 +207,18 @@ function PasswordStrength({ password }: { password: string }) {
   const { label, color } = getStrengthLabel();
   
   return (
-    <div className={t("auto.k_space_y_2_mt_1_19")}>
-      <div className={t("auto.k_flex_items_center_justify_between_text_x_20")}>
+    <div className={classMap["k_space_y_2_mt_1_19"]}>
+      <div className={classMap["k_flex_items_center_justify_between_text_x_20"]}>
         <span className="text-muted-foreground">{t("auto.k_force_du_mot_de_passe_3")}</span>
         <span className={cn("font-medium", color.replace("bg-", "text-"))}>{label}</span>
       </div>
-      <div className={t("auto.k_h_1_5_w_full_bg_muted_rounded_full_overf_21")}>
+      <div className={classMap["k_h_1_5_w_full_bg_muted_rounded_full_overf_21"]}>
         <div 
           className={cn("h-full transition-all duration-300 rounded-full", color)}
           style={{ width: `${(displayStrength / maxCriteria) * 100}%` }}
         />
       </div>
-      <div className={t("auto.k_flex_flex_wrap_gap_1_5_text_10px_22")}>
+      <div className={classMap["k_flex_flex_wrap_gap_1_5_text_10px_22"]}>
         <span className={cn("px-1.5 py-0.5 rounded", hasLower ? "bg-green-500/20 text-green-600" : "bg-muted text-muted-foreground")}>
           minuscule
         </span>
@@ -516,19 +517,19 @@ export function AuthModal() {
         )}
       >
         {/* Header with gradient border top */}
-        <div className={t("auto.k_relative_flex_shrink_0_23")}>
-          <div className={t("auto.k_absolute_top_0_left_0_right_0_h_0_5_bg_g_24")} />
+        <div className={classMap["k_relative_flex_shrink_0_23"]}>
+          <div className={classMap["k_absolute_top_0_left_0_right_0_h_0_5_bg_g_24"]} />
           <FloatingShapes />
           
-          <div className={t("auto.k_relative_flex_flex_col_items_center_just_25")}>
-            <div className={t("auto.k_mb_3_p_2_rounded_xl_bg_gradient_to_br_fr_26")}>
-              <Logo markSize={32} textClassName={t("auto.k_text_sm_font_bold_27")} className="opacity-90" />
+          <div className={classMap["k_relative_flex_flex_col_items_center_just_25"]}>
+            <div className={classMap["k_mb_3_p_2_rounded_xl_bg_gradient_to_br_fr_26"]}>
+              <Logo markSize={32} textClassName={classMap["k_text_sm_font_bold_27"]} className="opacity-90" />
             </div>
           </div>
         </div>
         
         {/* Scrollable content area */}
-        <div className={t("auto.k_flex_1_overflow_y_auto_px_4_sm_px_6_pb_8_28")}>
+        <div className={classMap["k_flex_1_overflow_y_auto_px_4_sm_px_6_pb_8_28"]}>
           <Tabs
             value={authModalTab}
             onValueChange={(v) => {
@@ -537,7 +538,7 @@ export function AuthModal() {
             }}
           >
             {/* Modern pill-style tabs */}
-            <TabsList className={t("auto.k_mx_auto_flex_w_full_max_w_sm_bg_muted_30_29")}>
+            <TabsList className={classMap["k_mx_auto_flex_w_full_max_w_sm_bg_muted_30_29"]}>
               <TabsTrigger
                 value="login"
                 className={cn(
@@ -566,19 +567,19 @@ export function AuthModal() {
 
             {/* ──────── LOGIN TAB ──────── */}
             <TabsContent value="login" className="mt-0">
-              <div className={t("auto.k_text_center_mb_4_30")}>
-                <DialogTitle className={t("auto.k_text_xl_font_bold_tracking_tight_mb_1_5_31")}>
+              <div className={classMap["k_text_center_mb_4_30"]}>
+                <DialogTitle className={classMap["k_text_xl_font_bold_tracking_tight_mb_1_5_31"]}>
                   Bon retour parmi nous
                 </DialogTitle>
-                <DialogDescription className={t("auto.k_text_sm_text_muted_foreground_32")}>
+                <DialogDescription className={classMap["k_text_sm_text_muted_foreground_32"]}>
                   Connectez-vous pour accéder à vos créations
                 </DialogDescription>
               </div>
 
-              <form onSubmit={handleLogin} className={t("auto.k_flex_flex_col_gap_3_33")}>
+              <form onSubmit={handleLogin} className={classMap["k_flex_flex_col_gap_3_33"]}>
                 {/* Email */}
-                <div className={t("auto.k_flex_flex_col_gap_1_5_34")}>
-                  <Label htmlFor="login-email" className={t("auto.k_text_sm_font_medium_35")}>
+                <div className={classMap["k_flex_flex_col_gap_1_5_34"]}>
+                  <Label htmlFor="login-email" className={classMap["k_text_sm_font_medium_35"]}>
                     Adresse email
                   </Label>
                   <StyledInput
@@ -597,14 +598,14 @@ export function AuthModal() {
                 </div>
 
                 {/* Password */}
-                <div className={t("auto.k_flex_flex_col_gap_1_5_34")}>
-                  <div className={t("auto.k_flex_items_center_justify_between_36")}>
-                    <Label htmlFor="login-password" className={t("auto.k_text_sm_font_medium_35")}>
+                <div className={classMap["k_flex_flex_col_gap_1_5_34"]}>
+                  <div className={classMap["k_flex_items_center_justify_between_36"]}>
+                    <Label htmlFor="login-password" className={classMap["k_text_sm_font_medium_35"]}>
                       Mot de passe
                     </Label>
                     <button 
                       type="button" 
-                      className={t("auto.k_text_xs_text_gold_hover_text_gold_80_fon_37")}
+                      className={classMap["k_text_xs_text_gold_hover_text_gold_80_fon_37"]}
                     >
                       Oublié ?
                     </button>
@@ -627,8 +628,8 @@ export function AuthModal() {
 
                 {/* Error */}
                 {loginError && (
-                  <div className={t("auto.k_flex_items_center_gap_2_p_3_rounded_lg_b_39")}>
-                    <AlertCircle className={t("auto.k_size_4_flex_shrink_0_40")} />
+                  <div className={classMap["k_flex_items_center_gap_2_p_3_rounded_lg_b_39"]}>
+                    <AlertCircle className={classMap["k_size_4_flex_shrink_0_40"]} />
                     <span>{loginError}</span>
                   </div>
                 )}
@@ -647,7 +648,7 @@ export function AuthModal() {
                 >
                   {loginLoading ? (
                     <>
-                      <Loader2 className={t("auto.k_mr_2_animate_spin_41")} />
+                      <Loader2 className={classMap["k_mr_2_animate_spin_41"]} />
                       Connexion...
                     </>
                   ) : (
@@ -662,11 +663,11 @@ export function AuthModal() {
                 />
 
                 {/* Switch to signup */}
-                <p className={t("auto.k_text_muted_foreground_text_center_text_s_42")}>
+                <p className={classMap["k_text_muted_foreground_text_center_text_s_42"]}>
                   Pas de compte ?{" "}
                   <button
                     type="button"
-                    className={t("auto.k_text_gold_hover_text_gold_80_font_semibo_43")}
+                    className={classMap["k_text_gold_hover_text_gold_80_font_semibo_43"]}
                     onClick={() => {
                       resetForms();
                       useAppStore.getState().openAuthModal("signup");
@@ -680,19 +681,19 @@ export function AuthModal() {
 
             {/* ──────── SIGNUP TAB ──────── */}
             <TabsContent value="signup" className="mt-0">
-              <div className={t("auto.k_text_center_mb_4_30")}>
-                <DialogTitle className={t("auto.k_text_xl_font_bold_tracking_tight_mb_1_5_31")}>
+              <div className={classMap["k_text_center_mb_4_30"]}>
+                <DialogTitle className={classMap["k_text_xl_font_bold_tracking_tight_mb_1_5_31"]}>
                   Créez votre compte
                 </DialogTitle>
-                <DialogDescription className={t("auto.k_text_sm_text_muted_foreground_32")}>
+                <DialogDescription className={classMap["k_text_sm_text_muted_foreground_32"]}>
                   Rejoignez UnifyFocus et commencez à créer
                 </DialogDescription>
               </div>
 
-              <form onSubmit={handleSignup} className={t("auto.k_flex_flex_col_gap_3_33")}>
+              <form onSubmit={handleSignup} className={classMap["k_flex_flex_col_gap_3_33"]}>
                 {/* Name */}
-                <div className={t("auto.k_flex_flex_col_gap_1_5_34")}>
-                  <Label htmlFor="signup-name" className={t("auto.k_text_sm_font_medium_35")}>
+                <div className={classMap["k_flex_flex_col_gap_1_5_34"]}>
+                  <Label htmlFor="signup-name" className={classMap["k_text_sm_font_medium_35"]}>
                     Nom complet
                   </Label>
                   <StyledInput
@@ -709,8 +710,8 @@ export function AuthModal() {
                 </div>
 
                 {/* Email */}
-                <div className={t("auto.k_flex_flex_col_gap_1_5_34")}>
-                  <Label htmlFor="signup-email" className={t("auto.k_text_sm_font_medium_35")}>
+                <div className={classMap["k_flex_flex_col_gap_1_5_34"]}>
+                  <Label htmlFor="signup-email" className={classMap["k_text_sm_font_medium_35"]}>
                     Adresse email
                   </Label>
                   <StyledInput
@@ -729,8 +730,8 @@ export function AuthModal() {
                 </div>
 
                 {/* Password */}
-                <div className={t("auto.k_flex_flex_col_gap_1_5_34")}>
-                  <Label htmlFor="signup-password" className={t("auto.k_text_sm_font_medium_35")}>
+                <div className={classMap["k_flex_flex_col_gap_1_5_34"]}>
+                  <Label htmlFor="signup-password" className={classMap["k_text_sm_font_medium_35"]}>
                     Mot de passe
                   </Label>
                   <StyledInput
@@ -752,8 +753,8 @@ export function AuthModal() {
                 </div>
 
                 {/* Confirm Password */}
-                <div className={t("auto.k_flex_flex_col_gap_1_5_34")}>
-                  <Label htmlFor="signup-confirm-password" className={t("auto.k_text_sm_font_medium_35")}>
+                <div className={classMap["k_flex_flex_col_gap_1_5_34"]}>
+                  <Label htmlFor="signup-confirm-password" className={classMap["k_text_sm_font_medium_35"]}>
                     Confirmer le mot de passe
                   </Label>
                   <StyledInput
@@ -772,26 +773,26 @@ export function AuthModal() {
                     autoComplete="new-password"
                   />
                   {signupConfirmPassword.length > 0 && !confirmPasswordValid && (
-                    <p className={t("auto.k_text_xs_text_destructive_mt_0_5_47")}>
+                    <p className={classMap["k_text_xs_text_destructive_mt_0_5_47"]}>
                       Les mots de passe ne correspondent pas
                     </p>
                   )}
                   {confirmPasswordValid && signupConfirmPassword.length > 0 && (
-                    <p className={t("auto.k_text_xs_text_green_600_mt_0_5_48")}>
+                    <p className={classMap["k_text_xs_text_green_600_mt_0_5_48"]}>
                       Les mots de passe correspondent
                     </p>
                   )}
                 </div>
 
                 {/* Password requirements */}
-                <div className={t("auto.k_text_10px_text_muted_foreground_leading__49")}>
+                <div className={classMap["k_text_10px_text_muted_foreground_leading__49"]}>
                   Le mot de passe doit contenir au moins 12 caractères avec : une majuscule, une minuscule, un chiffre et un caractère spécial.
                 </div>
 
                 {/* Error */}
                 {signupError && (
-                  <div className={t("auto.k_flex_items_center_gap_2_p_3_rounded_lg_b_39")}>
-                    <AlertCircle className={t("auto.k_size_4_flex_shrink_0_40")} />
+                  <div className={classMap["k_flex_items_center_gap_2_p_3_rounded_lg_b_39"]}>
+                    <AlertCircle className={classMap["k_size_4_flex_shrink_0_40"]} />
                     <span>{signupError}</span>
                   </div>
                 )}
@@ -810,7 +811,7 @@ export function AuthModal() {
                 >
                   {signupLoading ? (
                     <>
-                      <Loader2 className={t("auto.k_mr_2_animate_spin_41")} />
+                      <Loader2 className={classMap["k_mr_2_animate_spin_41"]} />
                       Création en cours...
                     </>
                   ) : (
@@ -825,11 +826,11 @@ export function AuthModal() {
                 />
 
                 {/* Switch to login */}
-                <p className={t("auto.k_text_muted_foreground_text_center_text_s_42")}>
+                <p className={classMap["k_text_muted_foreground_text_center_text_s_42"]}>
                   Déjà un compte ?{" "}
                   <button
                     type="button"
-                    className={t("auto.k_text_gold_hover_text_gold_80_font_semibo_43")}
+                    className={classMap["k_text_gold_hover_text_gold_80_font_semibo_43"]}
                     onClick={() => {
                       resetForms();
                       useAppStore.getState().openAuthModal("login");

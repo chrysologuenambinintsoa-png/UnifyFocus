@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
 import { CircleIcon } from "lucide-react"
@@ -36,9 +37,9 @@ function RadioGroupItem({
     >
       <RadioGroupPrimitive.Indicator
         data-slot="radio-group-indicator"
-        className={t("auto.k_relative_flex_items_center_justify_cente_192")}
+        className={classMap["k_relative_flex_items_center_justify_cente_192"]}
       >
-        <CircleIcon className={t("auto.k_fill_primary_absolute_top_1_2_left_1_2_s_193")} />
+        <CircleIcon className={classMap["k_fill_primary_absolute_top_1_2_left_1_2_s_193"]} />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   )

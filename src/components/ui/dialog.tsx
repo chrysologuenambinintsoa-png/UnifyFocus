@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
@@ -71,7 +72,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className={t("auto.k_ring_offset_background_focus_ring_ring_d_164")}
+            className={classMap["k_ring_offset_background_focus_ring_ring_d_164"]}
           >
             <XIcon />
             <span className="sr-only">Close</span>

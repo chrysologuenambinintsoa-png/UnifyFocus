@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import { OTPInput, OTPInputContext } from "input-otp"
 import { MinusIcon } from "lucide-react"
@@ -60,8 +61,8 @@ function InputOTPSlot({
     >
       {char}
       {hasFakeCaret && (
-        <div className={t("auto.k_pointer_events_none_absolute_inset_0_fle_168")}>
-          <div className={t("auto.k_animate_caret_blink_bg_foreground_h_4_w__169")} />
+        <div className={classMap["k_pointer_events_none_absolute_inset_0_fle_168"]}>
+          <div className={classMap["k_animate_caret_blink_bg_foreground_h_4_w__169"]} />
         </div>
       )}
     </div>

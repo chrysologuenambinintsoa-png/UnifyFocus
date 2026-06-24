@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Coins,
@@ -57,6 +57,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { acquireCheckout, isCheckoutPending, releaseCheckout } from '@/lib/checkoutLock';
 import { useTranslation } from "@/lib/i18n";
 
 /* ─── Animation Variants ───────────────────────────────────────────── */
@@ -255,6 +256,7 @@ export function UsageView() {
   const [timeRange, setTimeRange] = useState<"7days" | "30days" | "90days">("30days");
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<"free" | "pro" | "enterprise" | null>(null);
+  const pendingCheckoutRef = useRef<string | null>(null);
 
   // Fetch generations on mount
   useEffect(() => {
@@ -984,6 +986,11 @@ export function UsageView() {
 
   async function handleUpgrade(newPlan: "free" | "pro" | "enterprise") {
     if (!user) return;
+    const key = `${user.id}:${newPlan}`;
+    if (pendingCheckoutRef.current === key) return;
+    if (isCheckoutPending(key)) return;
+    if (!acquireCheckout(key)) return;
+    pendingCheckoutRef.current = key;
 
     setLoadingPlan(newPlan);
     try {
@@ -1007,9 +1014,22 @@ export function UsageView() {
         });
 
         const data = await response.json();
+        if (response.status === 409) {
+          toast({
+            title: "Session en cours",
+            description: "Une session de paiement est déjà en cours. Patientez quelques instants et réessayez.",
+          });
+          setLoadingPlan(null);
+          pendingCheckoutRef.current = null;
+          releaseCheckout(key);
+          return;
+        }
+
         if (!response.ok || !data.url) {
           throw new Error(data.error || "Failed to create payment session");
         }
+        pendingCheckoutRef.current = null;
+        releaseCheckout(key);
         window.location.href = data.url;
         return;
       }
@@ -1026,9 +1046,9 @@ export function UsageView() {
         description: "Impossible de changer de plan. Veuillez réessayer.",
         variant: "destructive",
       });
-    } finally {
       setLoadingPlan(null);
+      pendingCheckoutRef.current = null;
+      releaseCheckout(key);
     }
   }
 }
-

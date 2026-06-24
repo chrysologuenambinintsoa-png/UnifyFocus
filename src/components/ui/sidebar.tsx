@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, VariantProps } from "class-variance-authority"
@@ -189,7 +190,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className={t("auto.k_bg_sidebar_text_sidebar_foreground_w_sid_202")}
+          className={classMap["k_bg_sidebar_text_sidebar_foreground_w_sid_202"]}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -201,7 +202,7 @@ function Sidebar({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>{t("auto.k_displays_the_mobile_sidebar_200")}</SheetDescription>
           </SheetHeader>
-          <div className={t("auto.k_flex_h_full_w_full_flex_col_203")}>{children}</div>
+          <div className={classMap["k_flex_h_full_w_full_flex_col_203"]}>{children}</div>
         </SheetContent>
       </Sheet>
     )
@@ -209,7 +210,7 @@ function Sidebar({
 
   return (
     <div
-      className={t("auto.k_group_peer_text_sidebar_foreground_hidde_204")}
+      className={classMap["k_group_peer_text_sidebar_foreground_hidde_204"]}
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
       data-variant={variant}
@@ -246,7 +247,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className={t("auto.k_bg_sidebar_group_data_variant_floating_b_205")}
+          className={classMap["k_bg_sidebar_group_data_variant_floating_b_205"]}
         >
           {children}
         </div>
@@ -626,12 +627,12 @@ function SidebarMenuSkeleton({
     >
       {showIcon && (
         <Skeleton
-          className={t("auto.k_size_4_rounded_md_206")}
+          className={classMap["k_size_4_rounded_md_206"]}
           data-sidebar="menu-skeleton-icon"
         />
       )}
       <Skeleton
-        className={t("auto.k_h_4_max_w_skeleton_width_flex_1_207")}
+        className={classMap["k_h_4_max_w_skeleton_width_flex_1_207"]}
         data-sidebar="menu-skeleton-text"
         style={
           {

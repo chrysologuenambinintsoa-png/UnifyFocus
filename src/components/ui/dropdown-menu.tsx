@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
@@ -100,7 +101,7 @@ function DropdownMenuCheckboxItem({
       checked={checked}
       {...props}
     >
-      <span className={t("auto.k_pointer_events_none_absolute_left_2_flex_162")}>
+      <span className={classMap["k_pointer_events_none_absolute_left_2_flex_162"]}>
         <DropdownMenuPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />
         </DropdownMenuPrimitive.ItemIndicator>
@@ -136,9 +137,9 @@ function DropdownMenuRadioItem({
       )}
       {...props}
     >
-      <span className={t("auto.k_pointer_events_none_absolute_left_2_flex_162")}>
+      <span className={classMap["k_pointer_events_none_absolute_left_2_flex_162"]}>
         <DropdownMenuPrimitive.ItemIndicator>
-          <CircleIcon className={t("auto.k_size_2_fill_current_163")} />
+          <CircleIcon className={classMap["k_size_2_fill_current_163"]} />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -221,7 +222,7 @@ function DropdownMenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className={t("auto.k_ml_auto_size_4_166")} />
+      <ChevronRightIcon className={classMap["k_ml_auto_size_4_166"]} />
     </DropdownMenuPrimitive.SubTrigger>
   )
 }

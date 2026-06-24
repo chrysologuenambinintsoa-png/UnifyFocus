@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
 import { CheckIcon } from "lucide-react"
@@ -23,7 +24,7 @@ function Checkbox({
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className={t("auto.k_flex_items_center_justify_center_text_cu_157")}
+        className={classMap["k_flex_items_center_justify_center_text_cu_157"]}
       >
         <CheckIcon className="size-3.5" />
       </CheckboxPrimitive.Indicator>

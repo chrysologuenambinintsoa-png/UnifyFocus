@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu"
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
@@ -152,7 +153,7 @@ function ContextMenuCheckboxItem({
       checked={checked}
       {...props}
     >
-      <span className={t("auto.k_pointer_events_none_absolute_left_2_flex_162")}>
+      <span className={classMap["k_pointer_events_none_absolute_left_2_flex_162"]}>
         <ContextMenuPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />
         </ContextMenuPrimitive.ItemIndicator>
@@ -177,9 +178,9 @@ function ContextMenuRadioItem({
       )}
       {...props}
     >
-      <span className={t("auto.k_pointer_events_none_absolute_left_2_flex_162")}>
+      <span className={classMap["k_pointer_events_none_absolute_left_2_flex_162"]}>
         <ContextMenuPrimitive.ItemIndicator>
-          <CircleIcon className={t("auto.k_size_2_fill_current_163")} />
+          <CircleIcon className={classMap["k_size_2_fill_current_163"]} />
         </ContextMenuPrimitive.ItemIndicator>
       </span>
       {children}

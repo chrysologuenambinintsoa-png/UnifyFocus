@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -10,7 +11,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
-      className={t("auto.k_relative_w_full_overflow_x_auto_210")}
+      className={classMap["k_relative_w_full_overflow_x_auto_210"]}
     >
       <table
         data-slot="table"

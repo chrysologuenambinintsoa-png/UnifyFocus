@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import { GripVerticalIcon } from "lucide-react"
 import * as ResizablePrimitive from "react-resizable-panels"
@@ -47,7 +48,7 @@ function ResizableHandle({
       {...props}
     >
       {withHandle && (
-        <div className={t("auto.k_bg_border_z_10_flex_h_4_w_3_items_center_194")}>
+        <div className={classMap["k_bg_border_z_10_flex_h_4_w_3_items_center_194"]}>
           <GripVerticalIcon className="size-2.5" />
         </div>
       )}

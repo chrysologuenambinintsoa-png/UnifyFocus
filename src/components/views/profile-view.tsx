@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { classMap } from '@/styles/classMap';
+import { useState, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -19,6 +20,7 @@ import {
 import { useAppStore, type User } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
+import { acquireCheckout, isCheckoutPending, releaseCheckout } from '@/lib/checkoutLock';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -99,8 +101,9 @@ export default function ProfileView() {
   const [name, setName] = useState(user?.name ?? "");
   const [saving, setSaving] = useState(false);
 
-  // Plan switching
+  // Plan switching - use a ref to prevent double clicks
   const [switchingPlan, setSwitchingPlan] = useState<User["plan"] | null>(null);
+  const isProcessingRef = useRef(false);
 
   // Avatar upload
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -153,6 +156,12 @@ export default function ProfileView() {
   /* ── switch plan ── */
   async function handleSwitchPlan(newPlan: User["plan"]) {
     if (!user || newPlan === user.plan) return;
+    const lockKey = user.id;
+    if (isProcessingRef.current) return;
+    if (isCheckoutPending(lockKey)) return;
+    if (!acquireCheckout(lockKey)) return;
+    // Prevent double clicks - check and set processing flag atomically
+    isProcessingRef.current = true;
     setSwitchingPlan(newPlan);
     try {
       if (newPlan === "free") {
@@ -173,14 +182,43 @@ export default function ProfileView() {
           body: JSON.stringify({ userId: user.id, newPlan }),
         });
         const data = await res.json();
+        // If server reports a concurrent checkout for a different plan, show a friendly toast
+        if (res.status === 409) {
+          toast({
+            title: "Session en cours",
+            description:
+              "Une session de paiement est déjà en cours. Patientez quelques instants et réessayez.",
+          });
+          // reset processing state and release lock
+          isProcessingRef.current = false;
+          setSwitchingPlan(null);
+          releaseCheckout(lockKey);
+          return;
+        }
+
         if (!res.ok || !data.url) {
           throw new Error(data.error || "Erreur lors du paiement");
         }
-        // Open Stripe Checkout in a new tab to avoid blank page issues in some environments
-        const opened = window.open(data.url, "_blank", "noopener,noreferrer");
-        if (!opened) {
-          // fallback to navigate in the same tab
-          window.location.href = data.url;
+        // Prevent opening multiple checkout tabs from rapid clicks
+        try {
+          if ((window as any).__checkoutOpened) return;
+          (window as any).__checkoutOpened = true;
+          // Clear the flag after a short timeout in case the new tab blocked or failed
+          setTimeout(() => { try { (window as any).__checkoutOpened = false } catch {} }, 10000);
+
+          // Open Stripe Checkout in a new tab to avoid blank page issues in some environments
+          const opened = window.open(data.url, "_blank", "noopener,noreferrer");
+          // Release lock after attempting to open the new tab
+          isProcessingRef.current = false;
+          setSwitchingPlan(null);
+          releaseCheckout(lockKey);
+          if (!opened) {
+            // fallback to navigate in the same tab
+            (window as any).__checkoutOpened = false;
+            window.location.href = data.url;
+          }
+        } catch (err) {
+          try { (window as any).__checkoutOpened = false } catch {}
         }
         return;
       }
@@ -195,8 +233,9 @@ export default function ProfileView() {
         description: "Impossible de changer de plan. Réessayez.",
         variant: "destructive",
       });
-    } finally {
+      isProcessingRef.current = false;
       setSwitchingPlan(null);
+      releaseCheckout(lockKey);
     }
   }
 
@@ -286,25 +325,25 @@ export default function ProfileView() {
   const isEnterprise = user.plan === "enterprise";
 
   return (
-    <div className={t("auto.k_max_w_4xl_mx_auto_px_4_py_8_456")}>
+    <div className="max-w-4xl mx-auto px-4 py-8">
       {/* ── Top Bar ── */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className={t("auto.k_flex_items_center_justify_center_mb_8_re_457")}
+        className="flex items-center justify-center mb-8 relative"
       >
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setCurrentView("dashboard")}
-          className={t("auto.k_absolute_left_0_458")}
+          className="absolute left-0"
           aria-label={t("auto.k_retour_au_tableau_de_bord_108")}
         >
           <ArrowLeft className="size-5" />
         </Button>
 
-        <h1 className={t("auto.k_text_2xl_font_bold_tracking_tight_459")}>{t("profile.title")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("profile.title")}</h1>
       </motion.div>
 
       {/* ── Two-column layout ── */}
@@ -318,10 +357,8 @@ export default function ProfileView() {
         <div className="flex flex-col gap-6">
           {/* ── Profile Settings Card ── */}
           <motion.div variants={fadeInUp} transition={{ duration: 0.35 }}>
-            <div className={t("auto.k_bg_card_border_border_border_rounded_xl__461")}>
-              <h2 className={t("auto.k_text_lg_font_semibold_mb_6_462")}>
-                {t("profile.personalInfo")}
-              </h2>
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h2 className="text-lg font-semibold mb-6">{t("profile.personalInfo")}</h2>
 
               {/* Avatar */}
               <div className="flex flex-col items-center mb-6">
@@ -401,10 +438,10 @@ export default function ProfileView() {
                 <Button
                   onClick={handleSave}
                   disabled={saving}
-                  className={t("auto.k_w_full_bg_gold_text_gold_foreground_hove_309")}
+                  className="w-full bg-gold text-gold-foreground hover:bg-gold/90 flex items-center gap-2"
                 >
                   {saving ? (
-                    <Loader2 className={t("auto.k_size_4_animate_spin_473")} />
+                    <Loader2 className={classMap["k_size_4_animate_spin_473"]} />
                   ) : (
                     <Save className="size-4" />
                   )}
@@ -416,10 +453,8 @@ export default function ProfileView() {
 
           {/* ── Danger Zone ── */}
           <motion.div variants={fadeInUp} transition={{ duration: 0.35 }}>
-            <div className={t("auto.k_bg_card_border_border_destructive_40_rou_474")}>
-              <h2 className={t("auto.k_text_lg_font_semibold_text_destructive_m_475")}>
-                Zone dangereuse
-              </h2>
+            <div className="bg-card border border-destructive/40 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-destructive mb-2">Zone dangereuse</h2>
               <p className="text-sm text-muted-foreground mb-4">
                 Cette action est irréversible. Toutes vos données et générations
                 seront supprimées définitivement.
@@ -448,7 +483,7 @@ export default function ProfileView() {
                     <AlertDialogCancel>Annuler</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDeleteAccount}
-                      className={t("auto.k_bg_destructive_text_white_hover_bg_destr_477")}
+                      className={classMap["k_bg_destructive_text_white_hover_bg_destr_477"]}
                     >
                       Supprimer
                     </AlertDialogAction>
@@ -463,10 +498,8 @@ export default function ProfileView() {
         <div className="flex flex-col gap-6">
           {/* ── Subscription Card ── */}
           <motion.div variants={fadeInUp} transition={{ duration: 0.35 }}>
-            <div className={t("auto.k_bg_card_border_border_border_rounded_xl__461")}>
-              <h2 className={t("auto.k_text_lg_font_semibold_mb_6_462")}>
-                Abonnement actuel
-              </h2>
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h2 className="text-lg font-semibold mb-6">Abonnement actuel</h2>
 
               {/* Current plan badge + name */}
               <div className="flex items-center gap-3 mb-6">
@@ -486,7 +519,7 @@ export default function ProfileView() {
                   />
                 </div>
                 <div>
-                  <p className={t("auto.k_text_2xl_font_bold_tracking_tight_459")}>
+                  <p className="text-2xl font-bold tracking-tight">
                     <span
                       className={
                         isPro || isEnterprise ? "text-gold" : "text-foreground"
@@ -495,7 +528,7 @@ export default function ProfileView() {
                       {planMeta.label}
                     </span>
                   </p>
-                  <p className={t("auto.k_text_sm_text_muted_foreground_32")}>
+                  <p className="text-sm text-muted-foreground">
                     {user.plan === "free"
                       ? "Plan gratuit"
                       : user.plan === "pro"
@@ -545,19 +578,17 @@ export default function ProfileView() {
 
               {/* ── Plan Upgrade / Downgrade Section ── */}
               <div className="space-y-3">
-                <h3 className={t("auto.k_text_sm_font_medium_text_muted_foregroun_75")}>
-                  Changer de plan
-                </h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Changer de plan</h3>
 
                 {user.plan === "free" && (
                   <>
                     <Button
                       onClick={() => handleSwitchPlan("pro")}
                       disabled={switchingPlan !== null}
-                      className={t("auto.k_w_full_bg_gold_text_gold_foreground_hove_309")}
+                      className="w-full bg-gold text-gold-foreground hover:bg-gold/90 flex items-center gap-2"
                     >
                       {switchingPlan === "pro" ? (
-                        <Loader2 className={t("auto.k_size_4_animate_spin_473")} />
+                        <Loader2 className={classMap["k_size_4_animate_spin_473"]} />
                       ) : (
                         <Crown className="size-4" />
                       )}
@@ -570,7 +601,7 @@ export default function ProfileView() {
                       className="w-full"
                     >
                       {switchingPlan === "enterprise" ? (
-                        <Loader2 className={t("auto.k_size_4_animate_spin_473")} />
+                        <Loader2 className={classMap["k_size_4_animate_spin_473"]} />
                       ) : (
                         <Shield className="size-4" />
                       )}
@@ -594,7 +625,7 @@ export default function ProfileView() {
                       className="w-full"
                     >
                       {switchingPlan === "enterprise" ? (
-                        <Loader2 className={t("auto.k_size_4_animate_spin_473")} />
+                        <Loader2 className={classMap["k_size_4_animate_spin_473"]} />
                       ) : (
                         <Shield className="size-4" />
                       )}
@@ -607,7 +638,7 @@ export default function ProfileView() {
                       className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       {switchingPlan === "free" ? (
-                        <Loader2 className={t("auto.k_size_4_animate_spin_473")} />
+                        <Loader2 className={classMap["k_size_4_animate_spin_473"]} />
                       ) : (
                         <ArrowLeft className="size-4" />
                       )}
@@ -631,7 +662,7 @@ export default function ProfileView() {
                       className="w-full"
                     >
                       {switchingPlan === "pro" ? (
-                        <Loader2 className={t("auto.k_size_4_animate_spin_473")} />
+                        <Loader2 className={classMap["k_size_4_animate_spin_473"]} />
                       ) : (
                         <ArrowLeft className="size-4" />
                       )}

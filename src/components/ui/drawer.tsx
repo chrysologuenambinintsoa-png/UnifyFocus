@@ -1,5 +1,6 @@
 "use client"
 
+import { classMap } from '@/styles/classMap';
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
@@ -67,7 +68,7 @@ function DrawerContent({
         )}
         {...props}
       >
-        <div className={t("auto.k_bg_muted_mx_auto_mt_4_hidden_h_2_w_100px_165")} />
+        <div className={classMap["k_bg_muted_mx_auto_mt_4_hidden_h_2_w_100px_165"]} />
         {children}
       </DrawerPrimitive.Content>
     </DrawerPortal>

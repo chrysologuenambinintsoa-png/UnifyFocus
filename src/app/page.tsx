@@ -27,17 +27,19 @@ export default function Home() {
   if (!isAuthenticated) {
     return (
       <>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key="landing"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <LandingView />
-          </motion.div>
-        </AnimatePresence>
+        <Suspense fallback={<div />}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key="landing"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <LandingView />
+            </motion.div>
+          </AnimatePresence>
+        </Suspense>
         <AuthInitializer />
         <AuthModal />
         <Suspense fallback={<div />}>

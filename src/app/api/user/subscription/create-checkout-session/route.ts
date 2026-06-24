@@ -17,6 +17,22 @@ const PRICE_IDS: Record<"pro" | "enterprise", string | undefined> = {
 
 const PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
 
+// In-memory guard to avoid creating duplicate Checkout Sessions for the same user
+// Store an in-progress promise so concurrent requests await the same creation
+const pendingSessions: Map<
+  string,
+  { plan: string; promise: Promise<{ url?: string; id?: string }>; expires: number }
+> = new Map();
+
+function cleanupExpired() {
+  const now = Date.now();
+  for (const [k, v] of pendingSessions.entries()) {
+    if (v.expires <= now) pendingSessions.delete(k);
+  }
+}
+
+setInterval(cleanupExpired, 10_000);
+
 export async function POST(req: Request) {
   try {
     console.log("[Checkout Route] Request started");
@@ -99,28 +115,72 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("[Checkout Route] Creating Stripe session with price:", priceId);
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "subscription",
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      customer_email: user.email ?? undefined,
-      metadata: {
-        userId,
-        newPlan,
-      },
-      client_reference_id: userId,
-      success_url: `${PUBLIC_APP_URL}/?checkout=success`,
-      cancel_url: `${PUBLIC_APP_URL}/?checkout=cancel`,
-    });
+    // use userId as key to avoid creating multiple sessions for the same user
+    const key = `${userId}`;
+    const existing = pendingSessions.get(key);
+    if (existing && existing.expires > Date.now()) {
+      if (existing.plan !== newPlan) {
+        console.log(`[Checkout Route] Concurrent checkout for different plan detected for ${key}`);
+        return NextResponse.json(
+          { error: "A checkout is already in progress for another plan. Please wait." },
+          { status: 409 }
+        );
+      }
+      console.log(`[Checkout Route] Awaiting existing pending session for ${key}`);
+      try {
+        const result = await existing.promise;
+        return NextResponse.json({ url: result.url, id: result.id });
+      } catch (err) {
+        // failed previous attempt — fall through to create a new one
+        pendingSessions.delete(key);
+      }
+    }
 
-    console.log("[Checkout Route] Session created successfully:", session.id);
-    return NextResponse.json({ url: session.url, id: session.id });
+    console.log("[Checkout Route] Creating Stripe session with price:", priceId);
+    const idempotencyKey = `checkout_${userId}_${newPlan}`;
+
+    // create a promise representing the in-progress creation and store it immediately
+    const creationPromise = (async () => {
+      try {
+        const session = await stripe.checkout.sessions.create(
+          {
+            payment_method_types: ["card"],
+            mode: "subscription",
+            line_items: [
+              {
+                price: priceId,
+                quantity: 1,
+              },
+            ],
+            customer_email: user.email ?? undefined,
+            metadata: {
+              userId,
+              newPlan,
+            },
+            client_reference_id: userId,
+            success_url: `${PUBLIC_APP_URL}/?checkout=success`,
+            cancel_url: `${PUBLIC_APP_URL}/?checkout=cancel`,
+          },
+          { idempotencyKey }
+        );
+
+        console.log("[Checkout Route] Session created successfully:", session.id);
+        return { url: session.url ?? undefined, id: session.id };
+      } catch (err) {
+        throw err;
+      }
+    })();
+
+    pendingSessions.set(key, { plan: newPlan, promise: creationPromise, expires: Date.now() + 30_000 });
+
+    try {
+      const res = await creationPromise;
+      return NextResponse.json({ url: res.url, id: res.id });
+    } catch (err) {
+      // remove failed promise so next attempt can retry
+      pendingSessions.delete(key);
+      throw err;
+    }
   } catch (error: unknown) {
     console.error("[Checkout Route] Exception caught:", error);
     let message = "Impossible de démarrer le paiement";
