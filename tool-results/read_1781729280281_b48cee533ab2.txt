@@ -1,0 +1,903 @@
+     1→"use client";
+     2→
+     3→import { useState } from "react";
+     4→import { motion } from "framer-motion";
+     5→import { useTheme } from "next-themes";
+     6→import {
+     7→  Sparkles,
+     8→  FileText,
+     9→  Image,
+    10→  Video,
+    11→  BarChart3,
+    12→  Cpu,
+    13→  ShieldCheck,
+    14→  MessageSquare,
+    15→  Download,
+    16→  Menu,
+    17→  Sun,
+    18→  Moon,
+    19→  Github,
+    20→  Twitter,
+    21→  LayoutDashboard,
+    22→  PenTool,
+    23→  User,
+    24→  LogOut,
+    25→  Check,
+    26→  ArrowRight,
+    27→  Play,
+    28→  Monitor,
+    29→  Type,
+    30→  Zap,
+    31→} from "lucide-react";
+    32→
+    33→import { useAppStore } from "@/store/app-store";
+    34→import { Button } from "@/components/ui/button";
+    35→import {
+    36→  Card,
+    37→  CardHeader,
+    38→  CardTitle,
+    39→  CardDescription,
+    40→  CardContent,
+    41→  CardFooter,
+    42→} from "@/components/ui/card";
+    43→import { Badge } from "@/components/ui/badge";
+    44→import {
+    45→  Sheet,
+    46→  SheetTrigger,
+    47→  SheetContent,
+    48→  SheetHeader,
+    49→  SheetTitle,
+    50→  SheetClose,
+    51→} from "@/components/ui/sheet";
+    52→import {
+    53→  DropdownMenu,
+    54→  DropdownMenuTrigger,
+    55→  DropdownMenuContent,
+    56→  DropdownMenuItem,
+    57→  DropdownMenuSeparator,
+    58→  DropdownMenuLabel,
+    59→} from "@/components/ui/dropdown-menu";
+    60→import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+    61→import { Separator } from "@/components/ui/separator";
+    62→
+    63→const fadeInUp = {
+    64→  hidden: { opacity: 0, y: 30 },
+    65→  visible: { opacity: 1, y: 0 },
+    66→};
+    67→
+    68→const fadeIn = {
+    69→  hidden: { opacity: 0 },
+    70→  visible: { opacity: 1 },
+    71→};
+    72→
+    73→const staggerContainer = {
+    74→  hidden: {},
+    75→  visible: {
+    76→    transition: { staggerChildren: 0.1 },
+    77→  },
+    78→};
+    79→
+    80→const scaleOnHover = {
+    81→  rest: { scale: 1 },
+    82→  hover: { scale: 1.03, transition: { duration: 0.2 } },
+    83→};
+    84→
+    85→const features = [
+    86→  {
+    87→    icon: FileText,
+    88→    title: "Génération de Texte",
+    89→    description:
+    90→      "Créez du contenu captivant, articles, scripts et plus encore avec nos modèles de langage avancés.",
+    91→  },
+    92→  {
+    93→    icon: Image,
+    94→    title: "Création d'Images",
+    95→    description:
+    96→      "Transformez vos idées en visuels époustouflants grâce à l'IA générative d'images.",
+    97→  },
+    98→  {
+    99→    icon: Video,
+   100→    title: "Production Vidéo",
+   101→    description:
+   102→      "Générez des clips vidéo courts et des animations directement à partir de descriptions textuelles.",
+   103→  },
+   104→  {
+   105→    icon: BarChart3,
+   106→    title: "Analyse de Données",
+   107→    description:
+   108→      "Analysez et visualisez des ensembles de données complexes avec des insights actionnables.",
+   109→  },
+   110→  {
+   111→    icon: Cpu,
+   112→    title: "Multi-Modèles IA",
+   113→    description:
+   114→      "Accédez à GPT, Claude, Stable Diffusion et Runway depuis une interface unifiée.",
+   115→  },
+   116→  {
+   117→    icon: ShieldCheck,
+   118→    title: "Sécurité RGPD",
+   119→    description:
+   120→      "Vos données sont protégées et conformes aux réglementations européennes.",
+   121→  },
+   122→];
+   123→
+   124→const steps = [
+   125→  {
+   126→    icon: MessageSquare,
+   127→    title: "Décrivez votre idée",
+   128→    description: "Entrez votre prompt et sélectionnez le type de contenu souhaité.",
+   129→  },
+   130→  {
+   131→    icon: Sparkles,
+   132→    title: "L'IA crée pour vous",
+   133→    description: "Nos modèles IA travaillent en arrière-plan pour générer votre contenu.",
+   134→  },
+   135→  {
+   136→    icon: Download,
+   137→    title: "Téléchargez et partagez",
+   138→    description: "Récupérez vos créations en un clic et partagez-les avec le monde.",
+   139→  },
+   140→];
+   141→
+   142→const pricingPlans = [
+   143→  {
+   144→    name: "Gratuit",
+   145→    price: "0€",
+   146→    period: "/mois",
+   147→    features: ["50 crédits", "Génération texte", "1 image/jour", "Support basique"],
+   148→    buttonLabel: "Commencer",
+   149→    buttonVariant: "outline" as const,
+   150→    highlighted: false,
+   151→  },
+   152→  {
+   153→    name: "Pro",
+   154→    price: "29€",
+   155→    period: "/mois",
+   156→    features: [
+   157→      "500 crédits",
+   158→      "Tout type de génération",
+   159→      "Priorité IA",
+   160→      "Support prioritaire",
+   161→    ],
+   162→    buttonLabel: "Choisir Pro",
+   163→    buttonVariant: "default" as const,
+   164→    highlighted: true,
+   165→  },
+   166→  {
+   167→    name: "Enterprise",
+   168→    price: "99€",
+   169→    period: "/mois",
+   170→    features: [
+   171→      "5000 crédits",
+   172→      "API dédiée",
+   173→      "Personnalisation",
+   174→      "Account manager",
+   175→    ],
+   176→    buttonLabel: "Contacter",
+   177→    buttonVariant: "outline" as const,
+   178→    highlighted: false,
+   179→  },
+   180→];
+   181→
+   182→export default function LandingView() {
+   183→  const { theme, setTheme } = useTheme();
+   184→  const {
+   185→    setCurrentView,
+   186→    openAuthModal,
+   187→    isAuthenticated,
+   188→    user,
+   189→    logout,
+   190→    setAuth,
+   191→    setMobileMenuOpen,
+   192→    mobileMenuOpen,
+   193→  } = useAppStore();
+   194→  const [upgradingPlan, setUpgradingPlan] = useState(false);
+   195→
+   196→  const handlePrimaryAction = () => {
+   197→    if (isAuthenticated) {
+   198→      setCurrentView("dashboard");
+   199→    } else {
+   200→      openAuthModal("signup");
+   201→    }
+   202→  };
+   203→
+   204→  const handleLoginClick = () => {
+   205→    if (isAuthenticated) {
+   206→      setCurrentView("dashboard");
+   207→    } else {
+   208→      openAuthModal("login");
+   209→    }
+   210→  };
+   211→
+   212→  const handleSelectPlan = async (plan: string) => {
+   213→    if (!isAuthenticated) {
+   214→      openAuthModal("signup");
+   215→      return;
+   216→    }
+   217→    if (plan === "enterprise") {
+   218→      openAuthModal("login");
+   219→      return;
+   220→    }
+   221→    if (plan === "pro" && user) {
+   222→      setUpgradingPlan(true);
+   223→      try {
+   224→        const res = await fetch("/api/user/credits", {
+   225→          method: "POST",
+   226→          headers: { "Content-Type": "application/json" },
+   227→          body: JSON.stringify({ userId: user.id, plan: "pro" }),
+   228→        });
+   229→        const data = await res.json();
+   230→        if (data.user) {
+   231→          setAuth(data.user);
+   232→        }
+   233→      } catch {
+   234→        // Silently fail
+   235→      } finally {
+   236→        setUpgradingPlan(false);
+   237→      }
+   238→    } else {
+   239→      handlePrimaryAction();
+   240→    }
+   241→  };
+   242→
+   243→  const scrollToSection = (id: string) => {
+   244→    const el = document.getElementById(id);
+   245→    if (el) {
+   246→      el.scrollIntoView({ behavior: "smooth" });
+   247→    }
+   248→  };
+   249→
+   250→  const userInitials = user?.name
+   251→    ? user.name
+   252→        .split(" ")
+   253→        .map((n) => n[0])
+   254→        .join("")
+   255→        .toUpperCase()
+   256→        .slice(0, 2)
+   257→    : user?.email?.[0]?.toUpperCase() ?? "U";
+   258→
+   259→  return (
+   260→    <main className="min-h-screen flex flex-col">
+   261→      {/* ─── NAVBAR ─── */}
+   262→      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
+   263→        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+   264→          {/* Logo */}
+   265→          <button
+   266→            onClick={() => setCurrentView("landing")}
+   267→            className="flex items-center gap-2 transition-opacity hover:opacity-80"
+   268→          >
+   269→            <Sparkles className="size-6 text-gold" />
+   270→            <span className="text-lg font-bold tracking-tight">
+   271→              Unify<span className="text-gold">Focus</span>
+   272→            </span>
+   273→          </button>
+   274→
+   275→          {/* Center Nav Links (desktop) */}
+   276→          <nav className="hidden md:flex items-center gap-8">
+   277→            <button
+   278→              onClick={() => scrollToSection("features")}
+   279→              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+   280→            >
+   281→              Fonctionnalités
+   282→            </button>
+   283→            <button
+   284→              onClick={() => scrollToSection("pricing")}
+   285→              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+   286→            >
+   287→              Tarifs
+   288→            </button>
+   289→            <button
+   290→              onClick={() => scrollToSection("how-it-works")}
+   291→              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+   292→            >
+   293→              À propos
+   294→            </button>
+   295→          </nav>
+   296→
+   297→          {/* Right Side */}
+   298→          <div className="flex items-center gap-2">
+   299→            {/* Theme Toggle */}
+   300→            <Button
+   301→              variant="ghost"
+   302→              size="icon"
+   303→              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+   304→              aria-label="Changer le thème"
+   305→            >
+   306→              <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+   307→              <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+   308→            </Button>
+   309→
+   310→            {isAuthenticated && user ? (
+   311→              /* Authenticated: Avatar + Dropdown */
+   312→              <DropdownMenu>
+   313→                <DropdownMenuTrigger asChild>
+   314→                  <Button variant="ghost" className="relative size-9 rounded-full">
+   315→                    <Avatar className="size-8">
+   316→                      {user.avatar && <AvatarImage src={user.avatar} alt={user.name ?? ""} />}
+   317→                      <AvatarFallback className="bg-gold/20 text-gold text-xs font-semibold">
+   318→                        {userInitials}
+   319→                      </AvatarFallback>
+   320→                    </Avatar>
+   321→                  </Button>
+   322→                </DropdownMenuTrigger>
+   323→                <DropdownMenuContent align="end" className="w-56">
+   324→                  <DropdownMenuLabel className="font-normal">
+   325→                    <div className="flex flex-col gap-1">
+   326→                      <p className="text-sm font-medium">{user.name ?? "Utilisateur"}</p>
+   327→                      <p className="text-xs text-muted-foreground">{user.email}</p>
+   328→                    </div>
+   329→                  </DropdownMenuLabel>
+   330→                  <DropdownMenuSeparator />
+   331→                  <DropdownMenuItem onClick={() => setCurrentView("dashboard")}>
+   332→                    <LayoutDashboard className="mr-2 size-4" />
+   333→                    Dashboard
+   334→                  </DropdownMenuItem>
+   335→                  <DropdownMenuItem onClick={() => setCurrentView("editor")}>
+   336→                    <PenTool className="mr-2 size-4" />
+   337→                    Éditeur IA
+   338→                  </DropdownMenuItem>
+   339→                  <DropdownMenuItem onClick={() => setCurrentView("profile")}>
+   340→                    <User className="mr-2 size-4" />
+   341→                    Profil
+   342→                  </DropdownMenuItem>
+   343→                  <DropdownMenuSeparator />
+   344→                  <DropdownMenuItem
+   345→                    variant="destructive"
+   346→                    onClick={() => logout()}
+   347→                  >
+   348→                    <LogOut className="mr-2 size-4" />
+   349→                    Déconnexion
+   350→                  </DropdownMenuItem>
+   351→                </DropdownMenuContent>
+   352→              </DropdownMenu>
+   353→            ) : (
+   354→              /* Unauthenticated: Login + CTA */
+   355→              <>
+   356→                <Button
+   357→                  variant="ghost"
+   358→                  className="hidden sm:inline-flex"
+   359→                  onClick={handleLoginClick}
+   360→                >
+   361→                  Connexion
+   362→                </Button>
+   363→                <Button
+   364→                  className="hidden sm:inline-flex bg-gold text-gold-foreground hover:bg-gold/90"
+   365→                  onClick={handlePrimaryAction}
+   366→                >
+   367→                  Commencer
+   368→                </Button>
+   369→              </>
+   370→            )}
+   371→
+   372→            {/* Mobile Hamburger */}
+   373→            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+   374→              <SheetTrigger asChild>
+   375→                <Button variant="ghost" size="icon" className="md:hidden">
+   376→                  <Menu className="size-5" />
+   377→                  <span className="sr-only">Menu</span>
+   378→                </Button>
+   379→              </SheetTrigger>
+   380→              <SheetContent side="right" className="w-72">
+   381→                <SheetHeader>
+   382→                  <SheetTitle className="flex items-center gap-2">
+   383→                    <Sparkles className="size-5 text-gold" />
+   384→                    Unify<span className="text-gold">Focus</span>
+   385→                  </SheetTitle>
+   386→                </SheetHeader>
+   387→                <nav className="flex flex-col gap-1 px-4 pt-4">
+   388→                  <button
+   389→                    onClick={() => {
+   390→                      scrollToSection("features");
+   391→                      setMobileMenuOpen(false);
+   392→                    }}
+   393→                    className="rounded-md px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground text-left"
+   394→                  >
+   395→                    Fonctionnalités
+   396→                  </button>
+   397→                  <button
+   398→                    onClick={() => {
+   399→                      scrollToSection("pricing");
+   400→                      setMobileMenuOpen(false);
+   401→                    }}
+   402→                    className="rounded-md px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground text-left"
+   403→                  >
+   404→                    Tarifs
+   405→                  </button>
+   406→                  <button
+   407→                    onClick={() => {
+   408→                      scrollToSection("how-it-works");
+   409→                      setMobileMenuOpen(false);
+   410→                    }}
+   411→                    className="rounded-md px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground text-left"
+   412→                  >
+   413→                    À propos
+   414→                  </button>
+   415→                  <Separator className="my-3" />
+   416→                  {isAuthenticated && user ? (
+   417→                    <>
+   418→                      <button
+   419→                        onClick={() => {
+   420→                          setCurrentView("dashboard");
+   421→                          setMobileMenuOpen(false);
+   422→                        }}
+   423→                        className="rounded-md px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground text-left"
+   424→                      >
+   425→                        Dashboard
+   426→                      </button>
+   427→                      <button
+   428→                        onClick={() => {
+   429→                          setCurrentView("editor");
+   430→                          setMobileMenuOpen(false);
+   431→                        }}
+   432→                        className="rounded-md px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground text-left"
+   433→                      >
+   434→                        Éditeur IA
+   435→                      </button>
+   436→                      <button
+   437→                        onClick={() => {
+   438→                          setCurrentView("profile");
+   439→                          setMobileMenuOpen(false);
+   440→                        }}
+   441→                        className="rounded-md px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground text-left"
+   442→                      >
+   443→                        Profil
+   444→                      </button>
+   445→                      <Separator className="my-3" />
+   446→                      <button
+   447→                        onClick={() => {
+   448→                          logout();
+   449→                          setMobileMenuOpen(false);
+   450→                        }}
+   451→                        className="rounded-md px-3 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10 text-left"
+   452→                      >
+   453→                        Déconnexion
+   454→                      </button>
+   455→                    </>
+   456→                  ) : (
+   457→                    <div className="flex flex-col gap-2 pt-1">
+   458→                      <Button
+   459→                        variant="outline"
+   460→                        className="w-full"
+   461→                        onClick={() => {
+   462→                          openAuthModal("login");
+   463→                          setMobileMenuOpen(false);
+   464→                        }}
+   465→                      >
+   466→                        Connexion
+   467→                      </Button>
+   468→                      <Button
+   469→                        className="w-full bg-gold text-gold-foreground hover:bg-gold/90"
+   470→                        onClick={() => {
+   471→                          handlePrimaryAction();
+   472→                          setMobileMenuOpen(false);
+   473→                        }}
+   474→                      >
+   475→                        Commencer
+   476→                      </Button>
+   477→                    </div>
+   478→                  )}
+   479→                </nav>
+   480→              </SheetContent>
+   481→            </Sheet>
+   482→          </div>
+   483→        </div>
+   484→      </header>
+   485→
+   486→      {/* ─── HERO SECTION ─── */}
+   487→      <section className="relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden bg-grid px-4 py-20 sm:px-6 lg:px-8">
+   488→        {/* Radial glow background */}
+   489→        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+   490→          <div className="absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/5 blur-3xl" />
+   491→          <div className="absolute right-1/4 bottom-1/4 h-[400px] w-[400px] rounded-full bg-gold/3 blur-3xl" />
+   492→        </div>
+   493→
+   494→        <div className="relative z-10 mx-auto max-w-5xl text-center">
+   495→          <motion.div
+   496→            initial="hidden"
+   497→            animate="visible"
+   498→            variants={staggerContainer}
+   499→            className="flex flex-col items-center gap-6"
+   500→          >
+   501→            {/* Badge */}
+   502→            <motion.div variants={fadeIn}>
+   503→              <Badge
+   504→                variant="outline"
+   505→                className="border-gold/30 bg-gold/10 text-gold px-4 py-1.5 text-sm"
+   506→              >
+   507→                <Zap className="mr-1.5 size-3.5" />
+   508→                Propulsé par l&apos;IA de nouvelle génération
+   509→              </Badge>
+   510→            </motion.div>
+   511→
+   512→            {/* Heading */}
+   513→            <motion.h1
+   514→              variants={fadeInUp}
+   515→              className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+   516→            >
+   517→              <span className="gradient-text">Créez l&apos;extraordinaire</span>
+   518→              <br />
+   519→              <span className="text-foreground">avec l&apos;IA</span>
+   520→            </motion.h1>
+   521→
+   522→            {/* Subheading */}
+   523→            <motion.p
+   524→              variants={fadeInUp}
+   525→              className="max-w-2xl text-base text-muted-foreground sm:text-lg md:text-xl"
+   526→            >
+   527→              Unifiez tous vos outils de création IA en une seule plateforme.
+   528→              Texte, images, vidéos — tout est possible avec UnifyFocus.
+   529→            </motion.p>
+   530→
+   531→            {/* CTAs */}
+   532→            <motion.div variants={fadeInUp} className="flex flex-col gap-3 sm:flex-row">
+   533→              <Button
+   534→                size="lg"
+   535→                className="bg-gold text-gold-foreground hover:bg-gold/90 px-8 text-base"
+   536→                onClick={handlePrimaryAction}
+   537→              >
+   538→                Démarrer gratuitement
+   539→                <ArrowRight className="ml-1 size-4" />
+   540→              </Button>
+   541→              <Button size="lg" variant="outline" className="px-8 text-base">
+   542→                <Play className="mr-1.5 size-4" />
+   543→                Voir la démo
+   544→              </Button>
+   545→            </motion.div>
+   546→          </motion.div>
+   547→
+   548→          {/* Mockup Card */}
+   549→          <motion.div
+   550→            initial={{ opacity: 0, y: 60 }}
+   551→            animate={{ opacity: 1, y: 0 }}
+   552→            transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+   553→            className="mt-16"
+   554→          >
+   555→            <Card className="mx-auto max-w-4xl overflow-hidden border-border/50 bg-card/80 backdrop-blur-sm shadow-2xl shadow-gold/5">
+   556→              {/* Mockup Header */}
+   557→              <div className="flex items-center gap-2 border-b border-border/50 px-4 py-3">
+   558→                <div className="flex gap-1.5">
+   559→                  <div className="size-3 rounded-full bg-red-500/70" />
+   560→                  <div className="size-3 rounded-full bg-yellow-500/70" />
+   561→                  <div className="size-3 rounded-full bg-green-500/70" />
+   562→                </div>
+   563→                <div className="ml-3 flex-1">
+   564→                  <div className="mx-auto h-6 max-w-sm rounded-md bg-muted/60" />
+   565→                </div>
+   566→              </div>
+   567→              {/* Mockup Body */}
+   568→              <div className="grid grid-cols-1 md:grid-cols-[220px_1fr]">
+   569→                {/* Sidebar */}
+   570→                <div className="hidden border-r border-border/50 p-4 md:block">
+   571→                  <div className="flex flex-col gap-3">
+   572→                    {[
+   573→                      { icon: Type, label: "Texte" },
+   574→                      { icon: Image, label: "Image" },
+   575→                      { icon: Video, label: "Vidéo" },
+   576→                    ].map((item) => (
+   577→                      <div
+   578→                        key={item.label}
+   579→                        className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm ${
+   580→                          item.label === "Texte"
+   581→                            ? "bg-gold/10 text-gold"
+   582→                            : "text-muted-foreground"
+   583→                        }`}
+   584→                      >
+   585→                        <item.icon className="size-4" />
+   586→                        {item.label}
+   587→                      </div>
+   588→                    ))}
+   589→                  </div>
+   590→                </div>
+   591→                {/* Main area */}
+   592→                <div className="p-5">
+   593→                  <div className="mb-4 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+   594→                    <Sparkles className="size-4 text-gold" />
+   595→                    Génération de texte
+   596→                  </div>
+   597→                  <div className="mb-4 h-20 rounded-lg border border-border/50 bg-muted/30 p-3">
+   598→                    <div className="h-3 w-3/4 rounded bg-muted-foreground/20" />
+   599→                    <div className="mt-2 h-3 w-1/2 rounded bg-muted-foreground/15" />
+   600→                    <div className="mt-2 h-3 w-2/3 rounded bg-muted-foreground/10" />
+   601→                  </div>
+   602→                  <div className="grid grid-cols-2 gap-3">
+   603→                    <div className="h-24 rounded-lg border border-border/50 bg-muted/20" />
+   604→                    <div className="h-24 rounded-lg border border-gold/20 bg-gold/5 p-3">
+   605→                      <div className="mb-2 h-2.5 w-16 rounded bg-gold/30" />
+   606→                      <div className="h-2 w-full rounded bg-muted-foreground/10" />
+   607→                      <div className="mt-1.5 h-2 w-4/5 rounded bg-muted-foreground/8" />
+   608→                      <div className="mt-1.5 h-2 w-3/5 rounded bg-muted-foreground/6" />
+   609→                      <div className="mt-3 h-6 w-20 rounded bg-gold/20" />
+   610→                    </div>
+   611→                  </div>
+   612→                </div>
+   613→              </div>
+   614→            </Card>
+   615→          </motion.div>
+   616→        </div>
+   617→      </section>
+   618→
+   619→      {/* ─── FEATURES SECTION ─── */}
+   620→      <section id="features" className="px-4 py-20 sm:px-6 lg:px-8">
+   621→        <div className="mx-auto max-w-7xl">
+   622→          <motion.div
+   623→            initial="hidden"
+   624→            whileInView="visible"
+   625→            viewport={{ once: true, margin: "-100px" }}
+   626→            variants={staggerContainer}
+   627→            className="text-center"
+   628→          >
+   629→            <motion.h2
+   630→              variants={fadeInUp}
+   631→              className="text-3xl font-bold tracking-tight sm:text-4xl"
+   632→            >
+   633→              Tout ce dont vous avez besoin
+   634→            </motion.h2>
+   635→            <motion.p
+   636→              variants={fadeInUp}
+   637→              className="mt-4 text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto"
+   638→            >
+   639→              Une suite complète d&apos;outils IA pour répondre à tous vos besoins créatifs.
+   640→            </motion.p>
+   641→          </motion.div>
+   642→
+   643→          <motion.div
+   644→            initial="hidden"
+   645→            whileInView="visible"
+   646→            viewport={{ once: true, margin: "-50px" }}
+   647→            variants={staggerContainer}
+   648→            className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+   649→          >
+   650→            {features.map((feature) => (
+   651→              <motion.div key={feature.title} variants={fadeInUp}>
+   652→                <motion.div
+   653→                  whileHover={{ scale: 1.03, y: -4 }}
+   654→                  transition={{ duration: 0.2 }}
+   655→                >
+   656→                  <Card className="h-full border border-border bg-card transition-shadow hover:shadow-lg hover:shadow-gold/5">
+   657→                    <CardHeader>
+   658→                      <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-gold/10">
+   659→                        <feature.icon className="size-5 text-gold" />
+   660→                      </div>
+   661→                      <CardTitle className="text-lg">{feature.title}</CardTitle>
+   662→                    </CardHeader>
+   663→                    <CardContent className="-mt-2">
+   664→                      <CardDescription className="text-sm leading-relaxed">
+   665→                        {feature.description}
+   666→                      </CardDescription>
+   667→                    </CardContent>
+   668→                  </Card>
+   669→                </motion.div>
+   670→              </motion.div>
+   671→            ))}
+   672→          </motion.div>
+   673→        </div>
+   674→      </section>
+   675→
+   676→      {/* ─── HOW IT WORKS SECTION ─── */}
+   677→      <section id="how-it-works" className="px-4 py-20 sm:px-6 lg:px-8">
+   678→        <div className="mx-auto max-w-7xl">
+   679→          <motion.div
+   680→            initial="hidden"
+   681→            whileInView="visible"
+   682→            viewport={{ once: true, margin: "-100px" }}
+   683→            variants={staggerContainer}
+   684→            className="text-center"
+   685→          >
+   686→            <motion.h2
+   687→              variants={fadeInUp}
+   688→              className="text-3xl font-bold tracking-tight sm:text-4xl"
+   689→            >
+   690→              Comment ça marche
+   691→            </motion.h2>
+   692→            <motion.p
+   693→              variants={fadeInUp}
+   694→              className="mt-4 text-muted-foreground text-base sm:text-lg max-w-xl mx-auto"
+   695→            >
+   696→              Trois étapes simples pour donner vie à vos idées.
+   697→            </motion.p>
+   698→          </motion.div>
+   699→
+   700→          <motion.div
+   701→            initial="hidden"
+   702→            whileInView="visible"
+   703→            viewport={{ once: true, margin: "-50px" }}
+   704→            variants={staggerContainer}
+   705→            className="mt-14 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12"
+   706→          >
+   707→            {steps.map((step, index) => (
+   708→              <motion.div key={step.title} variants={fadeInUp} className="relative">
+   709→                {/* Connector line (desktop) */}
+   710→                {index < steps.length - 1 && (
+   711→                  <div className="absolute left-[calc(50%+40px)] top-10 hidden h-px w-[calc(100%-80px)] bg-gradient-to-r from-gold/40 to-transparent md:block" />
+   712→                )}
+   713→                <div className="flex flex-col items-center text-center">
+   714→                  {/* Step number */}
+   715→                  <div className="relative mb-5">
+   716→                    <div className="flex size-20 items-center justify-center rounded-2xl bg-gold/10 border border-gold/20">
+   717→                      <step.icon className="size-8 text-gold" />
+   718→                    </div>
+   719→                    <div className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full bg-gold text-gold-foreground text-xs font-bold shadow-md">
+   720→                      {index + 1}
+   721→                    </div>
+   722→                  </div>
+   723→                  <h3 className="text-lg font-semibold">{step.title}</h3>
+   724→                  <p className="mt-2 max-w-xs text-sm text-muted-foreground leading-relaxed">
+   725→                    {step.description}
+   726→                  </p>
+   727→                </div>
+   728→              </motion.div>
+   729→            ))}
+   730→          </motion.div>
+   731→        </div>
+   732→      </section>
+   733→
+   734→      {/* ─── PRICING SECTION ─── */}
+   735→      <section id="pricing" className="px-4 py-20 sm:px-6 lg:px-8">
+   736→        <div className="mx-auto max-w-7xl">
+   737→          <motion.div
+   738→            initial="hidden"
+   739→            whileInView="visible"
+   740→            viewport={{ once: true, margin: "-100px" }}
+   741→            variants={staggerContainer}
+   742→            className="text-center"
+   743→          >
+   744→            <motion.h2
+   745→              variants={fadeInUp}
+   746→              className="text-3xl font-bold tracking-tight sm:text-4xl"
+   747→            >
+   748→              Tarifs simples et transparents
+   749→            </motion.h2>
+   750→            <motion.p
+   751→              variants={fadeInUp}
+   752→              className="mt-4 text-muted-foreground text-base sm:text-lg max-w-xl mx-auto"
+   753→            >
+   754→              Choisissez le plan adapté à vos besoins. Évoluez à votre rythme.
+   755→            </motion.p>
+   756→          </motion.div>
+   757→
+   758→          <motion.div
+   759→            initial="hidden"
+   760→            whileInView="visible"
+   761→            viewport={{ once: true, margin: "-50px" }}
+   762→            variants={staggerContainer}
+   763→            className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3 lg:gap-8 items-start"
+   764→          >
+   765→            {pricingPlans.map((plan) => (
+   766→              <motion.div
+   767→                key={plan.name}
+   768→                variants={fadeInUp}
+   769→                className="flex justify-center"
+   770→              >
+   771→                <Card
+   772→                  className={`relative w-full max-w-sm ${
+   773→                    plan.highlighted
+   774→                      ? "border-gold/50 glow-gold"
+   775→                      : "border-border"
+   776→                  } bg-card`}
+   777→                >
+   778→                  {plan.highlighted && (
+   779→                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+   780→                      <Badge className="bg-gold text-gold-foreground border-0 px-3 py-1 text-xs font-semibold">
+   781→                        Populaire
+   782→                      </Badge>
+   783→                    </div>
+   784→                  )}
+   785→                  <CardHeader className="text-center pb-2">
+   786→                    <CardTitle className="text-xl">{plan.name}</CardTitle>
+   787→                    <div className="mt-3 flex items-baseline justify-center gap-1">
+   788→                      <span className="text-4xl font-bold">{plan.price}</span>
+   789→                      <span className="text-muted-foreground text-sm">{plan.period}</span>
+   790→                    </div>
+   791→                  </CardHeader>
+   792→                  <CardContent className="flex-1">
+   793→                    <ul className="flex flex-col gap-3">
+   794→                      {plan.features.map((feature) => (
+   795→                        <li key={feature} className="flex items-center gap-2.5 text-sm">
+   796→                          <Check className="size-4 shrink-0 text-gold" />
+   797→                          <span className="text-muted-foreground">{feature}</span>
+   798→                        </li>
+   799→                      ))}
+   800→                    </ul>
+   801→                  </CardContent>
+   802→                  <CardFooter>
+   803→                    <Button
+   804→                      variant={plan.buttonVariant}
+   805→                      className={`w-full ${
+   806→                        plan.highlighted
+   807→                          ? "bg-gold text-gold-foreground hover:bg-gold/90"
+   808→                          : ""
+   809→                      }`}
+   810→                      disabled={upgradingPlan}
+   811→                      onClick={() => handleSelectPlan(plan.name.toLowerCase())}
+   812→                    >
+   813→                      {upgradingPlan && plan.highlighted ? (
+   814→                        <span className="flex items-center gap-2">
+   815→                          <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+   816→                          Mise à jour...
+   817→                        </span>
+   818→                      ) : (
+   819→                        plan.buttonLabel
+   820→                      )}
+   821→                    </Button>
+   822→                  </CardFooter>
+   823→                </Card>
+   824→              </motion.div>
+   825→            ))}
+   826→          </motion.div>
+   827→        </div>
+   828→      </section>
+   829→
+   830→      {/* ─── CTA SECTION ─── */}
+   831→      <section className="px-4 py-20 sm:px-6 lg:px-8">
+   832→        <motion.div
+   833→          initial="hidden"
+   834→          whileInView="visible"
+   835→          viewport={{ once: true, margin: "-100px" }}
+   836→          variants={fadeInUp}
+   837→          className="mx-auto max-w-3xl text-center"
+   838→        >
+   839→          <div className="relative overflow-hidden rounded-2xl border border-border bg-card px-6 py-14 sm:px-12 sm:py-20">
+   840→            {/* Decorative glow */}
+   841→            <div className="pointer-events-none absolute inset-0">
+   842→              <div className="absolute left-1/2 top-0 h-48 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/10 blur-3xl" />
+   843→              <div className="absolute bottom-0 left-1/4 h-32 w-64 rounded-full bg-gold/5 blur-3xl" />
+   844→            </div>
+   845→            <div className="relative z-10">
+   846→              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+   847→                Prêt à transformer votre création ?
+   848→              </h2>
+   849→              <p className="mt-4 text-muted-foreground text-base sm:text-lg">
+   850→                Rejoignez des milliers de créatifs qui utilisent déjà UnifyFocus.
+   851→              </p>
+   852→              <Button
+   853→                size="lg"
+   854→                className="mt-8 bg-gold text-gold-foreground hover:bg-gold/90 px-8 text-base"
+   855→                onClick={handlePrimaryAction}
+   856→              >
+   857→                Créer mon compte gratuitement
+   858→                <ArrowRight className="ml-1.5 size-4" />
+   859→              </Button>
+   860→            </div>
+   861→          </div>
+   862→        </motion.div>
+   863→      </section>
+   864→
+   865→      {/* ─── FOOTER ─── */}
+   866→      <footer className="mt-auto border-t border-border/40 px-4 py-10 sm:px-6 lg:px-8">
+   867→        <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 sm:flex-row sm:justify-between">
+   868→          {/* Logo + Copyright */}
+   869→          <div className="flex flex-col items-center gap-2 sm:items-start">
+   870→            <div className="flex items-center gap-2">
+   871→              <Sparkles className="size-5 text-gold" />
+   872→              <span className="text-sm font-bold tracking-tight">
+   873→                Unify<span className="text-gold">Focus</span>
+   874→              </span>
+   875→            </div>
+   876→            <p className="text-xs text-muted-foreground">
+   877→              &copy; 2025 UnifyFocus. Tous droits réservés.
+   878→            </p>
+   879→          </div>
+   880→
+   881→          {/* Links */}
+   882→          <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+   883→            <button className="transition-colors hover:text-foreground">Confidentialité</button>
+   884→            <button className="transition-colors hover:text-foreground">CGU</button>
+   885→            <button className="transition-colors hover:text-foreground">Contact</button>
+   886→          </nav>
+   887→
+   888→          {/* Social Icons */}
+   889→          <div className="flex items-center gap-3">
+   890→            <Button variant="ghost" size="icon" className="size-9 text-muted-foreground hover:text-foreground">
+   891→              <Github className="size-4" />
+   892→              <span className="sr-only">GitHub</span>
+   893→            </Button>
+   894→            <Button variant="ghost" size="icon" className="size-9 text-muted-foreground hover:text-foreground">
+   895→              <Twitter className="size-4" />
+   896→              <span className="sr-only">Twitter</span>
+   897→            </Button>
+   898→          </div>
+   899→        </div>
+   900→      </footer>
+   901→    </main>
+   902→  );
+   903→}

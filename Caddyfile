@@ -1,0 +1,25 @@
+:81 {
+	@transform_port_query {
+		query XTransformPort=*
+	}
+
+	handle @transform_port_query {
+		reverse_proxy localhost:{query.XTransformPort} {
+			header_up Host {host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	handle {
+		# Allow Stripe and other third-party services
+		header Content-Security-Policy "default-src 'self'; script-src 'self' https://js.stripe.com https://checkout.stripe.com https://m.stripe.network https://hcaptcha.com https://*.hcaptcha.com https://newassets.hcaptcha.com https://b.stripecdn.com 'unsafe-eval' 'unsafe-inline' blob:; style-src 'self' https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com https://m.stripe.network 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://q.stripe.com https://m.stripe.network https://hcaptcha.com https://*.hcaptcha.com; frame-src https://js.stripe.com https://checkout.stripe.com https://hcaptcha.com https://*.hcaptcha.com; upgrade-insecure-requests"
+		reverse_proxy localhost:3000 {
+			header_up Host {host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+}

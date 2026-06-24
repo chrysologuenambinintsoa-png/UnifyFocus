@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+  <rect width="900" height="600" fill="#f7fafc"/>
+  <rect x="24" y="24" width="852" height="64" rx="8" fill="#0f172a"/>
+  <text x="44" y="64" font-family="Inter, Arial" font-size="20" fill="#fff">Centre d'aide — UnifyFocus</text>
+  <rect x="44" y="110" width="300" height="420" rx="8" fill="#ffffff" stroke="#e6eef8"/>
+  <rect x="360" y="110" width="536" height="420" rx="8" fill="#ffffff" stroke="#e6eef8"/>
+  <text x="64" y="140" font-family="Inter, Arial" font-size="14" fill="#0f172a">FAQ</text>
+  <rect x="64" y="160" width="256" height="40" rx="6" fill="#f8fafc"/>
+  <rect x="64" y="210" width="256" height="40" rx="6" fill="#f8fafc"/>
+  <rect x="64" y="260" width="256" height="40" rx="6" fill="#f8fafc"/>
+  <text x="380" y="140" font-family="Inter, Arial" font-size="14" fill="#0f172a">Article: Comment générer du contenu</text>
+  <rect x="380" y="160" width="496" height="320" rx="6" fill="#fbfbff"/>
+  <text x="400" y="188" font-family="Inter, Arial" font-size="13" fill="#374151">Suivez ces étapes : 1) Ouvrez l'éditeur 2) Choisissez type 3) Rédigez le prompt...</text>
+</svg>

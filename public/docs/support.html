@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Contact Support — UnifyFocus</title>
+  <style>
+    :root{--bg:#f7fafc;--muted:#6b7280;--card:#fff;--primary:#06b6d4;--success:#10b981;--danger:#ef4444;--border:#e6eef8}
+    html,body{height:100%}
+    body{font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:#0f172a;margin:0;padding:0}
+    header{background:#0f172a;color:#fff;padding:20px 24px}
+    .container{max-width:980px;margin:28px auto;padding:0 20px}
+    h1{margin:0;font-size:20px}
+    h2{font-size:18px;margin:0 0 8px}
+    p.small{color:var(--muted);margin:6px 0 0}
+    .card{background:var(--card);border:1px solid var(--border);padding:22px;border-radius:12px;box-shadow:0 6px 18px rgba(12,17,23,0.04)}
+    form{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+    .row{display:flex;gap:12px}
+    label{font-weight:600;font-size:13px;margin-bottom:6px;display:block}
+    input,textarea,select{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:14px}
+    textarea{min-height:160px;resize:vertical}
+    .actions{display:flex;gap:12px;align-items:center;margin-top:6px}
+    button.primary{background:var(--primary);color:#fff;padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600}
+    button.primary[disabled]{opacity:0.6;cursor:not-allowed}
+    .aside{background:linear-gradient(180deg,#ffffff, #fbfbff);border:1px solid var(--border);padding:16px;border-radius:10px}
+    .meta{font-size:13px;color:var(--muted);margin-top:8px}
+    .status{display:none;padding:10px 12px;border-radius:8px;font-weight:600}
+    .status.show{display:block}
+    .status.success{background:var(--success);color:#fff}
+    .status.error{background:var(--danger);color:#fff}
+    @media(min-width:900px){
+      .grid-2{display:grid;grid-template-columns:1fr 340px;gap:18px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container"><h1>Contact Support</h1><p class="small">UnifyFocus — Assistance & demandes commerciales</p></div>
+  </header>
+
+  <main class="container">
+    <div class="card grid-2">
+      <section>
+        <h2>Envoyer une demande</h2>
+        <p class="meta">Remplissez le formulaire ci‑dessous ; nous répondons généralement sous 24–72 heures.</p>
+
+        <form id="support-form" novalidate>
+          <div>
+            <label for="name">Nom (optionnel)</label>
+            <input id="name" name="name" type="text" placeholder="Votre nom complet" />
+          </div>
+
+          <div class="row">
+            <div style="flex:1">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" placeholder="votre@email.com" required />
+            </div>
+            <div style="width:180px">
+              <label for="subject">Sujet</label>
+              <input id="subject" name="subject" type="text" placeholder="Ex: bug, facturation" />
+            </div>
+          </div>
+
+          <div>
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="8" placeholder="Décrivez votre problème ou votre demande en détail..." required></textarea>
+          </div>
+
+          <div class="actions">
+            <button id="send-btn" class="primary" type="submit">Envoyer la demande</button>
+            <div id="status" class="status" role="status" aria-live="polite"></div>
+          </div>
+
+          <p class="meta">En envoyant ce formulaire, vous autorisez UnifyFocus à utiliser vos informations pour traiter votre demande. Consultez notre <a href="/docs/confidentialite.html">Politique de confidentialité</a>.</p>
+        </form>
+      </section>
+
+      <aside class="aside">
+        <h3>Besoin d'aide rapidement ?</h3>
+        <p class="meta">Avant d'envoyer, vérifiez :</p>
+        <ul>
+          <li>Que vous avez indiqué les étapes pour reproduire le bug.</li>
+          <li>Que vous avez inclus les messages d'erreur et la version du navigateur.</li>
+        </ul>
+
+        <h4 style="margin-top:12px">Contact alternatif</h4>
+        <p class="meta">Email support : <a href="mailto:support@example.com">support@example.com</a></p>
+        <p class="meta">Admin : <a href="mailto:admin@example.com">admin@example.com</a></p>
+
+        <h4 style="margin-top:12px">FAQ rapide</h4>
+        <p class="meta">- Problème de facturation : vérifiez votre compte et contactez-nous avec la référence de paiement.</p>
+        <p class="meta">- Page blanche / erreurs JS : envoyez la capture d'écran et les logs console.</p>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById('support-form');
+    const statusEl = document.getElementById('status');
+    const sendBtn = document.getElementById('send-btn');
+
+    function showStatus(text, type){ statusEl.textContent = text; statusEl.className = 'status show ' + (type === 'error' ? 'error' : 'success'); }
+    function clearStatus(){ statusEl.textContent = ''; statusEl.className = 'status'; }
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      clearStatus();
+      sendBtn.disabled = true;
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const subject = document.getElementById('subject').value.trim();
+      const message = document.getElementById('message').value.trim();
+      if(!email || !message){ showStatus('Veuillez fournir un email et un message.', 'error'); sendBtn.disabled = false; return; }
+
+      try{
+        const payload = { userId: email, name, subject, message };
+        const res = await fetch('/api/support', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const json = await res.json();
+        if(res.ok && json.ok){ showStatus('Message envoyé — merci ! Nous vous répondrons sous 24–72 heures.','success'); form.reset(); }
+        else{ showStatus(json?.error || 'Erreur serveur, réessayez plus tard.', 'error'); }
+      }catch(err){ showStatus('Erreur réseau, vérifiez votre connexion.', 'error'); }
+      sendBtn.disabled = false;
+      setTimeout(()=> clearStatus(), 8000);
+    });
+  </script>
+</body>
+</html>

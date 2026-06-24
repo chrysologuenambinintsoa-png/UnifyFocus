@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#eef2ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="#0f172a" rx="8"/>
+  <rect x="24" y="24" width="1152" height="652" fill="url(#g)" rx="6"/>
+  <rect x="44" y="56" width="320" height="28" rx="6" fill="#fff" opacity="0.9"/>
+  <rect x="380" y="56" width="700" height="28" rx="6" fill="#fff" opacity="0.9"/>
+  <rect x="44" y="100" width="1036" height="520" rx="6" fill="#ffffff"/>
+  <g transform="translate(64,120)">
+    <rect width="260" height="460" rx="6" fill="#f3f4f6"/>
+    <rect x="280" y="0" width="740" height="460" rx="6" fill="#ffffff"/>
+    <text x="20" y="28" font-family="Inter, Arial" font-size="16" fill="#0f172a">Prompts</text>
+    <text x="300" y="28" font-family="Inter, Arial" font-size="16" fill="#0f172a">Editor Preview</text>
+    <rect x="300" y="40" width="700" height="360" rx="4" fill="#f8fafc"/>
+    <text x="320" y="72" font-family="Inter, Arial" font-size="13" fill="#374151">"Rédige un email professionnel pour proposer notre nouveau produit"</text>
+  </g>
+  <g transform="translate(44,600)">
+    <rect width="1036" height="6" rx="3" fill="#e6eef8"/>
+  </g>
+</svg>

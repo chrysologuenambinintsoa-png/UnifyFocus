@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Générateur Logo PNG 1024x1024 - UnifyFocus</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #020617; color: white; margin: 0; }
+        .card { background: #1e293b; padding: 2.5rem; border-radius: 1.5rem; border: 1px solid #334155; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); max-width: 500px; }
+        canvas { background: transparent; border: 1px dashed #475569; margin: 1.5rem 0; max-width: 100%; height: auto; border-radius: 0.5rem; }
+        button { background: #eab308; color: #020617; border: none; padding: 0.8rem 2rem; border-radius: 0.6rem; font-weight: 800; cursor: pointer; font-size: 1.1rem; transition: all 0.2s; }
+        button:hover { background: #facc15; transform: scale(1.05); }
+        p { color: #94a3b8; line-height: 1.6; font-size: 0.95rem; }
+        h2 { color: #eab308; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Exportateur de Logo</h2>
+        <p>Cet outil transforme votre logo vectoriel en une image PNG haute résolution de <strong>1024 x 1024</strong> pixels.</p>
+        <canvas id="canvas" width="1024" height="1024"></canvas>
+        <br>
+        <button id="download">Télécharger unifyfocus-logo-1024.png</button>
+    </div>
+
+    <script>
+        // Version haute définition statique du logo pour l'export PNG
+        const svg = `
+<svg width="1024" height="1024" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#7c3aed" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <path d="M24 2 L44 13 L44 35 L24 46 L4 35 L4 13 Z" fill="url(#g)" opacity="0.1" />
+  <path d="M24 5 L41 14.5 L41 33.5 L24 43 L7 33.5 L7 14.5 Z" stroke="url(#g)" stroke-width="1.2" fill="none" />
+  <path d="M24 10 L36 17 L36 31 L24 38 L12 31 L12 17 Z" stroke="url(#g)" stroke-width="1.5" fill="none" />
+  <circle cx="24" cy="10" r="2" fill="url(#g)" />
+  <circle cx="36" cy="17" r="2" fill="url(#g)" />
+  <circle cx="36" cy="31" r="2" fill="url(#g)" />
+  <circle cx="24" cy="38" r="2" fill="url(#g)" />
+  <circle cx="12" cy="31" r="2" fill="url(#g)" />
+  <circle cx="12" cy="17" r="2" fill="url(#g)" />
+  <path d="M24 12 L24 36 M14 18 L34 30 M34 18 L14 30" stroke="url(#g)" stroke-width="0.8" opacity="0.5" />
+  <circle cx="24" cy="24" r="8" fill="url(#g)" opacity="0.12" />
+  <circle cx="24" cy="24" r="5" fill="url(#g)" opacity="0.2" />
+  <circle cx="24" cy="24" r="3" fill="url(#g)" />
+</svg>`;
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        const blob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
+        const url = URL.createObjectURL(blob);
+
+        img.onload = function() {
+            ctx.drawImage(img, 0, 0, 1024, 1024);
+            URL.revokeObjectURL(url);
+        };
+        img.src = url;
+
+        document.getElementById('download').onclick = () => {
+            const link = document.createElement('a');
+            link.download = 'unifyfocus-logo-1024.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+    </script>
+</body>
+</html>

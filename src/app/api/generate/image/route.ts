@@ -1,0 +1,115 @@
+import { db } from "@/lib/db";
+import { generateImageAI } from "@/lib/ai";
+import { normalizePrompt, extractPromptIntent } from "@/lib/prompt";
+import { NextResponse } from "next/server";
+
+export async function POST(req: Request) {
+  try {
+    const { userId, prompt, options, model, subtype } = await req.json();
+
+    const normalizedPrompt = normalizePrompt(prompt);
+    const promptIntent = extractPromptIntent(prompt);
+
+    // Debug: log presence of source image without printing full base64 data
+    try {
+      const optionKeys = options ? Object.keys(options) : [];
+      console.log(`[api/generate/image] received options keys: ${optionKeys.join(",")}`);
+      if (options && options.sourceImage) {
+        const src = String(options.sourceImage);
+        const isData = src.startsWith("data:");
+        console.log(
+          `[api/generate/image] sourceImage present - dataUrl=${isData} length=${src.length}`
+        );
+      }
+    } catch (e) {
+      // ignore logging errors
+    }
+
+    if (!userId || !prompt) {
+      return NextResponse.json(
+        { error: "Utilisateur et prompt requis" },
+        { status: 400 }
+      );
+    }
+
+    if (subtype === "image-to-image" && !(options && options.sourceImage)) {
+      return NextResponse.json(
+        { error: "Une image source est requise pour cette action." },
+        { status: 400 }
+      );
+    }
+
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (!user || user.credits < 3) {
+      return NextResponse.json(
+        { error: "Crédits insuffisants (3 nécessaires)" },
+        { status: 402 }
+      );
+    }
+
+    const generation = await db.generation.create({
+      data: {
+        userId,
+        type: "image",
+        prompt,
+        status: "pending",
+        credits: 3,
+      },
+    });
+
+    const effectivePrompt =
+      subtype === "image-to-image"
+        ? `Transforme l'image source selon le prompt suivant : ${normalizedPrompt}\n\n[Prompt Metadata]: ${JSON.stringify(promptIntent)}`
+        : `${normalizedPrompt}\n\n[Prompt Metadata]: ${JSON.stringify(promptIntent)}`;
+
+    try {
+      const result = await generateImageAI(effectivePrompt, options ?? {});
+
+      const [updatedUser, completed] = await db.$transaction([
+        db.user.update({
+          where: { id: userId },
+          data: { credits: { decrement: 3 } },
+        }),
+        db.generation.update({
+          where: { id: generation.id },
+          data: { result, status: "completed" },
+        }),
+      ]);
+
+      return NextResponse.json({
+        generation: {
+          id: completed.id,
+          type: completed.type,
+          prompt: completed.prompt,
+          result: completed.result,
+          status: completed.status,
+          credits: completed.credits,
+          createdAt: completed.createdAt.toISOString(),
+        },
+        credits: updatedUser.credits,
+      });
+    } catch (error) {
+      await db.generation.update({
+        where: { id: generation.id },
+        data: {
+          status: "failed",
+          result:
+            error instanceof Error
+              ? error.message
+              : "Échec de génération",
+        },
+      });
+      throw error;
+    }
+  } catch (error) {
+    console.error("Image generation failed:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erreur de génération";
+    const status = errorMessage.includes("for image generation") ? 501 : 500;
+    return NextResponse.json(
+      {
+        error: errorMessage,
+      },
+      { status }
+    );
+  }
+}

@@ -1,0 +1,1279 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Professional Creative Suite Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  
+  /* Sidebar & Panels */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  
+  /* Charts */
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  
+  /* UI Components */
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  
+  /* UnifyFocus Gold Accent */
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  
+  /* Professional Surface Colors */
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  
+  /* Radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  /* Professional spacing */
+  --radius: 0.5rem;
+  
+  /* Light mode - Professional workspace */
+  --background: oklch(0.98 0 0);
+  --foreground: oklch(0.2 0 0);
+  
+  /* Cards & Popovers */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0 0);
+  
+  /* Primary - Professional Blue */
+  --primary: oklch(0.55 0.2 260);
+  --primary-foreground: oklch(1 0 0);
+  
+  /* Secondary - Creative Purple */
+  --secondary: oklch(0.6 0.2 300);
+  --secondary-foreground: oklch(1 0 0);
+  
+  /* Muted */
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.5 0 0);
+  
+  /* Accent - UnifyFocus Gold */
+  --accent: oklch(0.78 0.155 75);
+  --accent-foreground: oklch(0.2 0 0);
+  
+  /* Destructive */
+  --destructive: oklch(0.577 0.245 27.325);
+  
+  /* Borders & Inputs */
+  --border: oklch(0.9 0 0);
+  --input: oklch(0.9 0 0);
+  --ring: oklch(0.78 0.155 75);
+  
+  /* Gold */
+  --gold: oklch(0.78 0.155 75);
+  --gold-foreground: oklch(0.2 0 0);
+  
+  /* Surface colors for panels */
+  --surface-1: oklch(0.97 0 0);
+  --surface-2: oklch(0.95 0 0);
+  --surface-3: oklch(0.92 0 0);
+  
+  /* Charts */
+  --chart-1: oklch(0.78 0.155 75);
+  --chart-2: oklch(0.55 0.2 260);
+  --chart-3: oklch(0.6 0.2 300);
+  --chart-4: oklch(0.65 0.2 150);
+  --chart-5: oklch(0.6 0.2 30);
+  
+  /* Sidebar */
+  --sidebar: oklch(0.97 0 0);
+  --sidebar-foreground: oklch(0.2 0 0);
+  --sidebar-primary: oklch(0.78 0.155 75);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.95 0 0);
+  --sidebar-accent-foreground: oklch(0.2 0 0);
+  --sidebar-border: oklch(0.9 0 0);
+  --sidebar-ring: oklch(0.78 0.155 75);
+}
+
+.dark {
+  /* Dark mode - Professional workspace */
+  --background: oklch(0.12 0 0);
+  --foreground: oklch(0.9 0 0);
+  
+  /* Cards & Popovers */
+  --card: oklch(0.15 0 0);
+  --card-foreground: oklch(0.9 0 0);
+  --popover: oklch(0.15 0 0);
+  --popover-foreground: oklch(0.9 0 0);
+  
+  /* Primary - Professional Blue */
+  --primary: oklch(0.65 0.2 260);
+  --primary-foreground: oklch(0.12 0 0);
+  
+  /* Secondary - Creative Purple */
+  --secondary: oklch(0.7 0.2 300);
+  --secondary-foreground: oklch(0.12 0 0);
+  
+  /* Muted */
+  --muted: oklch(0.2 0 0);
+  --muted-foreground: oklch(0.6 0 0);
+  
+  /* Accent - UnifyFocus Gold */
+  --accent: oklch(0.78 0.155 75);
+  --accent-foreground: oklch(0.12 0 0);
+  
+  /* Destructive */
+  --destructive: oklch(0.704 0.191 22.216);
+  
+  /* Borders & Inputs */
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.78 0.155 75);
+  
+  /* Gold */
+  --gold: oklch(0.78 0.155 75);
+  --gold-foreground: oklch(0.12 0 0);
+  
+  /* Surface colors for panels - dark */
+  --surface-1: oklch(0.14 0 0);
+  --surface-2: oklch(0.12 0 0);
+  --surface-3: oklch(0.1 0 0);
+  
+  /* Charts */
+  --chart-1: oklch(0.78 0.155 75);
+  --chart-2: oklch(0.65 0.2 260);
+  --chart-3: oklch(0.7 0.2 300);
+  --chart-4: oklch(0.65 0.2 150);
+  --chart-5: oklch(0.6 0.2 30);
+  
+  /* Sidebar */
+  --sidebar: oklch(0.14 0 0);
+  --sidebar-foreground: oklch(0.9 0 0);
+  --sidebar-primary: oklch(0.78 0.155 75);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.2 0 0);
+  --sidebar-accent-foreground: oklch(0.9 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.78 0.155 75);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground overflow-auto;
+    font-feature-settings: "cv11", "ss01";
+    font-variant-numeric: tabular-nums;
+  }
+  html {
+    @apply overflow-auto;
+  }
+}
+
+/* Professional scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0 0 / 30%);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.6 0 0 / 40%);
+}
+
+/* Thin scrollbar for panels */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0 0 / 20%);
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.6 0 0 / 30%);
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, oklch(0.78 0.155 75), oklch(0.55 0.2 260));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Professional panel styles */
+.panel {
+  @apply bg-surface-1 border border-border rounded-lg;
+  backdrop-filter: blur(8px);
+}
+
+.panel-header {
+  @apply px-4 py-3 border-b border-border flex items-center justify-between;
+}
+
+.panel-title {
+  @apply text-sm font-semibold text-foreground flex items-center gap-2;
+}
+
+.panel-content {
+  @apply p-4;
+}
+
+/* Tool button styles */
+.tool-btn {
+  @apply flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium
+           text-muted-foreground hover:text-foreground hover:bg-accent/10
+           transition-all duration-200;
+}
+
+.tool-btn.active {
+  @apply bg-accent/20 text-accent border-l-2 border-accent;
+}
+
+.tool-btn:hover:not(.active) {
+  @apply bg-muted/50;
+}
+
+/* Professional card hover */
+.pro-card {
+  @apply relative overflow-hidden rounded-lg border border-border bg-card
+           transition-all duration-200 hover:shadow-lg hover:border-accent/30;
+}
+
+.pro-card::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent
+         opacity-0 transition-opacity duration-200;
+}
+
+.pro-card:hover::before {
+  @apply opacity-100;
+}
+
+/* Workspace grid background */
+.workspace-grid {
+  background-image: 
+    linear-gradient(oklch(0.7 0 0 / 5%) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.7 0 0 / 5%) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dark .workspace-grid {
+  background-image: 
+    linear-gradient(oklch(1 0 0 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(1 0 0 / 3%) 1px, transparent 1px);
+}
+
+/* Professional input styles */
+.pro-input {
+  @apply w-full px-3 py-2 bg-surface-1 border border-border rounded-md
+         text-sm text-foreground placeholder:text-muted-foreground
+         focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent
+         transition-all duration-200;
+}
+
+/* Professional select */
+.pro-select {
+  @apply px-3 py-2 bg-surface-1 border border-border rounded-md
+         text-sm text-foreground cursor-pointer
+         focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent
+         transition-all duration-200;
+}
+
+/* Professional button variants */
+.btn-primary {
+  @apply px-4 py-2 bg-primary text-primary-foreground rounded-md
+         font-medium text-sm hover:opacity-90 transition-opacity
+         focus:outline-none focus:ring-2 focus:ring-primary/50;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-secondary text-secondary-foreground rounded-md
+         font-medium text-sm hover:opacity-90 transition-opacity
+         focus:outline-none focus:ring-2 focus:ring-secondary/50;
+}
+
+.btn-ghost {
+  @apply px-3 py-2 bg-transparent text-muted-foreground rounded-md
+         font-medium text-sm hover:bg-muted/50 hover:text-foreground
+         transition-colors focus:outline-none focus:ring-2 focus:ring-muted/50;
+}
+
+.btn-accent {
+  @apply px-4 py-2 bg-accent text-accent-foreground rounded-md
+         font-medium text-sm hover:opacity-90 transition-opacity
+         focus:outline-none focus:ring-2 focus:ring-accent/50;
+}
+
+/* Status indicators */
+.status-dot {
+  @apply size-2 rounded-full;
+}
+
+.status-dot.success {
+  @apply bg-emerald-500;
+}
+
+.status-dot.pending {
+  @apply bg-yellow-500;
+}
+
+.status-dot.error {
+  @apply bg-red-500;
+}
+
+.status-dot.processing {
+  @apply bg-blue-500 animate-pulse;
+}
+
+/* Professional badge */
+.pro-badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+         border border-border bg-surface-1 text-muted-foreground;
+}
+
+.pro-badge.active {
+  @apply bg-accent/20 text-accent border-accent/30;
+}
+
+/* Panel resizer */
+.panel-resizer {
+  @apply absolute z-10 bg-transparent hover:bg-accent/20
+         transition-colors duration-150;
+}
+
+.panel-resizer.vertical {
+  @apply w-1 cursor-col-resize;
+}
+
+.panel-resizer.horizontal {
+  @apply h-1 cursor-row-resize;
+}
+
+/* Toolbar styles */
+.toolbar {
+  @apply flex items-center gap-1 px-2 py-1.5 bg-surface-1 border-b border-border;
+}
+
+.toolbar-group {
+  @apply flex items-center gap-1 px-2 border-r border-border last:border-0;
+}
+
+.toolbar-btn {
+  @apply p-1.5 rounded-md text-muted-foreground hover:text-foreground
+         hover:bg-muted/50 transition-colors duration-150
+         focus:outline-none focus:ring-2 focus:ring-muted/50;
+}
+
+.toolbar-btn.active {
+  @apply bg-accent/20 text-accent;
+}
+
+.toolbar-separator {
+  @apply w-px h-5 bg-border mx-1;
+}
+
+/* Canvas area */
+.canvas-area {
+  @apply relative flex-1 overflow-hidden bg-background;
+}
+
+.canvas-content {
+  @apply absolute inset-0 p-6 overflow-auto;
+}
+
+/* Generation card */
+.generation-card {
+  @apply rounded-lg border border-border bg-card p-4
+         hover:border-accent/30 hover:shadow-md transition-all duration-200;
+}
+
+.generation-card:hover {
+  @apply -translate-y-0.5;
+}
+
+/* Empty state */
+.empty-state {
+  @apply flex flex-col items-center justify-center p-12 text-center;
+}
+
+.empty-state-icon {
+  @apply size-16 rounded-2xl bg-muted flex items-center justify-center mb-4;
+}
+
+.empty-state-title {
+  @apply text-lg font-semibold text-foreground mb-2;
+}
+
+.empty-state-description {
+  @apply text-sm text-muted-foreground max-w-sm;
+}
+
+/* Loading skeleton */
+.skeleton {
+  @apply animate-pulse bg-muted rounded;
+}
+
+/* Professional tooltip */
+.pro-tooltip {
+  @apply absolute z-50 px-2 py-1 bg-foreground text-background
+         text-xs rounded shadow-lg pointer-events-none;
+}
+
+/* Keyboard shortcut badge */
+.kbd {
+  @apply inline-flex items-center justify-center px-1.5 py-0.5
+         text-xs font-mono rounded bg-muted border border-border
+         text-muted-foreground;
+}
+
+/* Progress bar */
+.progress-bar {
+  @apply h-1 bg-muted rounded-full overflow-hidden;
+}
+
+.progress-bar-fill {
+  @apply h-full bg-accent rounded-full transition-all duration-300;
+}
+
+/* Tab styles */
+.tab {
+  @apply px-3 py-2 text-sm font-medium text-muted-foreground
+         border-b-2 border-transparent hover:text-foreground
+         hover:border-muted transition-colors duration-150;
+}
+
+.tab.active {
+  @apply text-accent border-accent;
+}
+
+/* Dropdown menu professional */
+.dropdown-menu {
+  @apply min-w-[180px] bg-card border border-border rounded-lg
+         p-1 shadow-lg z-50;
+}
+
+.dropdown-item {
+  @apply flex items-center gap-2 px-3 py-2 text-sm rounded-md
+         text-foreground hover:bg-muted/50 cursor-pointer
+         transition-colors duration-150;
+}
+
+.dropdown-separator {
+  @apply h-px bg-border my-1;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  @apply fixed inset-0 bg-background/80 backdrop-blur-sm z-50
+         flex items-center justify-center;
+}
+
+.modal-content {
+  @apply bg-card border border-border rounded-xl shadow-2xl
+         max-w-lg w-full mx-4 max-h-[90vh] overflow-auto;
+}
+
+/* Animation utilities */
+.fade-in {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Professional glow effects */
+.glow-accent {
+  box-shadow: 0 0 20px oklch(0.78 0.155 75 / 20%);
+}
+
+.glow-primary {
+  box-shadow: 0 0 20px oklch(0.55 0.2 260 / 20%);
+}
+
+.glow-secondary {
+  box-shadow: 0 0 20px oklch(0.6 0.2 300 / 20%);
+}
+
+/* Text utilities */
+.text-balance {
+  text-wrap: balance;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Professional drag handle */
+.drag-handle {
+  @apply cursor-grab active:cursor-grabbing p-1 rounded
+         text-muted-foreground hover:text-foreground hover:bg-muted/50
+         transition-colors duration-150;
+}
+
+/* Resize handle for textareas */
+.resize-handle {
+  @apply absolute bottom-0 right-0 size-3 cursor-nwse-resize;
+}
+
+/* Focus visible for accessibility */
+.focus-visible-ring:focus-visible {
+  @apply outline-none ring-2 ring-accent ring-offset-2;
+}
+
+/* Professional card with header */
+.card-with-header {
+  @apply rounded-lg border border-border bg-card overflow-hidden;
+}
+
+.card-header {
+  @apply px-4 py-3 border-b border-border bg-surface-1/50;
+}
+
+.card-body {
+  @apply p-4;
+}
+
+/* Professional divider */
+.divider {
+  @apply h-px bg-border my-4;
+}
+
+.divider-vertical {
+  @apply w-px h-full bg-border mx-4;
+}
+
+/* Badge variants */
+.badge-success {
+  @apply bg-emerald-500/10 text-emerald-600 border-emerald-500/20;
+}
+
+.badge-warning {
+  @apply bg-yellow-500/10 text-yellow-600 border-yellow-500/20;
+}
+
+.badge-error {
+  @apply bg-red-500/10 text-red-600 border-red-500/20;
+}
+
+.badge-info {
+  @apply bg-blue-500/10 text-blue-600 border-blue-500/20;
+}
+
+/* Professional avatar */
+.avatar {
+  @apply size-8 rounded-full bg-muted flex items-center justify-center
+         text-sm font-medium text-muted-foreground;
+}
+
+.avatar-ring {
+  @apply ring-2 ring-accent ring-offset-2 ring-offset-background;
+}
+
+/* Credit display */
+.credit-display {
+  @apply flex items-center gap-2 px-3 py-1.5 rounded-md
+         bg-accent/10 text-accent text-sm font-semibold;
+}
+
+/* Generation type badge */
+.type-badge {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
+         text-xs font-medium border;
+}
+
+.type-badge.text {
+  @apply bg-blue-500/10 text-blue-600 border-blue-500/20;
+}
+
+.type-badge.image {
+  @apply bg-purple-500/10 text-purple-600 border-purple-500/20;
+}
+
+.type-badge.video {
+  @apply bg-orange-500/10 text-orange-600 border-orange-500/20;
+}
+
+.type-badge.code {
+  @apply bg-green-500/10 text-green-600 border-green-500/20;
+}
+
+/* Workspace tabs */
+.workspace-tab {
+  @apply flex items-center gap-2 px-4 py-2 text-sm font-medium
+         text-muted-foreground border-b-2 border-transparent
+         hover:text-foreground hover:bg-muted/30 transition-colors;
+}
+
+.workspace-tab.active {
+  @apply text-accent border-accent bg-accent/5;
+}
+
+.workspace-tab-close {
+  @apply ml-1 p-0.5 rounded hover:bg-muted text-muted-foreground
+         hover:text-foreground transition-colors;
+}
+
+/* Professional notification */
+.notification {
+  @apply p-4 rounded-lg border border-border bg-card
+         shadow-sm hover:shadow-md transition-all duration-200;
+}
+
+.notification.unread {
+  @apply border-accent/30 bg-accent/5;
+}
+
+/* Search input */
+.search-input {
+  @apply relative flex items-center;
+}
+
+.search-input input {
+  @apply w-full pl-9 pr-4 py-2 bg-surface-1 border border-border
+         rounded-md text-sm text-foreground placeholder:text-muted-foreground
+         focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent
+         transition-all duration-200;
+}
+
+.search-input svg {
+  @apply absolute left-3 size-4 text-muted-foreground;
+}
+
+/* Command palette */
+.command-palette {
+  @apply fixed inset-0 z-50 flex items-start justify-center pt-24;
+}
+
+.command-palette-backdrop {
+  @apply fixed inset-0 bg-background/80 backdrop-blur-sm;
+}
+
+.command-palette-content {
+  @apply relative w-full max-w-2xl bg-card border border-border
+         rounded-xl shadow-2xl overflow-hidden;
+}
+
+/* Professional toggle */
+.toggle {
+  @apply relative inline-flex h-5 w-9 items-center rounded-full
+         bg-muted transition-colors duration-200
+         focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2;
+}
+
+.toggle[data-state="checked"] {
+  @apply bg-accent;
+}
+
+.toggle-thumb {
+  @apply pointer-events-none inline-block h-4 w-4 translate-x-0.5
+         rounded-full bg-background shadow ring-0 transition-transform duration-200;
+}
+
+.toggle[data-state="checked"] .toggle-thumb {
+  @apply translate-x-4;
+}
+
+/* Professional checkbox */
+.checkbox {
+  @apply size-4 rounded border border-border bg-surface-1
+         focus:ring-2 focus:ring-accent focus:ring-offset-2
+         checked:bg-accent checked:border-accent;
+}
+
+/* Professional radio */
+.radio {
+  @apply size-4 rounded-full border border-border bg-surface-1
+         focus:ring-2 focus:ring-accent focus:ring-offset-2
+         checked:border-accent checked:bg-accent;
+}
+
+/* File upload area */
+.upload-area {
+  @apply border-2 border-dashed border-border rounded-lg p-8
+         text-center hover:border-accent hover:bg-accent/5
+         transition-all duration-200 cursor-pointer;
+}
+
+.upload-area.dragging {
+  @apply border-accent bg-accent/10;
+}
+
+/* Professional slider */
+.slider {
+  @apply relative flex w-full touch-none select-none items-center;
+}
+
+.slider-track {
+  @apply relative h-1 w-full grow overflow-hidden rounded-full bg-muted;
+}
+
+.slider-range {
+  @apply absolute h-full bg-accent;
+}
+
+.slider-thumb {
+  @apply block h-4 w-4 rounded-full border border-accent 
+         bg-background shadow transition-colors focus-visible:outline-none
+         focus-visible:ring-1 focus-visible:ring-accent;
+}
+
+/* Professional toast */
+.toast {
+  @apply fixed bottom-4 right-4 z-50 flex items-center gap-3
+         rounded-lg border border-border bg-card p-4 shadow-lg
+         animate-in slide-in-from-right-full;
+}
+
+.toast.success {
+  @apply border-emerald-500/30;
+}
+
+.toast.error {
+  @apply border-red-500/30;
+}
+
+.toast.warning {
+  @apply border-yellow-500/30;
+}
+
+.toast.info {
+  @apply border-blue-500/30;
+}
+
+/* Context menu */
+.context-menu {
+  @apply min-w-[160px] bg-card border border-border rounded-lg
+         p-1 shadow-lg z-50;
+}
+
+.context-menu-item {
+  @apply flex items-center gap-2 px-3 py-2 text-sm rounded-md
+         text-foreground hover:bg-muted/50 cursor-pointer;
+}
+
+.context-menu-separator {
+  @apply h-px bg-border my-1;
+}
+
+/* Professional accordion */
+.accordion-item {
+  @apply border-b border-border last:border-b-0;
+}
+
+.accordion-trigger {
+  @apply flex w-full items-center justify-between py-4 text-sm
+         font-medium text-foreground hover:text-accent transition-colors;
+}
+
+.accordion-content {
+  @apply pb-4 text-sm text-muted-foreground;
+}
+
+/* Professional data table */
+.data-table {
+  @apply w-full text-sm;
+}
+
+.data-table-header {
+  @apply bg-surface-1 border-b border-border;
+}
+
+.data-table-cell {
+  @apply px-4 py-3 border-b border-border last:border-b-0;
+}
+
+.data-table-row {
+  @apply hover:bg-muted/30 transition-colors;
+}
+
+/* Professional pagination */
+.pagination {
+  @apply flex items-center justify-between px-4 py-3 border-t border-border;
+}
+
+.pagination-info {
+  @apply text-sm text-muted-foreground;
+}
+
+.pagination-controls {
+  @apply flex items-center gap-2;
+}
+
+.pagination-btn {
+  @apply px-3 py-1 rounded-md text-sm font-medium
+         text-muted-foreground hover:bg-muted/50 hover:text-foreground
+         transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.pagination-btn.active {
+  @apply bg-accent text-accent-foreground;
+}
+
+/* Professional breadcrumb */
+.breadcrumb {
+  @apply flex items-center gap-2 text-sm;
+}
+
+.breadcrumb-item {
+  @apply text-muted-foreground hover:text-foreground transition-colors;
+}
+
+.breadcrumb-separator {
+  @apply text-muted-foreground;
+}
+
+.breadcrumb-current {
+  @apply text-foreground font-medium;
+}
+
+/* Professional stepper */
+.stepper {
+  @apply flex items-center justify-between;
+}
+
+.stepper-step {
+  @apply flex flex-col items-center flex-1 relative;
+}
+
+.stepper-indicator {
+  @apply size-8 rounded-full flex items-center justify-center
+         text-sm font-medium border-2 border-border bg-background
+         text-muted-foreground;
+}
+
+.stepper-step.completed .stepper-indicator,
+.stepper-step.active .stepper-indicator {
+  @apply border-accent bg-accent text-accent-foreground;
+}
+
+.stepper-label {
+  @apply mt-2 text-xs text-muted-foreground;
+}
+
+.stepper-step.active .stepper-label {
+  @apply text-accent font-medium;
+}
+
+.stepper-connector {
+  @apply absolute top-4 left-1/2 right-1/2 h-0.5 bg-border;
+}
+
+.stepper-step.completed .stepper-connector {
+  @apply bg-accent;
+}
+
+/* Professional timeline */
+.timeline {
+  @apply relative pl-8;
+}
+
+.timeline::before {
+  content: '';
+  @apply absolute left-3 top-0 bottom-0 w-0.5 bg-border;
+}
+
+.timeline-item {
+  @apply relative pb-8 last:pb-0;
+}
+
+.timeline-marker {
+  @apply absolute left-0 top-1 size-6 rounded-full border-2 
+         border-background bg-muted;
+}
+
+.timeline-item.completed .timeline-marker {
+  @apply bg-accent border-accent;
+}
+
+.timeline-content {
+  @apply ml-4;
+}
+
+.timeline-title {
+  @apply text-sm font-medium text-foreground;
+}
+
+.timeline-description {
+  @apply text-xs text-muted-foreground mt-1;
+}
+
+/* Professional code block */
+.code-block {
+  @apply relative rounded-lg bg-foreground/5 p-4 overflow-x-auto;
+}
+
+.code-block pre {
+  @apply font-mono text-sm;
+}
+
+.code-block code {
+  @apply font-mono text-sm;
+}
+
+.code-block-header {
+  @apply flex items-center justify-between px-4 py-2 border-b border-border
+         bg-surface-1 rounded-t-lg;
+}
+
+.code-block-language {
+  @apply text-xs font-medium text-muted-foreground uppercase;
+}
+
+.code-block-copy {
+  @apply p-1 rounded hover:bg-muted text-muted-foreground
+         hover:text-foreground transition-colors;
+}
+
+/* Professional diff view */
+.diff-view {
+  @apply grid grid-cols-2 gap-4 font-mono text-sm;
+}
+
+.diff-line {
+  @apply px-4 py-1;
+}
+
+.diff-line.added {
+  @apply bg-emerald-500/10 text-emerald-600;
+}
+
+.diff-line.removed {
+  @apply bg-red-500/10 text-red-600;
+}
+
+.diff-line-number {
+  @apply inline-block w-8 text-right pr-4 text-muted-foreground select-none;
+}
+
+/* Professional image viewer */
+.image-viewer {
+  @apply relative overflow-hidden rounded-lg bg-muted;
+}
+
+.image-viewer-img {
+  @apply w-full h-full object-contain;
+}
+
+.image-viewer-controls {
+  @apply absolute bottom-0 left-0 right-0 flex items-center
+         justify-between p-3 bg-background/80 backdrop-blur-sm;
+}
+
+.image-viewer-zoom {
+  @apply text-xs text-muted-foreground;
+}
+
+.image-viewer-actions {
+  @apply flex items-center gap-2;
+}
+
+/* Professional color picker */
+.color-picker {
+  @apply flex items-center gap-2;
+}
+
+.color-picker-swatch {
+  @apply size-8 rounded-md border border-border cursor-pointer
+         hover:ring-2 hover:ring-accent hover:ring-offset-2
+         transition-all duration-150;
+}
+
+.color-picker-input {
+  @apply w-24 px-2 py-1 bg-surface-1 border border-border
+         rounded-md text-xs font-mono;
+}
+
+/* Professional file tree */
+.file-tree {
+  @apply text-sm;
+}
+
+.file-tree-item {
+  @apply flex items-center gap-2 px-2 py-1.5 rounded-md
+         hover:bg-muted/50 cursor-pointer transition-colors;
+}
+
+.file-tree-item.selected {
+  @apply bg-accent/10 text-accent;
+}
+
+.file-tree-icon {
+  @apply size-4 text-muted-foreground;
+}
+
+.file-tree-name {
+  @apply truncate;
+}
+
+/* Professional markdown editor */
+.markdown-editor {
+  @apply rounded-lg border border-border overflow-hidden;
+}
+
+.markdown-editor-toolbar {
+  @apply flex items-center gap-1 p-2 border-b border-border bg-surface-1;
+}
+
+.markdown-editor-content {
+  @apply p-4 min-h-[200px] focus:outline-none;
+}
+
+.markdown-editor-preview {
+  @apply p-4 border-l border-border bg-surface-1/50 text-sm
+         max-w-none;
+}
+
+/* Professional comparison view */
+.comparison-view {
+  @apply grid grid-cols-2 gap-4;
+}
+
+.comparison-panel {
+  @apply rounded-lg border border-border overflow-hidden;
+}
+
+.comparison-header {
+  @apply px-4 py-2 border-b border-border bg-surface-1
+         text-sm font-medium;
+}
+
+.comparison-content {
+  @apply p-4;
+}
+
+/* Professional gallery */
+.gallery {
+  @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4;
+}
+
+.gallery-item {
+  @apply relative aspect-square rounded-lg overflow-hidden
+         border border-border cursor-pointer;
+}
+
+.gallery-item-img {
+  @apply w-full h-full object-cover transition-transform
+         duration-300 group-hover:scale-105;
+}
+
+.gallery-item-overlay {
+  @apply absolute inset-0 bg-background/60 opacity-0
+         group-hover:opacity-100 transition-opacity duration-200
+         flex items-center justify-center;
+}
+
+.gallery-item-actions {
+  @apply flex items-center gap-2;
+}
+
+/* Professional preview panel */
+.preview-panel {
+  @apply rounded-lg border border-border bg-card overflow-hidden;
+}
+
+.preview-header {
+  @apply flex items-center justify-between px-4 py-2 border-b border-border
+         bg-surface-1;
+}
+
+.preview-title {
+  @apply text-sm font-medium;
+}
+
+.preview-actions {
+  @apply flex items-center gap-1;
+}
+
+.preview-content {
+  @apply p-4 min-h-[300px] flex items-center justify-center;
+}
+
+/* Professional export dialog */
+.export-dialog {
+  @apply rounded-xl border border-border bg-card shadow-2xl
+         max-w-md w-full overflow-hidden;
+}
+
+.export-header {
+  @apply px-6 py-4 border-b border-border;
+}
+
+.export-title {
+  @apply text-lg font-semibold;
+}
+
+.export-body {
+  @apply p-6 space-y-4;
+}
+
+.export-footer {
+  @apply flex items-center justify-end gap-3 px-6 py-4
+         border-t border-border bg-surface-1;
+}
+
+/* Professional settings panel */
+.settings-panel {
+  @apply space-y-6;
+}
+
+.settings-section {
+  @apply border-b border-border pb-6 last:border-b-0 last:pb-0;
+}
+
+.settings-section-title {
+  @apply text-sm font-semibold mb-4;
+}
+
+.settings-item {
+  @apply flex items-center justify-between py-3;
+}
+
+.settings-item-label {
+  @apply text-sm font-medium;
+}
+
+.settings-item-description {
+  @apply text-xs text-muted-foreground mt-1;
+}
+
+.settings-item-control {
+  @apply flex items-center gap-2;
+}
+
+/* Professional keyboard shortcuts */
+.shortcuts-list {
+  @apply space-y-2;
+}
+
+.shortcut-item {
+  @apply flex items-center justify-between py-2 px-3 rounded-md
+         hover:bg-muted/50 transition-colors;
+}
+
+.shortcut-description {
+  @apply text-sm;
+}
+
+.shortcut-keys {
+  @apply flex items-center gap-1;
+}
+
+/* Professional help panel */
+.help-panel {
+  @apply space-y-4;
+}
+
+.help-section {
+  @apply space-y-2;
+}
+
+.help-title {
+  @apply text-sm font-semibold text-foreground;
+}
+
+.help-link {
+  @apply flex items-center gap-2 text-sm text-muted-foreground
+         hover:text-accent transition-colors;
+}
+
+/* Professional about section */
+.about-section {
+  @apply text-center py-8;
+}
+
+.about-logo {
+  @apply size-16 mx-auto mb-4;
+}
+
+.about-title {
+  @apply text-xl font-bold mb-2;
+}
+
+.about-version {
+  @apply text-sm text-muted-foreground mb-4;
+}
+
+.about-description {
+  @apply text-sm text-muted-foreground max-w-md mx-auto;
+}
+
+.about-links {
+  @apply flex items-center justify-center gap-4 mt-6;
+}
+
+.about-link {
+  @apply text-sm text-accent hover:underline;
+}

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Documentation — UnifyFocus</title>
+  <style>
+    body{font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;background:#f7fafc;color:#0f172a;margin:0;padding:0}
+    header{background:#0f172a;color:#fff;padding:24px 28px}
+    .container{max-width:980px;margin:28px auto;padding:0 20px}
+    h1{margin:0 0 6px;font-size:24px}
+    h2{font-size:20px;margin:20px 0 8px}
+    p{line-height:1.6;color:#1f2937}
+    pre{background:#0b1220;color:#e6eef8;padding:12px;border-radius:6px;overflow:auto}
+    code{background:#eef2ff;padding:2px 6px;border-radius:4px}
+    nav a{color:#9ae6b4;margin-right:12px;text-decoration:none}
+    .card{background:#fff;border:1px solid #e6eef8;padding:16px;border-radius:8px;box-shadow:0 2px 6px rgba(12,17,23,0.04)}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+    .small{font-size:13px;color:#6b7280}
+    footer{padding:20px;text-align:center;color:#6b7280}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Documentation — UnifyFocus</h1>
+      <div class="small">Guide rapide, API, FAQ et contact</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+      <section>
+        <article class="card">
+          <h2>Vue d'ensemble</h2>
+          <p>UnifyFocus est une interface web qui fournit des outils de génération de contenu assistés par l'IA, un éditeur, un chat IA, gestion d'utilisateurs et un système de crédits/abonnements.</p>
+
+          <h2>Getting started</h2>
+          <ol>
+            <li>Clonez le dépôt et installez les dépendances.</li>
+            <li>Copiez le fichier d'environnement `.env.example` -> `.env.local` et renseignez les clés (Stripe, DB, etc.).</li>
+            <li>Lancer en développement :</li>
+          </ol>
+          <pre><code>npm install
+npm run dev</code></pre>
+
+          <h2>Structure importante</h2>
+          <ul>
+            <li><code>src/app</code> — routes/app pages (Next.js app router)</li>
+            <li><code>src/components</code> — UI, vues et layouts</li>
+            <li><code>src/lib</code> — utilitaires (ai, db, notify, etc.)</li>
+            <li><code>src/app/api</code> — endpoints serveur (app routes)</li>
+            <li><code>prisma/</code> — schéma et migrations</li>
+            <li><code>docs/</code> — pages de documentation et ressources</li>
+          </ul>
+
+          <h2>Commandes utiles</h2>
+          <pre><code>npm run build
+npm run start
+npm run db:migrate</code></pre>
+        </article>
+
+        <article style="margin-top:18px" class="card">
+          <h2>Principales vues et actions</h2>
+          <ul>
+            <li><strong>Éditeur IA</strong> — création et personnalisation de prompts.</li>
+            <li><strong>Chat</strong> — conversation interactive avec l'assistant.</li>
+            <li><strong>Profil</strong> — gestion de compte et abonnement (Stripe).</li>
+            <li><strong>Usage</strong> — historique de crédits et consommation.</li>
+          </ul>
+        </article>
+
+        <article style="margin-top:18px" class="card">
+          <h2>API (exemples)</h2>
+          <p>Endpoints exposés via <code>src/app/api</code>. Exemples :</p>
+          <pre><code>GET  /api/user/generations?userId=...     # Lister generations (query userId)
+DELETE /api/user/generations                 # Supprimer generation(s) (body: { id?, userId })
+POST   /api/support                          # Envoyer message support (body: { userId, message })
+POST   /api/user/subscription/create-checkout-session  # Créer session Stripe
+GET    /api/notifications?userId=...         # Lister notifications
+POST   /api/auth/login                        # Auth (selon implémentation)
+</code></pre>
+
+          <h3>Détails et exemples</h3>
+          <p><strong>Authentification</strong> : la plupart des endpoints utilisateurs supposent un cookie de session ou un token côté serveur. Pour tester en local, utilisez l'auth intégrée ou simulez <code>userId</code> dans les requêtes.</p>
+
+          <h4>Récupérer les générations (exemple)</h4>
+          <pre><code>curl -s "http://localhost:3000/api/user/generations?userId=USER_ID"
+HTTP/1.1 200 OK
+{
+  "generations": [
+    { "id": "g1", "type": "text", "prompt": "...", "status": "completed", "createdAt": "..." }
+  ]
+}
+</code></pre>
+
+          <h4>Supprimer une génération (exemple)</h4>
+          <pre><code>curl -X DELETE "http://localhost:3000/api/user/generations" \
+  -H "Content-Type: application/json" \
+  -d '{ "id": "g1", "userId": "USER_ID" }'
+Response: { "deleted": 1 }
+</code></pre>
+
+          <h4>Envoyer un message au support</h4>
+          <pre><code>fetch('/api/support', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ userId: 'USER_ID', message: 'Mon problème...' })
+})
+
+Réponse: { "ok": true, "message": "Received" }
+</code></pre>
+
+          <h4>Créer une session Stripe (exemple)</h4>
+          <pre><code>fetch('/api/user/subscription/create-checkout-session', { method: 'POST' })
+Response: { "url": "https://checkout.stripe.com/..", "id": "cs_test_..." }
+</code></pre>
+
+          <h4>Codes d'erreur courants</h4>
+          <ul>
+            <li><strong>400</strong> — Requête invalide (champs manquants).</li>
+            <li><strong>401</strong> — Non authentifié / accès refusé.</li>
+            <li><strong>403</strong> — Pas d'autorisation pour la ressource.</li>
+            <li><strong>500</strong> — Erreur serveur.</li>
+          </ul>
+
+          <h4>Webhooks (exemples)</h4>
+          <p>Si vous activez Stripe webhook, configurez l'endpoint correspondant côté serveur pour recevoir les événements de paiement et mettre à jour le paiement/plan de l'utilisateur.</p>
+          <pre><code>POST /api/webhooks/stripe  # Recevoir events Stripe
+Example event body: { "type": "checkout.session.completed", "data": { ... } }
+</code></pre>
+        </article>
+
+        <article style="margin-top:18px" class="card">
+          <h2>Dépannage</h2>
+          <ul>
+            <li>Page blanche après clic : ouvrir la console du navigateur (F12) et regarder les erreurs réseau/JS.</li>
+            <li>Import manquant (ex. <code>@/lib/notify</code>) : vérifier l'existence du fichier et exécuter <code>npm run build</code>.</li>
+            <li>Problèmes Stripe : validez les variables d'environnement <code>STRIPE_SECRET_KEY</code> et <code>NEXT_PUBLIC_APP_URL</code>.</li>
+            <li>Logs serveur : consultez la sortie du process Node (terminal où tourne <code>npm run dev</code>).</li>
+          </ul>
+        </article>
+      </section>
+
+      <aside>
+        <div class="card small">
+          <h3>Ressources</h3>
+          <ul>
+            <li><a href="/docs/index.html">Index documentation</a></li>
+            <li><a href="/app.html">Application (front)</a></li>
+            <li><a href="/public/">Public assets</a></li>
+          </ul>
+
+          <h3 style="margin-top:12px">Contact support</h3>
+          <p class="small">Utilisez la page <a href="/docs/documentation.html">documentation</a> ou la page d'aide pour envoyer un message via le formulaire intégré.</p>
+
+          <h3 style="margin-top:12px">Notes pour développeurs</h3>
+          <p class="small">Si vous exécutez le projet localement, ajoutez les variables d'environnement et exécutez les migrations Prisma :</p>
+          <pre><code>npx prisma migrate dev
+npx prisma db seed</code></pre>
+
+          <h3 style="margin-top:12px">Captures & Screenshots</h3>
+          <p class="small">Ajoutez des captures d'écran dans <code>docs/images/</code> ou <code>public/uploads/</code> et référencez-les ci-dessous. Exemples :</p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <img src="/docs/images/example-editor.svg" alt="Editor screenshot" style="max-width:100%;border:1px solid #e6eef8;border-radius:6px"/>
+            <img src="/docs/images/example-help.svg" alt="Help page screenshot" style="max-width:100%;border:1px solid #e6eef8;border-radius:6px"/>
+            <img src="/docs/images/example-pricing.svg" alt="Pricing screenshot" style="max-width:100%;border:1px solid #e6eef8;border-radius:6px"/>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    © UnifyFocus — Documentation générée automatiquement. Pour modifications, éditez <code>docs/documentation.html</code> dans le dépôt.
+  </footer>
+</body>
+</html>

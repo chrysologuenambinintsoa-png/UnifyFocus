@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  avatar        String?
+  passwordHash  String?
+  provider      String   @default("email")
+  credits       Int      @default(50)
+  plan          String   @default("free")
+  stripeId      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  generations   Generation[]
+  subscriptions Subscription[]
+  settings      UserSettings?
+  conversations Conversation[]
+  notifications Notification[]
+  feedbacks     MessageFeedback[]
+}
+
+model Generation {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // "text" | "image" | "video"
+  prompt      String
+  result      String?
+  status      String   @default("pending") // "pending" | "completed" | "failed"
+  credits     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  userId          String
+  plan            String   // "free" | "pro" | "enterprise"
+  stripeId        String?
+  status          String   @default("active") // "active" | "canceled" | "past_due"
+  currentPeriodEnd DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSettings {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  theme           String   @default("system") // "light" | "dark" | "system"
+  language        String   @default("fr") // "fr" | "en" | "es" | "de"
+  notifications   Boolean  @default(true)
+  emailAlerts     Boolean  @default(true)
+  autoSave        Boolean  @default(true)
+  defaultModel    String   @default("gpt-4o-mini") // default AI model
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String   @default("Nouvelle conversation")
+  model       String   @default("gpt-4o-mini") // selected model for this conversation
+  type        String   @default("text") // "text" | "image" | "video"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    Message[]
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  conversationId String
+  role          String   // "user" | "assistant" | "system"
+  content       String
+  attachments   Json?
+  model         String?  // model used for this message
+  createdAt     DateTime @default(now())
+
+  conversation  Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("info") // "info" | "success" | "warning" | "error"
+  read      Boolean  @default(false)
+  actionUrl String?  // optional URL to navigate to when clicking notification
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MessageFeedback {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  rating    String   // "good" | "bad" | "incomplete"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+}
