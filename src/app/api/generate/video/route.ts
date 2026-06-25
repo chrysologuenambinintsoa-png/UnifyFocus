@@ -33,7 +33,8 @@ export async function POST(req: Request) {
     }
 
     const user = await db.user.findUnique({ where: { id: userId } });
-    if (!user || user.credits < 5) {
+    const isAdmin = user?.role === "admin";
+    if (!user || (!isAdmin && user.credits < 5)) {
       return NextResponse.json(
         { error: "Crédits insuffisants (5 nécessaires)" },
         { status: 402 }
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
     const [updatedUser, generation] = await db.$transaction([
       db.user.update({
         where: { id: userId },
-        data: { credits: { decrement: 5 } },
+        data: isAdmin ? {} : { credits: { decrement: 5 } },
       }),
       db.generation.create({
         data: {

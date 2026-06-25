@@ -1,4 +1,64 @@
-﻿import { normalizePrompt, extractPromptIntent } from "./prompt";
+﻿import fs from "fs";
+import path from "path";
+import { normalizePrompt, extractPromptIntent } from "./prompt";
+import { GoogleGenAI } from "@google/genai";
+
+function loadEnvFile(filePath: string) {
+  if (!fs.existsSync(filePath)) {
+    return {} as Record<string, string>;
+  }
+
+  const content = fs.readFileSync(filePath, "utf8");
+  const entries: Record<string, string> = {};
+
+  for (const line of content.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const equalsIndex = trimmed.indexOf("=");
+    if (equalsIndex === -1) {
+      continue;
+    }
+
+    const key = trimmed.slice(0, equalsIndex).trim();
+    let value = trimmed.slice(equalsIndex + 1).trim();
+
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    entries[key] = value;
+  }
+
+  return entries;
+}
+
+function ensureLocalEnvLoaded() {
+  if (process.env.HF_API_KEY && process.env.HF_API_BASE) {
+    return;
+  }
+
+  const root = process.cwd();
+  const envFiles = [".env.local", ".env"];
+
+  for (const envFile of envFiles) {
+    const envPath = path.join(root, envFile);
+    const envData = loadEnvFile(envPath);
+
+    for (const [key, value] of Object.entries(envData)) {
+      if (!process.env[key] && value !== undefined) {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
+ensureLocalEnvLoaded();
 
 const rawAiProvider = process.env.AI_PROVIDER?.trim().toUpperCase() ?? "AUTO";
 const AI_PROVIDER = rawAiProvider;
@@ -58,10 +118,23 @@ const GITHUB_MODEL_API_KEY = envOrDefault(process.env.GITHUB_MODEL_API_KEY, "");
 const GITHUB_MODEL_API_BASE = envOrDefault(process.env.GITHUB_MODEL_API_BASE?.replace(/\/+$|\?$|\s+$/g, ""), "https://api.github.com");
 const GITHUB_MODEL_MODEL = envOrDefault(process.env.GITHUB_MODEL_MODEL, "gpt-4o");
 
-const AVAILABLE_AI_PROVIDERS = ["GROQ", "SILICONFLOW", "GITHUB_MODEL"] as const;
+const GEMINI_API_KEY = envOrDefault(process.env.GEMINI_API_KEY, "");
+const GEMINI_API_BASE = envOrDefault(process.env.GEMINI_API_BASE?.replace(/\/+$/, ""), "https://api.ai.google.com");
+const GEMINI_MODEL = envOrDefault(process.env.GEMINI_MODEL, "gemini-1.5-pro");
+const GEMINI_VIDEO_MODEL = envOrDefault(process.env.GEMINI_VIDEO_MODEL, "veo-2.0-generate-001");
+
+const HF_API_KEY = envOrDefault(process.env.HF_API_KEY, "");
+const HF_API_BASE = envOrDefault(process.env.HF_API_BASE?.replace(/\/+$/, ""), "https://api-inference.huggingface.co");
+const HF_VIDEO_MODEL = envOrDefault(process.env.HF_VIDEO_MODEL, "damo-vilab/text-to-video-ms-1.7b");
+
+const AIMUSIC_API_KEY = envOrDefault(process.env.AIMUSIC_API_KEY, "");
+const AIMUSIC_API_BASE = envOrDefault(process.env.AIMUSIC_API_BASE?.replace(/\/+$/, ""), "https://api.ai-music.com/v1");
+const AIMUSIC_MODEL = envOrDefault(process.env.AIMUSIC_MODEL, "audiomix-1");
+
+const AVAILABLE_AI_PROVIDERS = ["AIMUSIC", "HUGGINGFACE", "GEMINI", "GROQ", "SILICONFLOW", "GITHUB_MODEL"] as const;
 type AIProviderValue = (typeof AVAILABLE_AI_PROVIDERS)[number];
 
-type AIProviderCapability = "text" | "code" | "image" | "video";
+type AIProviderCapability = "text" | "code" | "image" | "video" | "audio";
 
 function isProviderConfigured(provider: AIProviderValue) {
   switch (provider) {
@@ -71,15 +144,37 @@ function isProviderConfigured(provider: AIProviderValue) {
       return !!GROQ_API_KEY;
     case "GITHUB_MODEL":
       return !!GITHUB_MODEL_API_KEY;
+    case "GEMINI":
+      return !!GEMINI_API_KEY;
+    case "HUGGINGFACE":
+      return !!HF_API_KEY;
+    case "AIMUSIC":
+      return !!AIMUSIC_API_KEY;
   }
 }
 
-const FALLBACK_PROVIDER_ORDER: AIProviderValue[] = ["GROQ", "SILICONFLOW", "GITHUB_MODEL"];
+const FALLBACK_PROVIDER_ORDER: AIProviderValue[] = [
+  "SILICONFLOW",
+  "HUGGINGFACE",
+  "GEMINI",
+  "GROQ",
+  "GITHUB_MODEL",
+  "AIMUSIC",
+];
+
+const FALLBACK_PROVIDER_ORDER_BY_ACTION: Record<AIProviderCapability, AIProviderValue[]> = {
+  text: ["GROQ", "SILICONFLOW", "GEMINI", "GITHUB_MODEL"],
+  code: ["GITHUB_MODEL", "GROQ", "SILICONFLOW", "GEMINI"],
+  image: ["SILICONFLOW"],
+  video: ["SILICONFLOW", "GEMINI", "HUGGINGFACE"],
+  audio: ["AIMUSIC"],
+};
+
 const ACTIVE_AI_PROVIDERS = FALLBACK_PROVIDER_ORDER.filter(isProviderConfigured);
 
-if (AI_PROVIDER === "AUTO" && ACTIVE_AI_PROVIDERS.length === 0) {
-  throw new Error("No AI provider is configured for AUTO mode.");
-}
+// Note: We don't throw here during build time to allow the app to build.
+// The error will be thrown at runtime when AI features are actually used.
+// This is important because environment variables may not be fully loaded during build.
 
 if (AI_PROVIDER !== "AUTO" && !AVAILABLE_AI_PROVIDERS.includes(AI_PROVIDER as AIProviderValue)) {
   throw new Error(`Unsupported AI_PROVIDER: ${AI_PROVIDER}`);
@@ -104,9 +199,22 @@ const GITHUB_MODEL_HEADERS = {
   Authorization: `Bearer ${GITHUB_MODEL_API_KEY}`,
 };
 
+const AIMUSIC_HEADERS = {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${AIMUSIC_API_KEY}`,
+};
+
+const HUGGINGFACE_HEADERS = {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${HF_API_KEY}`,
+};
+
 const PROVIDER_CAPABILITIES: Record<AIProviderValue, AIProviderCapability[]> = {
+  AIMUSIC: ["text", "audio"],
+  HUGGINGFACE: ["video"],
+  GEMINI: ["text", "code", "image", "video"],
   GROQ: ["text"],
-  SILICONFLOW: ["image", "video"],
+  SILICONFLOW: ["text", "code", "image", "video"],
   GITHUB_MODEL: ["text", "code"],
 };
 
@@ -118,7 +226,8 @@ function providerSupportsAction(
 }
 
 function getActiveProvidersForAction(action: AIProviderCapability) {
-  return FALLBACK_PROVIDER_ORDER.filter(
+  const order = FALLBACK_PROVIDER_ORDER_BY_ACTION[action] ?? FALLBACK_PROVIDER_ORDER;
+  return order.filter(
     (provider) => isProviderConfigured(provider) && providerSupportsAction(provider, action)
   ) as AIProviderValue[];
 }
@@ -259,6 +368,71 @@ async function githubModelFetch(path: string, body: unknown) {
   return data as any;
 }
 
+async function aiMusicFetch(path: string, body: unknown) {
+  const url = `${AIMUSIC_API_BASE}${path}`;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: AIMUSIC_HEADERS,
+      body: JSON.stringify(body),
+    });
+
+    let data: unknown;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok) {
+      const errorMessage = getApiErrorMessage(data, response.statusText);
+      throw new Error(`AI Music API request failed: ${errorMessage}`);
+    }
+
+    return data as any;
+  } catch (fetchError) {
+    if (fetchError instanceof Error) {
+      const messageLower = fetchError.message.toLowerCase();
+      if (messageLower.includes("getaddrinfo") || messageLower.includes("enotfound") || messageLower.includes("network")) {
+        throw new Error(
+          `AI Music API network error while requesting ${url}: ${fetchError.message}. ` +
+            `Check AIMUSIC_API_BASE and DNS/connectivity to ${AIMUSIC_API_BASE}.`
+        );
+      }
+    }
+    throw fetchError;
+  }
+}
+
+async function aiMusicAudioFetch(body: unknown) {
+  const endpoints = [
+    "/audio/generations",
+    "/audios/generations",
+    "/audio",
+    "/audios",
+  ];
+
+  let lastError: unknown = null;
+  for (const path of endpoints) {
+    try {
+      return await aiMusicFetch(path, body);
+    } catch (error) {
+      lastError = error;
+      if (typeof error === "object" && error !== null) {
+        const message = normalizeErrorMessage(error).toLowerCase();
+        if (message.includes("not found") || message.includes("404")) {
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  throw new Error(
+    `AI Music audio request failed: ${normalizeErrorMessage(lastError)}`
+  );
+}
+
 async function siliconflowImageFetch(body: unknown) {
   let lastError: unknown = null;
   for (const base of SILICONFLOW_API_BASES) {
@@ -323,6 +497,48 @@ async function siliconflowVideoFetch(body: unknown) {
   throw new Error(`SiliconFlow video fetch failed: ${normalizeErrorMessage(lastError)}`);
 }
 
+async function huggingFaceVideoFetch(body: unknown) {
+  const url = HF_API_BASE.includes("/models/")
+    ? HF_API_BASE
+    : `${HF_API_BASE}/models/${HF_VIDEO_MODEL}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: HUGGINGFACE_HEADERS,
+      body: JSON.stringify(body),
+    });
+  } catch (fetchError) {
+    const message = fetchError instanceof Error ? fetchError.message : String(fetchError);
+    throw new Error(`HuggingFace video fetch failed for ${url}: ${message}`);
+  }
+
+  let data: unknown;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    const errorMessage = getApiErrorMessage(data, response.statusText);
+    throw new Error(`HuggingFace video request failed: ${errorMessage}`);
+  }
+
+  if (data === null) {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.startsWith("video/") || contentType === "application/octet-stream") {
+      const buffer = await response.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      const base64 = Buffer.from(bytes).toString("base64");
+      return { data: [{ b64_json: base64 }] };
+    }
+  }
+
+  return data as any;
+}
+
 function parseTextResponse(response: any) {
   return (
     response?.choices?.[0]?.message?.content?.trim?.() ||
@@ -373,6 +589,42 @@ function parseVideoResponse(response: any) {
     response?.response?.trim?.() ||
     ""
   );
+}
+
+function parseAudioResponse(response: any) {
+  if (response?.data?.[0]?.url) {
+    return response.data[0].url.trim();
+  }
+
+  if (response?.data?.[0]?.b64_json) {
+    return `data:audio/mpeg;base64,${response.data[0].b64_json.trim()}`;
+  }
+
+  if (response?.data?.[0]?.b64_audio) {
+    return `data:audio/mpeg;base64,${response.data[0].b64_audio.trim()}`;
+  }
+
+  if (response?.audio?.[0]?.url) {
+    return response.audio[0].url.trim();
+  }
+
+  if (response?.audio?.url) {
+    return response.audio.url.trim();
+  }
+
+  if (response?.output?.[0]?.content?.[0]?.audio?.url) {
+    return response.output[0].content[0].audio.url.trim();
+  }
+
+  if (response?.output?.[0]?.audio?.url) {
+    return response.output[0].audio.url.trim();
+  }
+
+  if (response?.url?.trim) {
+    return response.url.trim();
+  }
+
+  throw new Error("AI Music API did not return a valid audio URL or base64 payload.");
 }
 
 // Helper to summarize provider responses without logging large base64 payloads
@@ -441,6 +693,13 @@ interface CodeGenerationOptions {
   complexity?: string;
 }
 
+const GEMINI_CLIENT = GEMINI_API_KEY
+  ? new GoogleGenAI({
+      apiKey: GEMINI_API_KEY,
+      httpOptions: GEMINI_API_BASE ? { baseUrl: GEMINI_API_BASE } : undefined,
+    })
+  : null;
+
 function getActiveTextProviders(): AIProviderValue[] {
   return getActiveProvidersForAction("text");
 }
@@ -451,6 +710,10 @@ function getActiveImageProviders(): AIProviderValue[] {
 
 function getActiveVideoProviders(): AIProviderValue[] {
   return getActiveProvidersForAction("video");
+}
+
+function getActiveAudioProviders(): AIProviderValue[] {
+  return getActiveProvidersForAction("audio");
 }
 
 function getActiveCodeProviders(): AIProviderValue[] {
@@ -488,6 +751,23 @@ async function requestTextFromProvider(
   userMessage: string,
   model?: string
 ) {
+  if (provider === "GEMINI") {
+    if (!GEMINI_CLIENT) {
+      throw new Error("Gemini provider is not configured.");
+    }
+
+    const data = await GEMINI_CLIENT.models.generateContent({
+      model: model?.trim() || GEMINI_MODEL,
+      contents: [systemMessage, userMessage],
+      config: {
+        temperature: 0.75,
+        maxOutputTokens: 700,
+      },
+    });
+
+    return parseTextResponse(data);
+  }
+
   if (provider === "GROQ") {
     const candidates = getGroqModelCandidates(model);
     let lastError: unknown;
@@ -526,6 +806,20 @@ async function requestTextFromProvider(
   if (provider === "SILICONFLOW") {
     const data = await siliconflowFetch("/chat/completions", {
       model: SILICONFLOW_MODEL,
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: userMessage },
+      ],
+      temperature: 0.75,
+      max_tokens: 700,
+    });
+
+    return parseTextResponse(data);
+  }
+
+  if (provider === "AIMUSIC") {
+    const data = await aiMusicFetch("/chat/completions", {
+      model: AIMUSIC_MODEL,
       messages: [
         { role: "system", content: systemMessage },
         { role: "user", content: userMessage },
@@ -577,6 +871,21 @@ async function requestCodeFromProvider(
       max_tokens: 1200,
     });
 
+    return parseTextResponse(data);
+  }
+
+  if (provider === "GEMINI") {
+    if (!GEMINI_CLIENT) {
+      throw new Error("Gemini provider is not configured.");
+    }
+    const data = await GEMINI_CLIENT.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [systemMessage, userMessage],
+      config: {
+        temperature: 0.7,
+        maxOutputTokens: 1200,
+      },
+    });
     return parseTextResponse(data);
   }
 
@@ -704,39 +1013,32 @@ async function requestImageFromProvider(
   options: ImageGenerationOptions
 ) {
   if (provider === "SILICONFLOW") {
+    const isEditMode = !!options.sourceImage;
     let body: any = {
-      model: options.sourceImage ? SILICONFLOW_IMAGE_EDIT_MODEL : SILICONFLOW_IMAGE_MODEL,
+      model: isEditMode ? SILICONFLOW_IMAGE_EDIT_MODEL : SILICONFLOW_IMAGE_MODEL,
       prompt,
       size: formatToSize(options.format),
-      response_format: "url",
     };
 
-    if (options.sourceImage) {
-      body.image = options.sourceImage;
-      body.prompt = `Recompose ou transforme l'image source selon le prompt suivant : ${prompt}`;
-
-      // If a data URL was provided, also include several common base64 fields
-      // to increase compatibility with different provider API shapes.
-      try {
-        const src = String(options.sourceImage);
-        if (src.startsWith("data:")) {
-          const parts = src.split(",");
-          const b64 = parts[1] ?? "";
-          if (b64) {
-            body.image_base64 = b64;
-            body.image_b64 = b64;
-            body.init_image = src; // keep the full data URL as well
-            body.image_data = b64;
-          }
+    if (isEditMode) {
+      body.prompt = `Transforme l'image source selon le prompt suivant : ${prompt}`;
+      
+      // Add image in proper format - only use image field for SiliconFlow
+      const src = String(options.sourceImage);
+      if (src.startsWith("data:")) {
+        // Extract base64 from data URL
+        const parts = src.split(",");
+        if (parts.length === 2) {
+          body.image = parts[1]; // Send just the base64 part
         } else {
-          // also provide as image_url in case provider accepts URLs
-          body.image_url = src;
+          body.image = src; // Fallback to full data URL
         }
-      } catch (e) {
-        // ignore
+      } else {
+        body.image = src;
       }
     }
 
+    // Adjust size for quality settings
     if (options.quality === "hd") {
       body.size = "1024x1024";
     } else if (options.quality === "ultra-hd") {
@@ -744,10 +1046,7 @@ async function requestImageFromProvider(
     }
 
     try {
-      console.log(`[ai] image request body keys: ${Object.keys(body).join(",")}`);
-      if (body.image_base64) console.log(`[ai] image_base64 length=${String(body.image_base64).length}`);
-      if (body.image_b64) console.log(`[ai] image_b64 length=${String(body.image_b64).length}`);
-
+      console.log(`[ai] siliconflow image request: model=${body.model}, size=${body.size}, edit=${isEditMode}`);
       const data = await siliconflowImageFetch(body);
       try {
         console.log(`[ai] siliconflow image response summary:`, summarizeResponse(data));
@@ -755,27 +1054,25 @@ async function requestImageFromProvider(
       return parseImageResponse(data);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg && /model\s+does\s+not\s+exist/i.test(msg)) {
-        const altModels = [
-          SILICONFLOW_IMAGE_EDIT_MODEL,
-          ...SILICONFLOW_IMAGE_EDIT_MODEL_ALTS,
-          SILICONFLOW_IMAGE_MODEL,
-          ...SILICONFLOW_IMAGE_MODEL_ALTS,
-        ];
-        for (const altModel of altModels) {
-          if (!altModel || altModel === body.model) continue;
-          const altBody = { ...body, model: altModel };
-          console.log(`[ai] retrying image request with alternate model: ${altModel}`);
-          if (altBody.image_base64) console.log(`[ai] retry image_base64 length=${String(altBody.image_base64).length}`);
+      console.log(`[ai] image request failed with ${body.model}: ${msg}`);
+      
+      // Retry with alternate models
+      const altModels = [
+        ...SILICONFLOW_IMAGE_MODEL_ALTS,
+        ...(isEditMode ? SILICONFLOW_IMAGE_EDIT_MODEL_ALTS : []),
+      ].filter((m) => m && m !== body.model);
+      
+      for (const altModel of altModels) {
+        const altBody = { ...body, model: altModel };
+        console.log(`[ai] retrying image with alternate model: ${altModel}`);
+        try {
+          const data2 = await siliconflowImageFetch(altBody);
           try {
-            const data2 = await siliconflowImageFetch(altBody);
-            try {
-              console.log(`[ai] siliconflow image response summary (retry):`, summarizeResponse(data2));
-            } catch {}
-            return parseImageResponse(data2);
-          } catch (retryErr) {
-            console.log(`[ai] alternate image model ${altModel} failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`);
-          }
+            console.log(`[ai] siliconflow image response summary (retry):`, summarizeResponse(data2));
+          } catch {}
+          return parseImageResponse(data2);
+        } catch (retryErr) {
+          console.log(`[ai] alternate model ${altModel} failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`);
         }
       }
       throw err;
@@ -813,41 +1110,38 @@ async function requestVideoFromProvider(
   options: VideoGenerationOptions
 ) {
   if (provider === "SILICONFLOW") {
+    const isEditMode = !!options.sourceVideo;
     let body: any = {
-      model: options.sourceVideo ? SILICONFLOW_VIDEO_EDIT_MODEL : SILICONFLOW_VIDEO_MODEL,
+      model: isEditMode ? SILICONFLOW_VIDEO_EDIT_MODEL : SILICONFLOW_VIDEO_MODEL,
       prompt,
-      duration: parseDuration(options.duration),
-      size: formatToSize(options.format),
-      response_format: "url",
     };
+    
+    // Only add optional parameters if they're relevant for SiliconFlow
+    const duration = parseDuration(options.duration);
+    if (duration && duration > 0) {
+      body.duration = duration;
+    }
 
-    if (options.sourceVideo) {
-      body.video = options.sourceVideo;
-      body.prompt = `Recompose ou transforme la vidéo source selon le prompt suivant : ${prompt}`;
-      try {
-        const src = String(options.sourceVideo);
-        if (src.startsWith("data:")) {
-          const parts = src.split(",");
-          const b64 = parts[1] ?? "";
-          if (b64) {
-            body.video_base64 = b64;
-            body.video_b64 = b64;
-            body.init_video = src;
-            body.video_data = b64;
-          }
+    if (isEditMode) {
+      body.prompt = `Transforme la vidéo source selon le prompt suivant : ${prompt}`;
+      
+      // Add video in proper format - only use video field for SiliconFlow
+      const src = String(options.sourceVideo);
+      if (src.startsWith("data:")) {
+        // Extract base64 from data URL
+        const parts = src.split(",");
+        if (parts.length === 2) {
+          body.video = parts[1]; // Send just the base64 part
         } else {
-          body.video_url = src;
+          body.video = src; // Fallback to full data URL
         }
-      } catch (e) {
-        // ignore
+      } else {
+        body.video = src;
       }
     }
 
     try {
-      console.log(`[ai] video request body keys: ${Object.keys(body).join(",")}`);
-      if (body.video_base64) console.log(`[ai] video_base64 length=${String(body.video_base64).length}`);
-      if (body.video_b64) console.log(`[ai] video_b64 length=${String(body.video_b64).length}`);
-
+      console.log(`[ai] siliconflow video request: model=${body.model}, duration=${body.duration}, edit=${isEditMode}`);
       const data = await siliconflowVideoFetch(body);
       try {
         console.log(`[ai] siliconflow video response summary:`, summarizeResponse(data));
@@ -856,35 +1150,156 @@ async function requestVideoFromProvider(
       return result || parseTextResponse(data);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg && /model\s+does\s+not\s+exist/i.test(msg)) {
-        const altModels = [
-          SILICONFLOW_VIDEO_EDIT_MODEL,
-          ...SILICONFLOW_VIDEO_EDIT_MODEL_ALTS,
-          SILICONFLOW_VIDEO_MODEL,
-          ...SILICONFLOW_VIDEO_MODEL_ALTS,
-        ];
-        for (const altModel of altModels) {
-          if (!altModel || altModel === body.model) continue;
-          const altBody = { ...body, model: altModel };
-          console.log(`[ai] retrying video request with alternate model: ${altModel}`);
-          if (altBody.video_base64) console.log(`[ai] retry video_base64 length=${String(altBody.video_base64).length}`);
+      console.log(`[ai] video request failed with ${body.model}: ${msg}`);
+      
+      // Retry with alternate models
+      const altModels = [
+        ...SILICONFLOW_VIDEO_MODEL_ALTS,
+        ...(isEditMode ? SILICONFLOW_VIDEO_EDIT_MODEL_ALTS : []),
+      ].filter((m) => m && m !== body.model);
+      
+      for (const altModel of altModels) {
+        const altBody = { ...body, model: altModel };
+        console.log(`[ai] retrying video with alternate model: ${altModel}`);
+        try {
+          const data2 = await siliconflowVideoFetch(altBody);
           try {
-            const data2 = await siliconflowVideoFetch(altBody);
-            try {
-              console.log(`[ai] siliconflow video response summary (retry):`, summarizeResponse(data2));
-            } catch {}
-            const result2 = parseVideoResponse(data2);
-            return result2 || parseTextResponse(data2);
-          } catch (retryErr) {
-            console.log(`[ai] alternate video model ${altModel} failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`);
-          }
+            console.log(`[ai] siliconflow video response summary (retry):`, summarizeResponse(data2));
+          } catch {}
+          const result2 = parseVideoResponse(data2);
+          return result2 || parseTextResponse(data2);
+        } catch (retryErr) {
+          console.log(`[ai] alternate model ${altModel} failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`);
         }
       }
       throw err;
     }
   }
 
+  if (provider === "GEMINI") {
+    if (!GEMINI_CLIENT) {
+      throw new Error("Gemini provider is not configured.");
+    }
+
+    const params: any = {
+      model: GEMINI_VIDEO_MODEL,
+      prompt,
+      config: {
+        // Gemini auto-selects the best video generation approach based on prompt.
+        // A shorter poll interval is used because Gemini operations may complete quickly.
+        responseMimeType: "video/mp4",
+      },
+    };
+
+    if (options.sourceVideo) {
+      const src = String(options.sourceVideo);
+      const match = src.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) {
+        params.video = {
+          data: match[2],
+          mimeType: match[1],
+        };
+      } else {
+        params.video = {
+          uri: src,
+        };
+      }
+
+      params.prompt = `Recompose ou transforme la vidéo source selon le prompt suivant : ${prompt}`;
+    }
+
+    let operation = await GEMINI_CLIENT.models.generateVideos(params);
+    const start = Date.now();
+    while (!operation.done && Date.now() - start < 120000) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      operation = await GEMINI_CLIENT.operations.getVideosOperation({ operation });
+    }
+
+    const videoAsset = operation.response?.generatedVideos?.[0]?.video;
+    if (videoAsset?.uri) {
+      return videoAsset.uri.trim();
+    }
+
+    if (videoAsset?.videoBytes) {
+      return `data:${videoAsset.mimeType ?? "video/mp4"};base64,${videoAsset.videoBytes}`.trim();
+    }
+
+    if (operation.response) {
+      return parseVideoResponse(operation.response) || parseTextResponse(operation.response);
+    }
+
+    throw new Error("Gemini video generation did not return a valid video.");
+  }
+
+  if (provider === "HUGGINGFACE") {
+    const body: any = {
+      inputs: prompt,
+      options: {
+        wait_for_model: true,
+      },
+    };
+
+    if (options.sourceVideo) {
+      body.inputs = `Transforme la vidéo source selon le prompt suivant : ${prompt}`;
+      body.video = options.sourceVideo;
+    }
+
+    const data = await huggingFaceVideoFetch(body);
+    const maybeUrl = parseVideoResponse(data);
+    if (maybeUrl) {
+      return maybeUrl;
+    }
+
+    throw new Error("HuggingFace video API did not return a valid video URL or base64 payload.");
+  }
+
   throw new Error(`Unsupported AI provider: ${provider}`);
+}
+
+async function requestAudioFromProvider(
+  provider: AIProviderValue,
+  prompt: string,
+  options: { sourceAudio?: string }
+) {
+  if (provider === "AIMUSIC") {
+    const body: any = {
+      model: AIMUSIC_MODEL,
+      prompt,
+      response_format: "url",
+    };
+
+    if (options.sourceAudio) {
+      body.audio = options.sourceAudio;
+      body.prompt = `Transforme l'audio source selon le prompt suivant : ${prompt}`;
+    }
+
+    const data = await aiMusicAudioFetch(body);
+    return parseAudioResponse(data);
+  }
+
+  throw new Error(
+    `Audio generation is not supported for provider ${provider}. Available audio providers are AIMUSIC.`
+  );
+}
+
+export async function generateAudioAI(
+  prompt: string,
+  options: { sourceAudio?: string }
+) {
+  const providers = getProvidersForAction("audio");
+
+  const errors: string[] = [];
+  for (const provider of providers) {
+    try {
+      return await requestAudioFromProvider(provider, prompt, options);
+    } catch (error) {
+      errors.push(`${provider}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  throw new Error(
+    `Audio generation failed for all available providers. Details: ${errors.join(" | ")}`
+  );
 }
 
 export async function generateVideoAI(

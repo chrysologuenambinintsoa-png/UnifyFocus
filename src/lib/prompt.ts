@@ -17,7 +17,7 @@ export function normalizePrompt(raw: string | undefined) {
 
 export type PromptIntent = {
   intent: string; // short intent label
-  type: "text" | "image" | "video" | "code" | "unknown";
+  type: "text" | "image" | "video" | "audio" | "code" | "unknown";
   language: string; // guessed language code (fr/en)
   entities: Record<string, string>;
 };
@@ -30,6 +30,7 @@ export function extractPromptIntent(raw: string | undefined): PromptIntent {
   let type: PromptIntent['type'] = "unknown";
   if (has(/\b(image|photo|picture|illustration|dessin|image)\b/)) type = "image";
   else if (has(/\b(video|vidéo|clip|film)\b/)) type = "video";
+  else if (has(/\b(music|musique|audio|song|beat|piste|mélodie|son)\b/)) type = "audio";
   else if (has(/\b(code|refactor|refactoriser|débogu|debug|explain|implémenter|implémentation)\b/)) type = "code";
   else type = "text";
 
@@ -48,6 +49,7 @@ export function extractPromptIntent(raw: string | undefined): PromptIntent {
   const intent = (() => {
     if (type === "image") return "create_image";
     if (type === "video") return "create_video";
+    if (type === "audio") return "create_audio";
     if (type === "code") return "code_task";
     return "write_text";
   })();

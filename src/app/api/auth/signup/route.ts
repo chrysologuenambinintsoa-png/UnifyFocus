@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { isAdminEmail } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
@@ -32,6 +33,8 @@ export async function POST(req: Request) {
         provider: "email",
         credits: 50,
         plan: "free",
+        role: isAdminEmail(email) ? "admin" : "user",
+        isBlocked: false,
       },
     });
 
@@ -44,7 +47,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
@@ -52,9 +55,18 @@ export async function POST(req: Request) {
         avatar: user.avatar,
         credits: user.credits,
         plan: user.plan,
+        role: user.role,
+        isBlocked: user.isBlocked,
       },
     });
-  } catch {
+    res.cookies.set("userId", user.id, {
+      httpOnly: true,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+    });
+    return res;
+  } catch (err) {
+    console.error("[POST /api/auth/signup] Error:", err);
     return NextResponse.json(
       { error: "Erreur lors de l'inscription" },
       { status: 500 }

@@ -301,6 +301,7 @@ function FeatureCard({ feature, onClick }: FeatureCardProps) {
 
 export function DashboardView() {
   const user = useAppStore((s) => s.user);
+  const isAdmin = user?.role === "admin";
   const generations = useAppStore((s) => s.generations);
   const setGenerations = useAppStore((s) => s.setGenerations);
   const setCurrentView = useAppStore((s) => s.setCurrentView);
@@ -349,6 +350,10 @@ export function DashboardView() {
     () => generations.filter((g) => g.type === "video").length,
     [generations]
   );
+  const audioCount = useMemo(
+    () => generations.filter((g) => g.type === "audio").length,
+    [generations]
+  );
 
   // Generate chart data from generations
   const chartData = useMemo(() => {
@@ -375,9 +380,10 @@ export function DashboardView() {
   // Type distribution data
   const typeDistribution = useMemo(() => [
     { name: "Texte", value: textCount, color: "#3b82f6" },
+    { name: "Musique", value: audioCount, color: "#22c55e" },
     { name: "Image", value: imageCount, color: "#a855f7" },
     { name: "Vidéo", value: videoCount, color: "#f43f5e" },
-  ].filter(d => d.value > 0), [textCount, imageCount, videoCount]);
+  ].filter(d => d.value > 0), [textCount, audioCount, imageCount, videoCount]);
 
   /* ── Handlers ─────────────────────────────────────────────────── */
   function handleNavigateToEditor(type: "text" | "image" | "video") {
@@ -433,24 +439,22 @@ export function DashboardView() {
                 Créez du contenu professionnel avec l'IA générative. Texte, images et vidéos en quelques clics.
               </motion.p>
             </div>
-            <motion.div 
-              className="flex items-center gap-4"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <div className="flex items-center gap-3 rounded-xl border border-gold/20 bg-gold/5 px-5 py-3">
-                <div className="flex size-10 items-center justify-center rounded-full bg-gold/20">
-                  <Coins className="size-5 text-gold" />
+            {!isAdmin && (
+              <motion.div 
+                className="flex items-center gap-4"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <div className="flex items-center gap-2.5 rounded-lg bg-muted/50 px-4 py-2 border border-border/50">
+                  <Coins className="size-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Crédits</p>
+                    <p className="text-sm font-semibold text-foreground tabular-nums">{user.credits}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Crédits disponibles</p>
-                  <p className="text-xl font-bold text-gold">{user.credits}</p>
-                </div>
-              </div>
-
-
-            </motion.div>
+              </motion.div>
+            )}
           </div>
         </div>
       </motion.section>
@@ -812,6 +816,8 @@ function GenerationCard({
   generation: Generation;
   index: number;
 }) {
+  const user = useAppStore((s) => s.user);
+  const isAdmin = user?.role === "admin";
   const { t } = useTranslation();
   const typeConfig = getTypeConfig(gen.type);
   const statusConfig = getStatusConfig(gen.status);
@@ -863,11 +869,13 @@ function GenerationCard({
       </div>
 
       {/* Meta */}
-      <div className="flex items-center gap-3 shrink-0">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Coins className="size-3" />
-          {gen.credits}
-        </div>
+        <div className="flex items-center gap-3 shrink-0">
+        {!isAdmin && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Coins className="size-3" />
+            {gen.credits}
+          </div>
+        )}
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Clock className="size-3" />
           {getRelativeTime(gen.createdAt)}

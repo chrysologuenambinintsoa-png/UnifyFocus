@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { isAdminEmail } from "@/lib/auth";
 
 async function fetchGoogleUser(accessToken?: string, idToken?: string) {
   try {
@@ -86,10 +87,22 @@ export async function POST(req: Request) {
       if (info.name && !existing.name) {
         updateData.name = info.name;
       }
+      if (isAdminEmail(email) && existing.role !== "admin") {
+        updateData.role = "admin";
+      }
 
       if (Object.keys(updateData).length > 0) {
         await db.user.update({ where: { id: existing.id }, data: updateData });
       }
+
+      if (existing.isBlocked) {
+        return NextResponse.json(
+          { error: "Compte bloqué. Contactez un administrateur." },
+          { status: 403 }
+        );
+      }
+
+      const role = (updateData.role as string) || existing.role;
 
       const resp = NextResponse.json({
         user: {
@@ -99,6 +112,8 @@ export async function POST(req: Request) {
           avatar: existing.avatar || info.avatar || null,
           credits: existing.credits,
           plan: existing.plan,
+          role: role,
+          isBlocked: existing.isBlocked,
         },
       });
       // Persist session with a simple HttpOnly cookie (userId)
@@ -118,6 +133,8 @@ export async function POST(req: Request) {
         provider: p,
         credits: 50,
         plan: "free",
+        role: isAdminEmail(email) ? "admin" : "user",
+        isBlocked: false,
       },
     });
 
@@ -137,6 +154,8 @@ export async function POST(req: Request) {
         avatar: user.avatar,
         credits: user.credits,
         plan: user.plan,
+        role: user.role,
+        isBlocked: user.isBlocked,
       },
     });
     // Persist session with a simple HttpOnly cookie (userId)
@@ -147,6 +166,8 @@ export async function POST(req: Request) {
     });
     return resp;
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Erreur OAuth" }, { status: 500 });
+    console.error("[POST /api/auth/oauth] Error:", err);
+    const message = err instanceof Error ? err.message : "Erreur OAuth";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

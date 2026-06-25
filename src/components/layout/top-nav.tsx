@@ -32,6 +32,8 @@ import {
   Building2,
   ArrowRight,
   Flame,
+  Shield,
+  Music,
 } from "lucide-react";
 import { useAppStore } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
@@ -214,7 +216,7 @@ export function TopNav({ onNavigate, onOpenAuth, onOpenProperties, onOpenMobileS
 
   // Tool configuration for hover cards
   const toolConfig = [
-    { id: "text", icon: FileText, label: "Texte", description: "Génération de contenu", color: "blue" },
+    { id: "text", icon: Music, label: "Musique", description: "Génération musicale", color: "blue" },
     { id: "image", icon: ImageIcon, label: "Image", description: "Création visuelle", color: "purple" },
     { id: "video", icon: Video, label: "Vidéo", description: "Production vidéo", color: "orange" },
     { id: "code", icon: Code, label: "Code", description: "Génération de code", color: "green" },
@@ -363,54 +365,88 @@ export function TopNav({ onNavigate, onOpenAuth, onOpenProperties, onOpenMobileS
 
           {/* Right Section - User & Actions */}
           <div className="flex items-center gap-3">
-            {/* Credits Display - Enhanced with animation */}
-            {isAuthenticated && user && (
-              <motion.div 
-                className="relative"
+            {/* Credits Display - Enhanced with colored badge */}
+            {isAuthenticated && user && user.role !== "admin" && (
+              <motion.div
                 whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="relative"
               >
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 backdrop-blur-md">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg blur opacity-30" />
+                <div className="relative flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-emerald-500/20 border border-emerald-500/30 backdrop-blur-md">
                   <motion.div
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                    animate={{ rotate: [0, 15, -15, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                   >
-                    <Coins className="size-4 text-amber-400" />
+                    <Coins className="size-4 text-emerald-400" />
                   </motion.div>
-                  <span className="text-sm font-bold text-amber-400">{user.credits}</span>
+                  <span className="text-xs font-bold text-emerald-300 tabular-nums">{user.credits}</span>
+                  <span className="text-[10px] text-emerald-400/70">crédits</span>
+                  <motion.div
+                    animate={{ scale: [1, 1.3, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                  />
                 </div>
               </motion.div>
             )}
 
-            {/* Plan Badge - Animated */}
+            {/* Admin & Plan Badges */}
             {isAuthenticated && user && (
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative hidden sm:flex"
-              >
-                <div className={`relative px-3 py-1.5 rounded-xl bg-gradient-to-r ${planConfig.gradient} border ${planConfig.borderColor} backdrop-blur-md overflow-hidden`}>
-                  {/* Animated shimmer */}
+              <div className="flex items-center gap-2">
+                {/* Admin Badge */}
+                {user.role === "admin" && (
                   <motion.div
-                    animate={{ x: ["-100%", "200%"] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                  />
-                  
-                  <div className="relative flex items-center gap-2">
-                    <PlanIcon className={`size-3.5 ${planConfig.textColor}`} />
-                    <span className={`text-xs font-bold ${planConfig.textColor}`}>
-                      {planConfig.label}
-                    </span>
-                    {currentPlan !== "free" && (
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="hidden sm:flex relative"
+                  >
+                    <div className="relative px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-500/20 via-purple-500/10 to-violet-500/20 border border-violet-500/30 backdrop-blur-md overflow-hidden">
                       <motion.div
-                        animate={{ scale: [1, 1.2, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-gradient-to-r ${planConfig.color}`}
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
                       />
-                    )}
-                  </div>
-                </div>
-              </motion.div>
+                      <div className="relative flex items-center gap-2">
+                        <Shield className="size-3.5 text-violet-400" />
+                        <span className="text-xs font-bold text-violet-300">Admin</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+                
+                {/* Plan Badge - Hidden for admin */}
+                {user.role !== "admin" && (
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative hidden sm:flex"
+                  >
+                    <div className={`relative px-3 py-1.5 rounded-xl bg-gradient-to-r ${planConfig.gradient} border ${planConfig.borderColor} backdrop-blur-md overflow-hidden`}>
+                      {/* Animated shimmer */}
+                      <motion.div
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                      />
+                      
+                      <div className="relative flex items-center gap-2">
+                        <PlanIcon className={`size-3.5 ${planConfig.textColor}`} />
+                        <span className={`text-xs font-bold ${planConfig.textColor}`}>
+                          {planConfig.label}
+                        </span>
+                        {currentPlan !== "free" && (
+                          <motion.div
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-gradient-to-r ${planConfig.color}`}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
             )}
 
             {/* Theme Toggle - Enhanced */}
@@ -470,7 +506,14 @@ export function TopNav({ onNavigate, onOpenAuth, onOpenProperties, onOpenMobileS
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">{user.name || "Utilisateur"}</p>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-sm font-semibold text-foreground truncate">{user.name || "Utilisateur"}</p>
+                          {user.role === "admin" && (
+                            <Badge variant="secondary" className="bg-violet-500/20 text-violet-300 text-xs">
+                              Admin
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       </div>
                     </div>
@@ -493,8 +536,15 @@ export function TopNav({ onNavigate, onOpenAuth, onOpenProperties, onOpenMobileS
                     <span>Statistiques</span>
                     <ArrowRight className="size-3 ml-auto text-muted-foreground" />
                   </DropdownMenuItem>
+                  {user.role === "admin" && (
+                    <DropdownMenuItem onClick={() => setCurrentView("admin")} className="py-2.5 px-3 rounded-lg hover:bg-white/10 cursor-pointer">
+                      <Shield className="size-4 mr-2 text-muted-foreground" />
+                      <span>Admin</span>
+                      <ArrowRight className="size-3 ml-auto text-muted-foreground" />
+                    </DropdownMenuItem>
+                  )}
                   
-                  {currentPlan === "free" && (
+                  {currentPlan === "free" && user.role !== "admin" && (
                     <>
                       <DropdownMenuSeparator className="bg-white/10 my-2" />
                       <DropdownMenuItem 

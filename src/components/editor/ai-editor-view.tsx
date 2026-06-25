@@ -52,6 +52,7 @@ import {
   VideoIcon,
   Code2,
   FileTextIcon,
+  Music,
 } from "lucide-react";
 
 import { useAppStore, Conversation, AVAILABLE_MODELS } from "@/store/app-store";
@@ -86,14 +87,16 @@ import {
 // ---------------------------------------------------------------------------
 
 const TAB_CONFIG = [
-  { key: "text" as const, label: "Texte", icon: FileText, credits: 1, color: "blue" },
+  { key: "text" as const, label: "Musique", icon: Music, credits: 1, color: "blue" },
   { key: "image" as const, label: "Image", icon: ImageIcon, credits: 3, color: "purple" },
   { key: "video" as const, label: "Vidéo", icon: Video, credits: 5, color: "orange" },
   { key: "code" as const, label: "Code", icon: Code, credits: 2, color: "green" },
 ] as const;
 
 const TEXT_SUBTABS = [
-  { key: "text-generation", label: "Texte", icon: Type, credits: 1, description: "Génération de contenu texte" },
+  { key: "text-generation", label: "Génération", icon: Music, credits: 1, description: "Génération de musique" },
+  { key: "text-to-music", label: "Texte → Musique", icon: Music, credits: 2, description: "Créez une piste à partir d'un prompt textuel" },
+  { key: "music-to-music", label: "Musique → Musique", icon: Sparkles, credits: 2, description: "Transformez une idée musicale existante" },
 ];
 
 const IMAGE_SUBTABS = [
@@ -116,7 +119,7 @@ const CODE_SUBTABS = [
 ];
 
 const ALLOWED_FILE_TYPES: Record<"text" | "image" | "video" | "code", string[]> = {
-  text: [".txt", ".doc", ".docx", ".pdf", ".md"],
+  text: [".txt", ".doc", ".docx", ".pdf", ".md", ".mp3", ".wav", ".ogg", ".m4a"],
   image: [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"],
   video: [".mp4", ".avi", ".mov", ".wmv", ".webm"],
   code: [],
@@ -141,13 +144,15 @@ type ResultMeta = {
 };
 
 type ResultPayload = {
-  type: "text" | "image" | "video" | "code";
+  type: "text" | "image" | "video" | "code" | "audio";
   subtype: string;
   result: string;
 };
 
 const PLACEHOLDERS: Record<string, string> = {
-  text: "Décrivez le texte que vous souhaitez générer...",
+  text: "Décrivez la musique que vous souhaitez générer (genre, tempo, ambiance...)...",
+  "text-to-music": "Donnez les paroles, l'ambiance ou le style pour créer votre musique...",
+  "music-to-music": "Décrivez la transformation musicale souhaitée ou le style de la piste cible...",
   image: "Décrivez l'image que vous souhaitez créer en détail...",
   video: "Décrivez la vidéo que vous souhaitez produire...",
   code: "Décrivez le code que vous souhaitez générer...",
@@ -161,7 +166,9 @@ const API_ENDPOINTS: Record<string, string> = {
 };
 
 const SUBTAB_ENDPOINTS: Record<string, string> = {
-  "text-generation": "/api/generate/text",
+  "text-generation": "/api/generate/audio",
+  "text-to-music": "/api/generate/audio",
+  "music-to-music": "/api/generate/audio",
   "text-to-image": "/api/generate/image",
   "image-to-image": "/api/generate/image",
   "image-to-text": "/api/generate/text",
@@ -175,14 +182,16 @@ const SUBTAB_ENDPOINTS: Record<string, string> = {
 };
 
 const TAB_HELP_TEXT: Record<string, string> = {
-  text: "Génère du contenu à partir de votre prompt.",
+  text: "Génère de la musique à partir de votre prompt.",
   image: "Génère une nouvelle image ou transforme une image source.",
   video: "Génère une nouvelle vidéo ou transforme une vidéo source.",
   code: "Générez, expliquez ou déboguez du code dans n'importe quel langage.",
 };
 
 const RESULT_DISPLAY_CONFIG: Record<string, { title: string; icon: LucideIcon; color: keyof typeof TAB_COLORS }> = {
-  "text-generation": { title: "Texte généré", icon: FileText, color: "blue" },
+  "text-generation": { title: "Musique générée", icon: Music, color: "blue" },
+  "text-to-music": { title: "Musique générée", icon: Music, color: "blue" },
+  "music-to-music": { title: "Musique transformée", icon: Sparkles, color: "blue" },
   "text-to-image": { title: "Image générée", icon: ImageIcon, color: "purple" },
   "image-to-image": { title: "Image transformée", icon: Camera, color: "purple" },
   "image-to-text": { title: "Texte extrait", icon: Type, color: "purple" },
@@ -196,7 +205,9 @@ const RESULT_DISPLAY_CONFIG: Record<string, { title: string; icon: LucideIcon; c
 };
 
 const RESULT_TOAST_LABEL: Record<string, string> = {
-  "text-generation": "texte",
+  "text-generation": "musique",
+  "text-to-music": "musique",
+  "music-to-music": "musique",
   "text-to-image": "image",
   "image-to-image": "image",
   "image-to-text": "texte",
@@ -1319,9 +1330,9 @@ function ProfessionalGeneratingAnimation({ tab, subtype, streamingContent }: { t
                         repeat: Infinity,
                         ease: "easeInOut",
                       }}
-                      className={`relative w-28 h-28 rounded-full ${colors.bgActive} flex items-center justify-center shadow-2xl overflow-hidden`}
+                      className="relative w-28 h-28 rounded-full flex items-center justify-center"
                     >
-                      <div className="w-16 h-16">
+                      <div className="w-20 h-20">
                         <img src="/logo.svg" alt="UnifyFocus" className="w-full h-full" />
                       </div>
                     </motion.div>
@@ -1413,12 +1424,12 @@ function TextResult({
     try {
       await navigator.clipboard.writeText(result);
       setCopied(true);
-      toast({ title: "Copié !", description: "Texte copié dans le presse-papiers." });
+      toast({ title: "Copié !", description: "Musique copiée dans le presse-papiers." });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast({
         title: "Erreur",
-        description: "Impossible de copier le texte.",
+        description: "Impossible de copier la musique.",
         variant: "destructive",
       });
     }
@@ -1577,12 +1588,15 @@ function MediaViewer({
     >
       <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" />
       
-      <button
+      <motion.button
         onClick={onClose}
-        className="absolute top-6 right-6 z-50 w-12 h-12 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors backdrop-blur-md border border-white/10"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        className="absolute top-6 right-6 z-50 w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-all duration-300 shadow-lg shadow-red-500/40 hover:shadow-red-500/60"
+        style={{ boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)' }}
       >
-        <X className="w-5 h-5 text-white" />
-      </button>
+        <X className="w-7 h-7 text-white" strokeWidth={3} />
+      </motion.button>
 
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
@@ -1756,7 +1770,7 @@ function ImageResult({
       </div>
 
       {/* Result card */}
-      <GlassCard variant="output" className="overflow-hidden max-w-3xl mx-auto">
+      <GlassCard variant="output" className="overflow-hidden max-w-xl mx-auto">
         <div className={`absolute top-0 left-0 right-0 h-1 ${TAB_COLORS[meta.color].bgActive} opacity-80`} />
         
         <div className="p-5">
@@ -1778,7 +1792,7 @@ function ImageResult({
                 transition={{ delay: 0.3, duration: 0.5 }}
                 src={result}
                 alt="Image générée par IA"
-                className="w-full max-h-[60vh] rounded-xl object-contain group-hover:scale-105 transition-transform duration-500"
+                className="w-full max-h-[480px] rounded-xl object-contain group-hover:scale-105 transition-transform duration-500"
               />
             </motion.div>
           ) : (
@@ -1983,7 +1997,7 @@ function VideoResult({
       </div>
 
       {/* Result card */}
-      <GlassCard variant="output" className="overflow-hidden max-w-3xl mx-auto">
+      <GlassCard variant="output" className="overflow-hidden max-w-xl mx-auto">
         <div className={`absolute top-0 left-0 right-0 h-1 ${TAB_COLORS[meta.color].bgActive} opacity-80`} />
         
         <div className="p-5">
@@ -2005,7 +2019,7 @@ function VideoResult({
                 transition={{ delay: 0.3, duration: 0.5 }}
                 controls
                 src={result}
-                className="w-full max-h-[60vh] rounded-xl object-contain group-hover:scale-105 transition-transform duration-500"
+                className="w-full max-h-[480px] rounded-xl object-contain group-hover:scale-105 transition-transform duration-500"
               />
             </motion.div>
           ) : (
@@ -2067,6 +2081,161 @@ function VideoResult({
   );
 }
 
+function AudioResult({
+  result,
+  meta,
+  onRegenerate,
+  onNew,
+}: {
+  result: string;
+  meta: ResultMeta;
+  onRegenerate: () => void;
+  onNew: () => void;
+}) {
+  const { toast } = useToast();
+  const [audioSrcIsValid, setAudioSrcIsValid] = useState(false);
+
+  useEffect(() => {
+    if (!result) {
+      setAudioSrcIsValid(false);
+      return;
+    }
+    const trimmed = result.trim();
+    const isDataAudio = trimmed.startsWith("data:audio/");
+    if (isDataAudio) {
+      setAudioSrcIsValid(true);
+      return;
+    }
+    try {
+      new URL(trimmed);
+      setAudioSrcIsValid(true);
+    } catch {
+      setAudioSrcIsValid(false);
+    }
+  }, [result]);
+
+  const handleDownload = useCallback(() => {
+    if (!audioSrcIsValid) {
+      toast({
+        title: "Erreur",
+        description: "Aucun fichier audio valide à télécharger.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    downloadHref(result, `unifyfocus-audio-${Date.now()}.mp3`);
+    toast({ title: "Téléchargement lancé", description: "Audio téléchargé avec succès." });
+  }, [audioSrcIsValid, result, toast]);
+
+  return (
+    <motion.div
+      key="result-audio"
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+      className="w-full"
+    >
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className={`relative w-12 h-12 rounded-xl ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center shadow-lg`}
+          >
+            <div className={`absolute inset-0 rounded-xl ${TAB_COLORS[meta.color].bgActive} opacity-40 blur-md`} />
+            <meta.icon className="w-5 h-5 text-white relative z-10" />
+          </motion.div>
+          <div>
+            <motion.p
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-base font-semibold text-foreground"
+            >
+              {meta.title}
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-xs text-muted-foreground flex items-center gap-1"
+            >
+              <Bot className="w-3 h-3" />
+              Généré par UnifyFocus AI
+            </motion.p>
+          </div>
+        </div>
+        {audioSrcIsValid && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDownload}
+              className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <Download className="w-4 h-4 text-muted-foreground" />
+            </Button>
+          </motion.div>
+        )}
+      </div>
+
+      <GlassCard variant="output" className="overflow-hidden max-w-3xl mx-auto">
+        <div className={`absolute top-0 left-0 right-0 h-1 ${TAB_COLORS[meta.color].bgActive} opacity-80`} />
+        <div className="p-5">
+          {audioSrcIsValid ? (
+            <div className="rounded-xl bg-slate-950/70 p-6 border border-white/10">
+              <audio controls src={result} className="w-full" />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-10">
+              <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
+                <Music className="w-8 h-8 text-destructive" />
+              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                L'audio n'a pas pu être généré correctement.
+              </p>
+              <p className="text-xs text-muted-foreground mt-2 break-all text-center">{result}</p>
+            </div>
+          )}
+        </div>
+      </GlassCard>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="flex items-center gap-3 mt-5"
+      >
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onRegenerate}
+          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-md"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Régénérer
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onNew}
+          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-md"
+        >
+          <Plus className="w-4 h-4" />
+          Nouveau
+        </motion.button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function CodeResult({
   result,
   meta,
@@ -2097,38 +2266,75 @@ function CodeResult({
     }
   }, [result, toast]);
 
+  // Improved syntax highlighting with proper HTML escaping
   const highlightCode = (code: string) => {
-    const keywords = ['const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'class', 'import', 'export', 'from', 'async', 'await', 'try', 'catch', 'throw', 'new', 'this', 'typeof', 'instanceof'];
-    const strings = /(["'`])(?:(?!\1)[^\\]|\\.)*\1/g;
-    const comments = /(\/\/.*$|\/\*[\s\S]*?\*\/)/gm;
+    // First, escape HTML entities to prevent XSS and rendering issues
+    const escapeHtml = (text: string) => {
+      const map: Record<string, string> = {
+        '&': '&',
+        '<': '<',
+        '>': '>',
+        '"': '"',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, (m) => map[m]);
+    };
+
+    // Escape the code first
+    let escaped = escapeHtml(code);
+
+    // Syntax highlighting patterns (applied after escaping)
+    // Comments (single-line and multi-line)
+    escaped = escaped.replace(/(\/\/.*$)/gm, '<span class="text-slate-500 italic">$1</span>');
+    escaped = escaped.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="text-slate-500 italic">$1</span>');
     
-    let highlighted = code
-      .replace(/&/g, '&')
-      .replace(/</g, '<')
-      .replace(/>/g, '>');
+    // Strings (single, double, and template literals)
+    escaped = escaped.replace(/(&#039;[^&#]*?&#039;)/g, '<span class="text-emerald-400">$1</span>');
+    escaped = escaped.replace(/("[^&]*?")/g, '<span class="text-emerald-400">$1</span>');
+    escaped = escaped.replace(/(`[^`]*?`)/g, '<span class="text-emerald-400">$1</span>');
     
-    highlighted = highlighted.replace(strings, '<span class="text-emerald-400">$&</span>');
-    highlighted = highlighted.replace(comments, '<span class="text-gray-500 italic">$&</span>');
+    // Keywords
+    const keywords = [
+      'const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 
+      'class', 'import', 'export', 'from', 'async', 'await', 'try', 'catch', 
+      'throw', 'new', 'this', 'typeof', 'instanceof', 'switch', 'case', 'break',
+      'continue', 'default', 'do', 'in', 'of', 'yield', 'delete', 'void',
+      'true', 'false', 'null', 'undefined', 'NaN', 'Infinity'
+    ];
+    
     keywords.forEach(keyword => {
       const regex = new RegExp(`\\b(${keyword})\\b`, 'g');
-      highlighted = highlighted.replace(regex, '<span class="text-purple-400 font-medium">$1</span>');
+      escaped = escaped.replace(regex, '<span class="text-violet-400 font-medium">$1</span>');
     });
-    highlighted = highlighted.replace(/\b(\d+\.?\d*)\b/g, '<span class="text-orange-400">$1</span>');
-    
-    return highlighted;
+
+    // Numbers
+    escaped = escaped.replace(/\b(\d+\.?\d*)\b/g, '<span class="text-amber-400">$1</span>');
+
+    // Function calls
+    escaped = escaped.replace(/\b([a-zA-Z_]\w*)\s*(?=\()/g, '<span class="text-blue-400">$1</span>');
+
+    return escaped;
   };
 
   const getLanguageFromCode = (code: string): string => {
-    if (code.includes('import React') || code.includes('import { useState')) return 'jsx';
-    if (code.includes('def ') || code.includes('import ')) return 'python';
-    if (code.includes('function ') || code.includes('const ') || code.includes('let ')) return 'javascript';
-    if (code.includes('public class') || code.includes('public static')) return 'java';
-    if (code.includes('fn ') || code.includes('let mut')) return 'rust';
-    if (code.includes('package ') || code.includes('import (')) return 'go';
-    return 'plaintext';
+    if (code.includes('import React') || code.includes('import { useState') || code.includes('import { useEffect')) return 'JSX/React';
+    if (code.includes('def ') || code.includes('import ') || code.includes('print(')) return 'Python';
+    if (code.includes('function ') || code.includes('const ') || code.includes('let ') || code.includes('console.log')) return 'JavaScript';
+    if (code.includes('public class') || code.includes('public static') || code.includes('System.out')) return 'Java';
+    if (code.includes('fn ') || code.includes('let mut') || code.includes('println!')) return 'Rust';
+    if (code.includes('package ') || code.includes('import (') || code.includes('fmt.Println')) return 'Go';
+    if (code.includes('<?php') || code.includes('echo ') || code.includes('$')) return 'PHP';
+    if (code.includes('public ') && code.includes('static ') && code.includes('void Main')) return 'C#';
+    if (code.includes('#include') || code.includes('int main') || code.includes('std::')) return 'C++';
+    if (code.includes('<') && code.includes('>') && code.includes('</') && !code.includes('import')) return 'HTML';
+    if (code.includes('{') && code.includes(':') && code.includes('}')) return 'JSON';
+    return 'Code';
   };
 
   const language = getLanguageFromCode(result);
+
+  // Count lines for line numbers
+  const lines = result.split('\n');
 
   return (
     <motion.div
@@ -2175,7 +2381,7 @@ function CodeResult({
           transition={{ delay: 0.5 }}
           className="flex items-center gap-2"
         >
-          <Badge variant="outline" className="rounded-lg text-xs bg-white/5 border-white/10">
+          <Badge variant="outline" className="rounded-lg text-xs bg-white/5 border-white/10 uppercase">
             {language}
           </Badge>
           <Button
@@ -2183,6 +2389,7 @@ function CodeResult({
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
             className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors"
+            title={isExpanded ? "Réduire" : "Agrandir"}
           >
             {isExpanded ? (
               <Minimize2 className="w-4 h-4 text-muted-foreground" />
@@ -2195,6 +2402,7 @@ function CodeResult({
             size="sm"
             onClick={handleCopy}
             className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors"
+            title="Copier le code"
           >
             {copied ? (
               <Check className="w-4 h-4 text-emerald-500" />
@@ -2205,16 +2413,38 @@ function CodeResult({
         </motion.div>
       </div>
 
-      {/* Result card */}
-      <GlassCard variant="output" className="overflow-hidden" style={{ maxHeight: isExpanded ? 'none' : '700px', display: 'flex', flexDirection: 'column' }}>
+      {/* Result card with professional code editor styling */}
+      <GlassCard variant="output" className="overflow-hidden" style={{ maxHeight: isExpanded ? 'none' : '600px', display: 'flex', flexDirection: 'column' }}>
         <div className={`absolute top-0 left-0 right-0 h-1 ${TAB_COLORS[meta.color].bgActive} opacity-80`} />
         
+        {/* Code editor container */}
         <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-white/10">
-          <pre className="p-5 bg-slate-950/80 text-slate-100 font-mono text-sm leading-relaxed overflow-x-auto">
-            <code
-              dangerouslySetInnerHTML={{ __html: highlightCode(result) }}
-            />
-          </pre>
+          <div className="relative">
+            {/* Line numbers */}
+            <div className="absolute left-0 top-0 bottom-0 w-12 bg-slate-900/50 border-r border-white/5 flex flex-col items-end py-4 pr-3 select-none">
+              {lines.map((_, i) => (
+                <span key={i} className="text-xs text-slate-600 font-mono leading-6 h-6">
+                  {i + 1}
+                </span>
+              ))}
+            </div>
+            
+            {/* Code content */}
+            <pre className="pl-14 pr-5 py-4 font-mono text-sm leading-6 overflow-x-auto">
+              <code
+                className="text-slate-200"
+                dangerouslySetInnerHTML={{ __html: highlightCode(result) }}
+              />
+            </pre>
+          </div>
+        </div>
+        
+        {/* Footer with line count */}
+        <div className="border-t border-white/5 px-4 py-2 bg-slate-900/30">
+          <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+            <span>{lines.length} ligne{lines.length > 1 ? 's' : ''}</span>
+            <span>{result.length} caractère{result.length > 1 ? 's' : ''}</span>
+          </div>
         </div>
       </GlassCard>
 
@@ -2503,7 +2733,7 @@ export function AiEditorView() {
 
   const getPlaceholder = useCallback(() => {
     const placeholders: Record<string, string> = {
-      'text-generation': 'Décrivez le texte que vous souhaitez générer...',
+      'text-generation': 'Décrivez la musique que vous souhaitez générer...',
       'text-to-image': 'Décrivez l\'image que vous souhaitez créer en détail...',
       'image-to-image': 'Joignez une image et décrivez les transformations souhaitées...',
       'image-to-text': 'Joignez une image pour en extraire le texte...',
@@ -2551,7 +2781,7 @@ export function AiEditorView() {
     () =>
       prompt.trim().length > 0 &&
       !isGenerating &&
-      (user?.credits ?? 0) >= currentCredits &&
+      (user?.role === "admin" || (user?.credits ?? 0) >= currentCredits) &&
       (!requiresSourceFile || hasSourceFile),
     [prompt, isGenerating, user, currentCredits, requiresSourceFile, hasSourceFile]
   );
@@ -2559,7 +2789,11 @@ export function AiEditorView() {
   const generateButtonLabel = useMemo(() => {
     switch (selectedSubtool) {
       case "text-generation":
-        return "Générer le texte";
+        return "Générer la musique";
+      case "text-to-music":
+        return "Générer la musique";
+      case "music-to-music":
+        return "Transformer la musique";
       case "text-to-image":
         return "Générer l'image";
       case "image-to-image":
@@ -2653,9 +2887,12 @@ export function AiEditorView() {
         const sourceFile = attachedFiles[0];
         if (sourceFile.type.startsWith("image/")) {
           options.sourceImage = await readFileAsDataUrl(sourceFile.file);
-        }
-        if (sourceFile.type.startsWith("video/")) {
+        } else if (sourceFile.type.startsWith("video/")) {
           options.sourceVideo = await readFileAsDataUrl(sourceFile.file);
+        } else if (sourceFile.type.startsWith("audio/")) {
+          options.sourceAudio = await readFileAsDataUrl(sourceFile.file);
+        } else {
+          options.sourceDocument = await readFileAsDataUrl(sourceFile.file);
         }
       }
 
@@ -2709,7 +2946,11 @@ export function AiEditorView() {
       setPrompt("");
       clearAttachedFiles();
 
-      if (currentConversation && editorTab === "text") {
+      if (
+        currentConversation &&
+        editorTab === "text" &&
+        !["text-generation", "text-to-music", "music-to-music"].includes(selectedSubtool)
+      ) {
         setMessages((prev) => [
           ...prev,
           { role: "user", content: trimmedPrompt },
@@ -2914,7 +3155,12 @@ export function AiEditorView() {
   }, [editorTab]);
 
   useEffect(() => {
-    if (isGenerating && (editorTab === "text" || editorTab === "code")) {
+    if (
+      isGenerating &&
+      (editorTab === "code" ||
+        (editorTab === "text" &&
+          !["text-generation", "text-to-music", "music-to-music"].includes(selectedSubtool)))
+    ) {
       setStreamingContent("");
       
       const startStreaming = async () => {
@@ -3012,6 +3258,17 @@ export function AiEditorView() {
     if (lastResult && lastResult.type === "video" && lastResult.result) {
       return (
         <VideoResult
+          result={lastResult.result}
+          meta={getResultMeta(lastResult.subtype, editorTab)}
+          onRegenerate={handleRegenerate}
+          onNew={handleNew}
+        />
+      );
+    }
+
+    if (lastResult && lastResult.type === "audio" && lastResult.result) {
+      return (
+        <AudioResult
           result={lastResult.result}
           meta={getResultMeta(lastResult.subtype, editorTab)}
           onRegenerate={handleRegenerate}
@@ -3285,7 +3542,7 @@ export function AiEditorView() {
                   </motion.button>
                 </div>
 
-                {(user?.credits ?? 0) < currentCredits && (
+                {user?.role !== "admin" && (user?.credits ?? 0) < currentCredits && (
                   <div className="px-4 pb-4">
                     <div className="flex items-center gap-2 text-xs text-destructive">
                       <Coins className="w-3 h-3" />

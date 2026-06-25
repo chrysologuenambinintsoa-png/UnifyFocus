@@ -1,36 +1,17 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { db } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth";
 
 export async function GET(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
-
-    if (!userId) {
+    const user = await getSessionUser();
+    if (!user) {
       return NextResponse.json({ user: null });
     }
 
-    const user = await db.user.findUnique({ where: { id: userId } });
-
-    if (!user) {
-      // Clear invalid cookie
-      const res = NextResponse.json({ user: null });
-      res.cookies.set("userId", "", { httpOnly: true, path: "/", maxAge: 0 });
-      return res;
-    }
-
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatar: user.avatar,
-        credits: user.credits,
-        plan: user.plan,
-      },
-    });
+    return NextResponse.json({ user });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });
+    console.error("[GET /api/auth/me] Error:", err);
+    const message = err instanceof Error ? err.message : "Erreur";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

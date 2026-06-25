@@ -35,6 +35,7 @@ import {
   Type,
   Zap,
   MousePointer2,
+  Music,
 } from "lucide-react";
 
 import { Logo } from "@/components/ui/logo";
@@ -100,10 +101,10 @@ const scaleOnHover = {
 
 const features = [
   {
-    icon: FileText,
-    title: "Génération de Texte",
+    icon: Music,
+    title: "Génération Vocale",
     description:
-      "Créez du contenu captivant, articles, scripts et plus encore avec nos modèles de langage avancés.",
+      "Créez des voix off et des narrations de haute qualité avec nos modèles de synthèse vocale avancés.",
   },
   {
     icon: ImageIcon,
@@ -161,7 +162,7 @@ const pricingPlans = [
     name: "Gratuit",
     price: "0€",
     period: "/mois",
-    features: ["50 crédits", "Génération texte", "1 image/jour", "Support basique"],
+    features: ["50 crédits", "Génération vocale", "1 création/jour", "Support basique"],
     buttonLabel: "Commencer",
     buttonVariant: "outline" as const,
     highlighted: false,
@@ -172,7 +173,7 @@ const pricingPlans = [
     price: "29€",
     period: "/mois",
     features: [
-      "500 crédits",
+      "1000 crédits",
       "Tout type de génération",
       "Priorité IA",
       "Support prioritaire",
@@ -218,6 +219,7 @@ export default function LandingView() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [demoTab, setDemoTab] = useState(0);
   const [demoSlideIndex, setDemoSlideIndex] = useState(0);
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     const checkoutState = searchParams.get("checkout");
@@ -798,7 +800,7 @@ export default function LandingView() {
               className="max-w-2xl text-base text-muted-foreground sm:text-lg md:text-xl"
             >
               Unifiez tous vos outils de création IA en une seule plateforme.
-              Texte, images, vidéos — tout est possible avec UnifyFocus.
+              Musique, images, vidéos — tout est possible avec UnifyFocus.
             </motion.p>
 
             {/* CTAs */}
@@ -886,7 +888,7 @@ export default function LandingView() {
 
                   <div className="flex flex-col gap-3">
                     {[
-                      { icon: Type, label: "Texte" },
+                      { icon: Music, label: "Musique" },
                       { icon: ImageIcon, label: "Image" },
                       { icon: Video, label: "Vidéo" },
                     ].map((item, i) => {
@@ -1314,7 +1316,7 @@ export default function LandingView() {
           {/* Tab Navigation */}
           <div className="flex-shrink-0 flex gap-1 p-2 border-b border-border ">
             {[
-              { id: 0, label: "Texte", icon: Type },
+              { id: 0, label: "Musique", icon: Music },
               { id: 1, label: "Images", icon: ImageIcon },
               { id: 2, label: "Vidéos", icon: Video },
             ].map((tab) => (
@@ -1335,7 +1337,7 @@ export default function LandingView() {
 
           {/* Tab Content */}
           <div className="flex-1 overflow-y-auto p-6 ">
-            {/* Text Generation Demo */}
+            {/* Music Generation Demo */}
             {demoTab === 0 && (
               <motion.div
                 key={`text-${demoSlideIndex % textSlides.length}`}

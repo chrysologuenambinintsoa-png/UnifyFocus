@@ -63,6 +63,7 @@ const THEME_OPTIONS: { value: UserSettings["theme"]; label: string; icon: typeof
 /* ──────────── component ──────────── */
 export default function SettingsView() {
   const { user, setCurrentView, settings, setSettings, updateSettings } = useAppStore();
+  const isAdmin = user?.role === "admin";
   const { toast } = useToast();
   const { theme: currentTheme, setTheme: setNextTheme } = useTheme();
   const { t } = useTranslation();
@@ -375,8 +376,8 @@ export default function SettingsView() {
                 <h4 className="text-sm font-medium mb-2">{t("auto.k_informations_du_compte_487")}</h4>
                 <div className="space-y-1 text-sm text-muted-foreground">
                   <p>Email: {user.email}</p>
-                  <p>Plan: {user.plan === "free" ? "Gratuit" : user.plan === "pro" ? "Pro" : "Enterprise"}</p>
-                  <p>Crédits: {user.credits}</p>
+                  <p>Plan: {isAdmin ? "Administrateur" : user.plan === "free" ? "Gratuit" : user.plan === "pro" ? "Pro" : "Enterprise"}</p>
+                  {!isAdmin && <p>Crédits: {user.credits}</p>}
                 </div>
               </div>
 

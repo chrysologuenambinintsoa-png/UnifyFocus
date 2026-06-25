@@ -29,6 +29,7 @@ import {
   Check,
   AlertCircle,
   Trash2,
+  Music,
 } from "lucide-react";
 import { useAppStore, type Generation } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
@@ -95,6 +96,38 @@ const optionGroups: Record<"text" | "image" | "video" | "code", OptionGroup[]> =
         { value: "persuasif", label: "Persuasif" },
         { value: "narratif", label: "Narratif" },
         { value: "technique", label: "Technique" },
+      ],
+    },
+  ],
+  music: [
+    {
+      id: "style",
+      label: "Genre",
+      options: [
+        { value: "electro", label: "Électro" },
+        { value: "ambient", label: "Ambient" },
+        { value: "orchestral", label: "Orchestral" },
+        { value: "pop", label: "Pop" },
+        { value: "jazz", label: "Jazz" },
+      ],
+    },
+    {
+      id: "length",
+      label: "Durée",
+      options: [
+        { value: "court", label: "Court (30 sec)" },
+        { value: "moyen", label: "Moyen (1 min)" },
+        { value: "long", label: "Long (2 min)" },
+      ],
+    },
+    {
+      id: "tone",
+      label: "Ambiance",
+      options: [
+        { value: "calme", label: "Calme" },
+        { value: "energique", label: "Énergique" },
+        { value: "cinematique", label: "Cinéma" },
+        { value: "dramatic", label: "Dramatique" },
       ],
     },
   ],
@@ -212,6 +245,7 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
   const {
     currentView,
     editorTab,
+    selectedSubtool,
     generations,
     editorOptions,
     setEditorOptions,
@@ -271,6 +305,11 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
       length: "textLength",
       tone: "textTone",
     },
+    music: {
+      style: "textStyle",
+      length: "textLength",
+      tone: "textTone",
+    },
     image: {
       style: "imageStyle",
       format: "imageFormat",
@@ -288,12 +327,57 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
     },
   };
 
-  const currentTool = editorTab || "text";
+  const isMusicTool = ["text-generation", "text-to-music", "music-to-music"].includes(selectedSubtool);
+  const currentTool = isMusicTool ? "music" : editorTab || "text";
   const currentOptions = optionGroups[currentTool as keyof typeof optionGroups] || optionGroups.text;
+
+  const getSelectedToolLabel = () => {
+    switch (selectedSubtool) {
+      case "text-generation":
+        return "Génération de musique";
+      case "text-to-music":
+        return "Texte → Musique";
+      case "music-to-music":
+        return "Musique → Musique";
+      case "text-to-image":
+        return "Texte → Image";
+      case "image-to-image":
+        return "Image → Image";
+      case "image-to-text":
+        return "Image → Texte";
+      case "text-to-video":
+        return "Texte → Vidéo";
+      case "video-to-video":
+        return "Vidéo → Vidéo";
+      case "video-to-text":
+        return "Vidéo → Texte";
+      case "code-generation":
+        return "Génération de code";
+      case "code-refactor":
+        return "Refactorisation de code";
+      case "code-explain":
+        return "Explication de code";
+      case "code-debug":
+        return "Débogage de code";
+      default:
+        return isMusicTool
+          ? "Génération de musique"
+          : currentTool === "text"
+          ? "Génération de musique"
+          : currentTool === "image"
+          ? "Création d'image"
+          : currentTool === "video"
+          ? "Production vidéo"
+          : currentTool === "code"
+          ? "Génération de code"
+          : "Propriétés";
+    }
+  };
 
   const selectedOptions = React.useMemo(() => {
     switch (currentTool) {
       case "text":
+      case "music":
         return {
           style: editorOptions.textStyle,
           length: editorOptions.textLength,
@@ -344,6 +428,7 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
   const getToolIcon = (type: string) => {
     switch (type) {
       case "text": return FileText;
+      case "music": return Music;
       case "image": return ImageIcon;
       case "video": return Video;
       case "code": return Code;
@@ -424,10 +509,7 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
                   className: "size-4 text-accent",
                 })}
                 <span className="text-sm font-medium text-foreground">
-                  {currentTool === "text" && "Génération de texte"}
-                  {currentTool === "image" && "Création d'image"}
-                  {currentTool === "video" && "Production vidéo"}
-                  {currentTool === "code" && "Génération de code"}
+                  {getSelectedToolLabel()}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">

@@ -17,13 +17,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "UnifyFocus — IA Générative pour Créatifs",
   description:
-    "Plateforme SaaS d'intelligence artificielle générative. Créez du texte, des images et des vidéos avec la puissance de l'IA.",
+    "Plateforme SaaS d'intelligence artificielle générative. Créez de la musique, des images et des vidéos avec la puissance de l'IA.",
   keywords: [
     "UnifyFocus",
     "IA",
     "générative",
     "SaaS",
-    "texte",
+    "musique",
     "image",
     "vidéo",
     "intelligence artificielle",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "UnifyFocus — IA Générative pour Créatifs",
     description:
-      "Générez du texte, des images et des vidéos avec la puissance de l'IA.",
+      "Générez de la musique, des images et des vidéos avec la puissance de l'IA.",
     type: "website",
   },
 };

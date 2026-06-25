@@ -25,7 +25,7 @@ const pricingPlans = [
     name: "Gratuit",
     price: "0€",
     period: "/mois",
-    features: ["50 crédits", "Génération texte", "1 image/jour", "Support basique"],
+    features: ["50 crédits", "Génération vocale", "1 création/jour", "Support basique"],
     buttonLabel: "Commencer",
     buttonVariant: "outline",
     highlighted: false,
@@ -35,7 +35,7 @@ const pricingPlans = [
     name: "Pro",
     price: "29€",
     period: "/mois",
-    features: ["500 crédits", "Tout type de génération", "Priorité IA", "Support prioritaire"],
+    features: ["1000 crédits", "Tout type de génération", "Priorité IA", "Support prioritaire"],
     buttonLabel: "Choisir Pro",
     buttonVariant: "default",
     highlighted: true,
@@ -62,12 +62,17 @@ export default function PricingView() {
   const [upgradingPlan, setUpgradingPlan] = React.useState<string | null>(null);
   const { toast } = useToast();
   const user = useAppStore((s) => s.user);
+  const isAdmin = user?.role === "admin";
   const pendingCheckoutRef = React.useRef<string | null>(null);
   const router = useRouter();
 
   const handleSelectPlan = async (newPlan: string) => {
     if (!user) {
       toast({ title: "Connexion requise", description: "Veuillez vous connecter pour souscrire.", variant: "destructive" });
+      return;
+    }
+    if (isAdmin) {
+      toast({ title: "Action non disponible", description: "Les administrateurs ne peuvent pas gérer un abonnement personnel.", variant: "destructive" });
       return;
     }
     const lockKey = `${user.id}`;
@@ -134,6 +139,11 @@ export default function PricingView() {
           <motion.p variants={fadeInUp} className={classMap["k_mt_4_text_muted_foreground_text_base_sm__371"]}>
             Choisissez le plan adapté à vos besoins. Évoluez à votre rythme.
           </motion.p>
+          {isAdmin && (
+            <motion.div variants={fadeInUp} className="mt-6 rounded-2xl border border-border bg-muted/50 p-4 text-sm text-muted-foreground">
+              Les administrateurs n'ont pas accès à la gestion d'abonnement personnelle depuis cette page.
+            </motion.div>
+          )}
         </motion.div>
 
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }} className={classMap["k_mt_14_grid_grid_cols_1_gap_6_md_grid_col_381"]}>
@@ -163,7 +173,7 @@ export default function PricingView() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Button variant={plan.buttonVariant as any} className={`w-full ${plan.highlighted ? "bg-gold text-gold-foreground hover:bg-gold/90" : ""}`} disabled={upgradingPlan !== null} onClick={() => handleSelectPlan(plan.id)}>
+                  <Button variant={plan.buttonVariant as any} className={`w-full ${plan.highlighted ? "bg-gold text-gold-foreground hover:bg-gold/90" : ""}`} disabled={upgradingPlan !== null || isAdmin} onClick={() => handleSelectPlan(plan.id)}>
                     {upgradingPlan && plan.highlighted ? (
                       <span className={classMap["k_flex_items_center_gap_2_89"]}>
                         <span className={classMap["k_size_4_animate_spin_rounded_full_border__391"]} />

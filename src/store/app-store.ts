@@ -9,6 +9,7 @@ export type AppView =
   | "settings"
   | "usage"
   | "pricing"
+  | "admin"
   | "help";
 
 export interface User {
@@ -19,6 +20,9 @@ export interface User {
   provider: string;
   credits: number;
   plan: "free" | "pro" | "enterprise";
+  role: "user" | "admin";
+  isBlocked?: boolean;
+  createdAt: string;
 }
 
 export interface UserSettings {
@@ -34,7 +38,7 @@ export interface UserSettings {
 
 export interface Generation {
   id: string;
-  type: "text" | "image" | "video" | "code";
+  type: "text" | "image" | "video" | "audio" | "code";
   prompt: string;
   result: string | null;
   status: "pending" | "completed" | "failed";

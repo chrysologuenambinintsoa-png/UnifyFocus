@@ -40,6 +40,7 @@ import {
   LayoutDashboard,
   PenTool,
   BarChart3,
+  Music,
 } from "lucide-react";
 import { useAppStore, type Generation } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
@@ -111,8 +112,8 @@ const menuSections = [
 const toolCategories = [
   {
     id: "text",
-    label: "Texte",
-    icon: FileText,
+    label: "Musique",
+    icon: Music,
     color: "text-blue-400",
     gradientFrom: "from-blue-500",
     gradientTo: "to-cyan-400",
@@ -122,7 +123,9 @@ const toolCategories = [
     badge: "POPULAIRE",
     badgeColor: "bg-blue-500",
     subtools: [
-      { id: "text-generation", label: "Génération", icon: Type, credits: 1, description: "Créez du contenu texte avec l'IA", badge: "RAPIDE" },
+      { id: "text-generation", label: "Génération", icon: Music, credits: 1, description: "Créez de la musique avec l'IA", badge: "RAPIDE" },
+      { id: "text-to-music", label: "Texte → Musique", icon: Music, credits: 2, description: "Créez une piste à partir de mots et d'un style" },
+      { id: "music-to-music", label: "Musique → Musique", icon: Sparkles, credits: 2, description: "Transformez l'ambiance ou le style de votre musique" },
     ],
   },
   {
@@ -490,33 +493,6 @@ export function ToolsPanel({ collapsed = false, isMobile = false, onToolSelect }
         })}
 
         <Separator className="my-2" />
-
-        {/* Credits with hover effect */}
-        {user && (
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <button className="relative p-3 rounded-2xl text-muted-foreground hover:bg-white/10 transition-all duration-300 group">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-500/0 to-yellow-500/0 group-hover:from-amber-500/10 group-hover:to-yellow-500/10 transition-all duration-300" />
-                <Coins className="size-5 text-accent relative z-10" />
-              </button>
-            </HoverCardTrigger>
-            <HoverCardContent
-              className="w-40 p-3 border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-xl rounded-xl"
-              side="right"
-              sideOffset={12}
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <Coins className="size-4 text-amber-500" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Crédits</p>
-                  <p className="text-lg font-bold text-foreground">{user.credits}</p>
-                </div>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-        )}
       </div>
     );
   }
@@ -539,32 +515,6 @@ export function ToolsPanel({ collapsed = false, isMobile = false, onToolSelect }
               </p>
             </div>
           </div>
-
-          {/* Credits Display - Enhanced for mobile */}
-          {user && (
-            <div className="px-3 py-2">
-              <div className="relative flex items-center gap-3 rounded-3xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-3 shadow-lg overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-orange-500/5" />
-                <div className="relative grid h-12 w-12 place-items-center rounded-2xl bg-slate-900/80 text-amber-400 shadow-inner">
-                  <motion.div
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Coins className="size-5" />
-                  </motion.div>
-                </div>
-                <div className="relative flex-1">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Crédits disponibles</p>
-                  <p className="text-xl font-bold text-amber-400">{user.credits}</p>
-                </div>
-                <div className="relative">
-                  <Badge className="bg-amber-500 text-white text-[10px] font-bold">
-                    {user.plan === 'pro' ? 'PRO' : user.plan === 'enterprise' ? 'ENT' : 'FREE'}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          )}
 
           <Separator className="bg-white/10" />
 
@@ -863,21 +813,6 @@ export function ToolsPanel({ collapsed = false, isMobile = false, onToolSelect }
             Créez du contenu avec l'IA
           </p>
         </div>
-
-        {/* Credits Display */}
-        {user && (
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/5 p-3 shadow-sm">
-              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-900/80 text-accent shadow-inner">
-                <Coins className="size-4" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Crédits</p>
-                <p className="text-sm font-semibold text-foreground">{user.credits}</p>
-              </div>
-            </div>
-          </div>
-        )}
 
         <Separator />
 

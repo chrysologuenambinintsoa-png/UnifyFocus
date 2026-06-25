@@ -21,6 +21,7 @@ import {
   Check,
   ExternalLink,
   Sparkles,
+  Music,
 } from "lucide-react";
 import { useAppStore, type Generation } from "@/store/app-store";
 import { Badge } from "@/components/ui/badge";
@@ -110,8 +111,8 @@ function getTypeConfig(type: Generation["type"]): {
   switch (type) {
     case "text":
       return {
-        label: "Texte",
-        Icon: FileText,
+        label: "Musique",
+        Icon: Music,
         color: "text-blue-500",
         bg: "bg-blue-500/10",
       };
@@ -214,6 +215,8 @@ interface UsageHistoryItemProps {
 function UsageHistoryItem({ generation }: UsageHistoryItemProps) {
   const typeConfig = getTypeConfig(generation.type);
   const TypeIcon = typeConfig.Icon;
+  const user = useAppStore((s) => s.user);
+  const isAdmin = user?.role === "admin";
 
   return (
     <motion.div
@@ -236,10 +239,12 @@ function UsageHistoryItem({ generation }: UsageHistoryItemProps) {
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        <Coins className="size-3 text-gold" />
-        <span className="font-medium">{generation.credits}</span>
-      </div>
+      {!isAdmin && (
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Coins className="size-3 text-gold" />
+          <span className="font-medium">{generation.credits}</span>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -248,6 +253,7 @@ function UsageHistoryItem({ generation }: UsageHistoryItemProps) {
 
 export function UsageView() {
   const user = useAppStore((s) => s.user);
+  const isAdmin = user?.role === "admin";
   const setAuth = useAppStore((s) => s.setAuth);
   const generations = useAppStore((s) => s.generations);
   const setGenerations = useAppStore((s) => s.setGenerations);
@@ -294,6 +300,7 @@ export function UsageView() {
     const textCount = filteredGenerations.filter((g) => g.type === "text").length;
     const imageCount = filteredGenerations.filter((g) => g.type === "image").length;
     const videoCount = filteredGenerations.filter((g) => g.type === "video").length;
+    const audioCount = filteredGenerations.filter((g) => g.type === "audio").length;
     const codeCount = filteredGenerations.filter((g) => g.type === "code").length;
     const completedCount = filteredGenerations.filter((g) => g.status === "completed").length;
     const successRate = totalGenerations > 0 ? Math.round((completedCount / totalGenerations) * 100) : 0;
@@ -304,6 +311,7 @@ export function UsageView() {
       textCount,
       imageCount,
       videoCount,
+      audioCount,
       codeCount,
       successRate,
     };
@@ -329,6 +337,7 @@ export function UsageView() {
         generations: dayGenerations.length,
         credits: dayGenerations.reduce((sum, g) => sum + g.credits, 0),
         text: dayGenerations.filter((g) => g.type === "text").length,
+        audio: dayGenerations.filter((g) => g.type === "audio").length,
         image: dayGenerations.filter((g) => g.type === "image").length,
         video: dayGenerations.filter((g) => g.type === "video").length,
       };
@@ -337,7 +346,7 @@ export function UsageView() {
 
   // Type distribution data
   const typeDistribution = useMemo(() => [
-    { name: "Texte", value: stats.textCount, color: "#3b82f6" },
+    { name: "Musique", value: stats.textCount, color: "#3b82f6" },
     { name: "Image", value: stats.imageCount, color: "#a855f7" },
     { name: "Vidéo", value: stats.videoCount, color: "#f43f5e" },
     { name: "Code", value: stats.codeCount, color: "#06b6d4" },
@@ -355,11 +364,11 @@ export function UsageView() {
       id: "free",
       name: "Gratuit",
       price: "Gratuit",
-      credits: 100,
+      credits: 50,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
       borderColor: "border-blue-500/30",
-      features: ["100 crédits/mois", "Générations standard", "Support communautaire"],
+      features: ["50 crédits/mois", "Générations standard", "Support communautaire"],
       popular: false,
     },
     {
@@ -393,9 +402,9 @@ export function UsageView() {
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
       borderColor: "border-blue-500/30",
-      credits: 100,
+      credits: 50,
       price: "Gratuit",
-      features: ["100 crédits/mois", "Générations standard", "Support communautaire"],
+      features: ["50 crédits/mois", "Générations standard", "Support communautaire"],
     };
     switch (user.plan) {
       case "pro":
@@ -424,9 +433,9 @@ export function UsageView() {
           color: "text-blue-500",
           bgColor: "bg-blue-500/10",
           borderColor: "border-blue-500/30",
-          credits: 100,
+          credits: 50,
           price: "Gratuit",
-          features: ["100 crédits/mois", "Générations standard", "Support communautaire"],
+          features: ["50 crédits/mois", "Générations standard", "Support communautaire"],
         };
     }
   }, [user?.plan]);
@@ -436,6 +445,18 @@ export function UsageView() {
     if (!user) return 0;
     return Math.min(100, Math.round((stats.totalCredits / planConfig.credits) * 100));
   }, [stats.totalCredits, planConfig.credits, user]);
+
+  const displayPlanName = isAdmin ? "Administrateur" : planConfig.name;
+  const displayPlanPrice = isAdmin ? "Accès administrateur" : `${planConfig.price}/mois`;
+  const displayPlanFeatures = isAdmin
+    ? [
+        "Accès administrateur",
+        "Aucune facturation personnelle",
+        "Gestion complète des comptes",
+      ]
+    : planConfig.features;
+  const displayPlanUsage = isAdmin ? "—" : `${stats.totalCredits} / ${planConfig.credits}`;
+  const showUsageProgress = !isAdmin;
 
   if (!user) return null;
 
@@ -467,7 +488,7 @@ export function UsageView() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                Suivez votre consommation de crédits et vos générations.
+                Suivez votre consommation et vos générations.
               </motion.p>
             </div>
             <motion.div
@@ -476,15 +497,6 @@ export function UsageView() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4 }}
             >
-              <div className="flex items-center gap-3 rounded-xl border border-gold/20 bg-gold/5 px-5 py-3">
-                <div className="flex size-10 items-center justify-center rounded-full bg-gold/20">
-                  <Coins className="size-5 text-gold" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Crédits disponibles</p>
-                  <p className="text-xl font-bold text-gold">{user.credits}</p>
-                </div>
-              </div>
               <Select
                 value={timeRange}
                 onValueChange={(v) => setTimeRange(v as typeof timeRange)}
@@ -516,16 +528,14 @@ export function UsageView() {
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`flex size-8 items-center justify-center rounded-lg ${planConfig.bgColor}`}>
-                      <Crown className={`size-4 ${planConfig.color}`} />
-                    </div>
-                    <div>
-                      <CardTitle className="text-base font-semibold">Plan {planConfig.name}</CardTitle>
-                      <CardDescription>{planConfig.price}/mois</CardDescription>
-                    </div>
+                  <div className={`flex size-8 items-center justify-center rounded-lg ${planConfig.bgColor}`}>
+                    <Crown className={`size-4 ${planConfig.color}`} />
                   </div>
-                  {user.plan !== "enterprise" && (
+                  <div>
+                    <CardTitle className="text-base font-semibold">Plan {displayPlanName}</CardTitle>
+                    <CardDescription>{displayPlanPrice}</CardDescription>
+                  </div>
+                  {!isAdmin && user.plan !== "enterprise" && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -542,28 +552,38 @@ export function UsageView() {
                 {/* Usage Progress */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Crédits utilisés</span>
-                    <span className="font-medium">{stats.totalCredits} / {planConfig.credits}</span>
+                    <span className="text-muted-foreground">
+                      {isAdmin ? "Vue administrateur" : "Crédits utilisés"}
+                    </span>
+                    <span className="font-medium">{displayPlanUsage}</span>
                   </div>
-                  <div className="h-3 rounded-full bg-muted overflow-hidden">
-                    <motion.div
-                      className={`h-full rounded-full ${usagePercentage > 80 ? 'bg-rose-500' : 'bg-gold'}`}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${usagePercentage}%` }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                    />
-                  </div>
-                  {usagePercentage > 80 && (
-                    <p className="text-xs text-rose-500 flex items-center gap-1">
-                      <ArrowUpRight className="size-3" />
-                      Bientôt à court de crédits
+                  {showUsageProgress ? (
+                    <>
+                      <div className="h-3 rounded-full bg-muted overflow-hidden">
+                        <motion.div
+                          className={`h-full rounded-full ${usagePercentage > 80 ? 'bg-rose-500' : 'bg-gold'}`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${usagePercentage}%` }}
+                          transition={{ duration: 0.8, ease: "easeOut" }}
+                        />
+                      </div>
+                      {usagePercentage > 80 && (
+                        <p className="text-xs text-rose-500 flex items-center gap-1">
+                          <ArrowUpRight className="size-3" />
+                          Bientôt à court de crédits
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Les administrateurs ne disposent pas d'un suivi de crédits personnel dans cette interface.
                     </p>
                   )}
                 </div>
 
                 {/* Features List */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {planConfig.features.map((feature, idx) => (
+                  {displayPlanFeatures.map((feature, idx) => (
                     <div key={idx} className="flex items-center gap-2 text-sm">
                       <Check className={`size-4 ${planConfig.color}`} />
                       <span className="text-muted-foreground">{feature}</span>
@@ -594,8 +614,8 @@ export function UsageView() {
               />
               <UsageStatCard
                 title="Crédits consommés"
-                value={stats.totalCredits}
-                description={`Solde: ${user.credits}`}
+                value={isAdmin ? "—" : stats.totalCredits}
+                description={isAdmin ? "Vue administrateur" : `Solde: ${user.credits}`}
                 icon={Coins}
                 iconColor="text-emerald-500"
                 iconBg="bg-emerald-500/10"
@@ -744,7 +764,7 @@ export function UsageView() {
                   <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       {[
-                        { type: "text", count: stats.textCount, color: "blue", label: "Texte" },
+                        { type: "text", count: stats.textCount, color: "blue", label: "Musique" },
                         { type: "image", count: stats.imageCount, color: "purple", label: "Image" },
                         { type: "video", count: stats.videoCount, color: "rose", label: "Vidéo" },
                         { type: "code", count: stats.codeCount, color: "sky", label: "Code" },
@@ -846,8 +866,9 @@ export function UsageView() {
         </motion.div>
 
         {/* ─── Upgrade Dialog ──────────────────────────────────────── */}
-        <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
-          <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto p-0 gap-0">
+        {!isAdmin && (
+          <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto p-0 gap-0">
             {/* Dialog Header with gradient background */}
             <div className="relative bg-gradient-to-r from-gold/20 via-purple-500/10 to-blue-500/10 px-6 py-6 sm:px-8">
               <div className="flex items-start justify-between">
@@ -978,8 +999,9 @@ export function UsageView() {
                 </Button>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </main>
     </div>
   );

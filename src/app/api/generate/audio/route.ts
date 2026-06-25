@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { generateTextAI } from "@/lib/ai";
+import { generateAudioAI } from "@/lib/ai";
 import { normalizePrompt, extractPromptIntent } from "@/lib/prompt";
 import { NextResponse } from "next/server";
 
@@ -17,31 +17,25 @@ export async function POST(req: Request) {
       );
     }
 
-    if (
-      subtype === "image-to-text" &&
-      !(options && options.sourceImage)
-    ) {
+    if (subtype === "music-to-music" && !(options && options.sourceAudio)) {
       return NextResponse.json(
-        { error: "Une image source est requise pour cette action." },
-        { status: 400 }
-      );
-    }
-
-    if (
-      subtype === "video-to-text" &&
-      !(options && options.sourceVideo)
-    ) {
-      return NextResponse.json(
-        { error: "Une vidéo source est requise pour cette action." },
+        { error: "Un fichier audio source est requis pour transformer une piste." },
         { status: 400 }
       );
     }
 
     const user = await db.user.findUnique({ where: { id: userId } });
-    const isAdmin = user?.role === "admin";
-    if (!user || (!isAdmin && user.credits < 1)) {
+    if (!user || user.credits < 1) {
       return NextResponse.json(
         { error: "Crédits insuffisants" },
+        { status: 402 }
+      );
+    }
+
+    const creditCost = subtype === "text-generation" ? 1 : 2;
+    if (!user || user.credits < creditCost) {
+      return NextResponse.json(
+        { error: `Crédits insuffisants (${creditCost} nécessaires)` },
         { status: 402 }
       );
     }
@@ -49,30 +43,25 @@ export async function POST(req: Request) {
     const generation = await db.generation.create({
       data: {
         userId,
-        type: "text",
+        type: "audio",
         prompt,
         status: "pending",
-        credits: 1,
+        credits: creditCost,
       },
     });
+
     const effectivePrompt =
-      subtype === "image-to-text"
-        ? `Extrait le texte de l'image suivante et fournis-le clairement. Contexte : ${normalizedPrompt}\n\nImage : ${
-            options?.sourceImage ?? ""
-          }\n\n[Prompt Metadata]: ${JSON.stringify(promptIntent)}`
-        : subtype === "video-to-text"
-        ? `Transcris la vidéo suivante et fournis le texte de manière claire et structurée. Contexte : ${normalizedPrompt}\n\nVidéo : ${
-            options?.sourceVideo ?? ""
-          }\n\n[Prompt Metadata]: ${JSON.stringify(promptIntent)}`
+      subtype === "music-to-music"
+        ? `Transforme l'audio source selon le prompt suivant : ${normalizedPrompt}\n\n[Prompt Metadata]: ${JSON.stringify(promptIntent)}`
         : `${normalizedPrompt}\n\n[Prompt Metadata]: ${JSON.stringify(promptIntent)}`;
 
     try {
-      const result = await generateTextAI(effectivePrompt, options ?? {}, model);
+      const result = await generateAudioAI(effectivePrompt, options ?? {});
 
       const [updatedUser, completed] = await db.$transaction([
         db.user.update({
           where: { id: userId },
-          data: isAdmin ? {} : { credits: { decrement: 1 } },
+          data: { credits: { decrement: creditCost } },
         }),
         db.generation.update({
           where: { id: generation.id },
@@ -106,7 +95,7 @@ export async function POST(req: Request) {
       throw error;
     }
   } catch (error) {
-    console.error("Text generation failed:", error);
+    console.error("Audio generation failed:", error);
     return NextResponse.json(
       {
         error:

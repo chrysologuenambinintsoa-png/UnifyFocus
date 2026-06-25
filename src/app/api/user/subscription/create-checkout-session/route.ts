@@ -187,8 +187,18 @@ export async function POST(req: Request) {
     let status = 500;
     let stripeErrorDetails: Record<string, unknown> | undefined;
 
-    if (typeof error === "object" && error !== null) {
-      const maybeStripeError = error as Stripe.StripeError & Record<string, unknown>;
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === "object" && error !== null) {
+      const maybeStripeError = error as {
+        message?: unknown;
+        statusCode?: unknown;
+        type?: unknown;
+        code?: unknown;
+        requestId?: unknown;
+        param?: unknown;
+        decline_code?: unknown;
+      };
 
       if (typeof maybeStripeError.message === "string") {
         message = maybeStripeError.message;
@@ -205,8 +215,6 @@ export async function POST(req: Request) {
         param: maybeStripeError.param,
         decline_code: maybeStripeError.decline_code,
       };
-    } else if (error instanceof Error) {
-      message = error.message;
     }
 
     console.error(

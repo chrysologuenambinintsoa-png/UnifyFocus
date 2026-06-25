@@ -62,16 +62,16 @@ const PLAN_META: Record<
     maxCredits: 50,
     features: [
       "50 crédits/mois",
-      "Génération texte uniquement",
-      "1 image/jour",
+      "Génération vocale uniquement",
+      "1 création/jour",
     ],
     icon: Zap,
   },
   pro: {
     label: "Pro",
-    maxCredits: 500,
+    maxCredits: 1000,
     features: [
-      "500 crédits/mois",
+      "1000 crédits/mois",
       "Tous types de génération",
       "Priorité IA",
       "Support prioritaire",
@@ -122,11 +122,12 @@ export default function ProfileView() {
 
   // Credits progress
   const planMeta = PLAN_META[user?.plan ?? "free"];
-  const creditsUsed = planMeta.maxCredits - (user?.credits ?? 0);
-  const creditsPercent = Math.min(
-    100,
-    Math.max(0, (creditsUsed / planMeta.maxCredits) * 100)
-  );
+  const isAdmin = user?.role === "admin";
+  const creditsUsed = isAdmin ? 0 : planMeta.maxCredits - (user?.credits ?? 0);
+  const creditsPercent = isAdmin
+    ? 0
+    : Math.min(100, Math.max(0, (creditsUsed / planMeta.maxCredits) * 100));
+  const displayPlanLabel = isAdmin ? "Administrateur" : planMeta.label;
 
   /* ── save profile ── */
   async function handleSave() {
@@ -155,7 +156,7 @@ export default function ProfileView() {
 
   /* ── switch plan ── */
   async function handleSwitchPlan(newPlan: User["plan"]) {
-    if (!user || newPlan === user.plan) return;
+    if (!user || newPlan === user.plan || user.role === "admin") return;
     const lockKey = user.id;
     if (isProcessingRef.current) return;
     if (isCheckoutPending(lockKey)) return;
@@ -525,37 +526,44 @@ export default function ProfileView() {
                         isPro || isEnterprise ? "text-gold" : "text-foreground"
                       }
                     >
-                      {planMeta.label}
+                      {displayPlanLabel}
                     </span>
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {user.plan === "free"
-                      ? "Plan gratuit"
-                      : user.plan === "pro"
-                        ? "29€/mois"
-                        : "99€/mois"}
+                    {isAdmin
+                      ? "Accès administrateur"
+                      : user.plan === "free"
+                        ? "Plan gratuit"
+                        : user.plan === "pro"
+                          ? "29€/mois"
+                          : "99€/mois"}
                   </p>
                 </div>
               </div>
 
-              {/* Credits progress */}
-              <div className="space-y-2 mb-6">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Crédits restants
-                  </span>
-                  <span className="font-medium tabular-nums">
-                    {user.credits} / {planMeta.maxCredits}
-                  </span>
+              {!isAdmin ? (
+                <div className="space-y-2 mb-6">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Renouvellement
+                    </span>
+                    <span className="font-medium tabular-nums">
+                      21 de chaque mois
+                    </span>
+                  </div>
+                  <Progress
+                    value={creditsPercent}
+                    className="h-2.5"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {creditsUsed} crédits utilisés ce mois-ci
+                  </p>
                 </div>
-                <Progress
-                  value={creditsPercent}
-                  className="h-2.5"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {creditsUsed} crédits utilisés ce mois-ci
-                </p>
-              </div>
+              ) : (
+                <div className="rounded-2xl border border-border/50 bg-muted/30 p-4 mb-6 text-sm text-muted-foreground">
+                  Les administrateurs ne disposent pas d'un suivi de crédits personnel dans cette interface.
+                </div>
+              )}
 
               <Separator className="my-5" />
 
@@ -565,7 +573,15 @@ export default function ProfileView() {
                   Inclut dans votre plan
                 </h3>
                 <ul className="space-y-2">
-                  {planMeta.features.map((feature) => (
+                  {(isAdmin
+                    ? [
+                        "Accès administrateur",
+                        "Aucune limite de crédits",
+                        "Gestion complète des comptes",
+                        "Pas de facturation personnelle",
+                      ]
+                    : planMeta.features
+                  ).map((feature) => (
                     <li key={feature} className="flex items-center gap-2 text-sm">
                       <Check className="size-4 text-gold shrink-0" />
                       <span>{feature}</span>
@@ -576,11 +592,11 @@ export default function ProfileView() {
 
               <Separator className="my-5" />
 
-              {/* ── Plan Upgrade / Downgrade Section ── */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">Changer de plan</h3>
+              {!isAdmin && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-muted-foreground">Changer de plan</h3>
 
-                {user.plan === "free" && (
+                  {user.plan === "free" && (
                   <>
                     <Button
                       onClick={() => handleSwitchPlan("pro")}
@@ -671,6 +687,7 @@ export default function ProfileView() {
                   </>
                 )}
               </div>
+              )}
             </div>
           </motion.div>
         </div>

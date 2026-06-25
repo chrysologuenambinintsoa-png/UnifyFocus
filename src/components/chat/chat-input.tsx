@@ -1,27 +1,35 @@
-import React, { useState, useEffect } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
 import { Paperclip, Send, Loader2, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
 type AttachedFile = { file: File; uploading?: boolean; url?: string; progress?: number };
 
-export default function ChatInput({
-  input,
-  setInput,
-  onSend,
-  isLoading,
-  attachedFiles,
-  setAttachedFiles,
-  onCancelUpload,
-}: {
+type ChatInputProps = {
   input: string;
   setInput: (s: string) => void;
   onSend: (custom?: string) => void;
   isLoading: boolean;
   attachedFiles: AttachedFile[];
-  setAttachedFiles: (files: AttachedFile[]) => void;
+  setAttachedFiles: React.Dispatch<React.SetStateAction<AttachedFile[]>>;
   onCancelUpload?: (index: number) => void;
-}) {
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+};
+
+const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
+  (
+    {
+      input,
+      setInput,
+      onSend,
+      isLoading,
+      attachedFiles,
+      setAttachedFiles,
+      onCancelUpload,
+      onKeyDown,
+    },
+    ref
+  ) => {
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -73,8 +81,10 @@ export default function ChatInput({
           </label>
 
           <Textarea
+            ref={ref}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={onKeyDown}
             placeholder="Demandez à UnifyFocus... (Entrée pour envoyer, Maj+Entrée pour nouvelle ligne)"
             className="w-full min-h-[52px] max-h-[200px] resize-none rounded-md bg-background border border-border text-foreground placeholder:text-muted-foreground p-3 pl-12 pr-12 text-sm focus:border-gold focus:ring-1 focus:ring-gold transition-colors"
             rows={1}
@@ -149,4 +159,8 @@ export default function ChatInput({
       </div>
     </div>
   );
-}
+});
+
+ChatInput.displayName = "ChatInput";
+
+export default ChatInput;

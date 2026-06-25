@@ -6,7 +6,6 @@ import {
   Clock,
   AlertCircle,
   Loader2,
-  Coins,
   Zap,
   Wifi,
   WifiOff,
@@ -159,19 +158,6 @@ export function StatusBar({ className }: StatusBarProps) {
 
         {/* Center Section - Info */}
         <div className="flex items-center gap-3">
-          {/* Credits */}
-          {user && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1">
-                  <Coins className="size-3 text-accent" />
-                  <span className="text-accent font-medium">{user.credits}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>Crédits disponibles</TooltipContent>
-            </Tooltip>
-          )}
-
           {/* Generations Count */}
           {generations.length > 0 && (
             <Tooltip>
@@ -204,7 +190,7 @@ export function StatusBar({ className }: StatusBarProps) {
           {/* View Info */}
           <span className="hidden sm:inline">
             {currentView === "dashboard" && "Tableau de bord"}
-            {currentView === "editor" && `Éditeur - ${editorTab || "texte"}`}
+            {currentView === "editor" && `Éditeur - ${editorTab || "musique"}`}
             {currentView === "chat" && "Chat IA"}
             {currentView === "profile" && "Profil"}
             {currentView === "settings" && "Paramètres"}

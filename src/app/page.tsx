@@ -19,6 +19,7 @@ import { Logo } from "@/components/ui/logo";
 
 import { UsageView } from "@/components/views/usage-view";
 import HelpView from "@/components/views/help-view";
+import AdminView from "@/components/views/admin-view";
 export default function Home() {
   const { t } = useTranslation();
   const { currentView, isAuthenticated } = useAppStore();
@@ -154,6 +155,19 @@ export default function Home() {
             className="flex-1"
           >
             <PricingView />
+          </motion.div>
+        )}
+
+        {currentView === "admin" && (
+          <motion.div
+            key="admin"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="flex-1"
+          >
+            <AdminView />
           </motion.div>
         )}
       </AnimatePresence>
