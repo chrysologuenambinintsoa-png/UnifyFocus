@@ -47,7 +47,7 @@ function ensureLocalEnvLoaded() {
   const envFiles = [".env.local", ".env"];
 
   for (const envFile of envFiles) {
-    const envPath = path.join(root, envFile);
+    const envPath = path.join(/* turbopackIgnore: true */ root, envFile);
     const envData = loadEnvFile(envPath);
 
     for (const [key, value] of Object.entries(envData)) {
