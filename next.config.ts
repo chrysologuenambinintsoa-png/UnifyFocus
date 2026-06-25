@@ -21,7 +21,7 @@ const prodCsp = [
   "style-src-elem 'self' https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com https://m.stripe.network 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://q.stripe.com https://m.stripe.network https://hcaptcha.com https://*.hcaptcha.com",
+  "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://q.stripe.com https://m.stripe.network https://hcaptcha.com https://*.hcaptcha.com https://www.google-analytics.com",
   "frame-src https://js.stripe.com https://checkout.stripe.com https://hcaptcha.com https://*.hcaptcha.com",
   "upgrade-insecure-requests",
 ].join('; ');

@@ -13,18 +13,26 @@ import { ChatView } from "@/components/views/chat-view";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { OAuthCallback } from "@/components/auth/oauth-callback";
 import { AnimatePresence, motion } from "framer-motion";
-import { AppLayout } from "@/components/layout/app-layout"; 
-import { AuthInitializer } from "@/components/auth/auth-initializer"; 
+import { AppLayout } from "@/components/layout/app-layout";
+import { AuthInitializer } from "@/components/auth/auth-initializer";
+import { SplashScreen } from "@/components/views/splash-screen";
 import { Logo } from "@/components/ui/logo";
 
 import { UsageView } from "@/components/views/usage-view";
 import HelpView from "@/components/views/help-view";
 import AdminView from "@/components/views/admin-view";
 export default function Home() {
-  const { t } = useTranslation();
-  const { currentView, isAuthenticated } = useAppStore();
+  const { currentView, isAuthenticated, initialLoadComplete } = useAppStore();
 
-  // If not authenticated, always show the landing page.
+  if (!initialLoadComplete) {
+    return (
+      <>
+        <SplashScreen />
+        <AuthInitializer />
+      </>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <>
@@ -41,11 +49,11 @@ export default function Home() {
             </motion.div>
           </AnimatePresence>
         </Suspense>
-        <AuthInitializer />
         <AuthModal />
         <Suspense fallback={<div />}>
           <OAuthCallback />
         </Suspense>
+        <AuthInitializer />
       </>
     );
   }
