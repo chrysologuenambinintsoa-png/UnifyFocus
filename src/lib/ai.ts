@@ -235,9 +235,6 @@ function getActiveProvidersForAction(action: AIProviderCapability) {
 function getProvidersForAction(action: AIProviderCapability) {
   if (AI_PROVIDER === "AUTO") {
     const providers = getActiveProvidersForAction(action);
-    if (providers.length === 0) {
-      throw new Error(`No configured AI provider is available for ${action} generation.`);
-    }
     return providers;
   }
 
@@ -1559,4 +1556,3 @@ export async function requestCodeAIStreaming(
     `Code generation failed for all available providers. Details: ${errors.join(" | ")}`
   );
 }
-
