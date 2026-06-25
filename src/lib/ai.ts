@@ -39,22 +39,34 @@ function loadEnvFile(filePath: string) {
 }
 
 function ensureLocalEnvLoaded() {
+  // Skip if we already have AI provider configuration
   if (process.env.HF_API_KEY && process.env.HF_API_BASE) {
     return;
   }
 
-  const root = process.cwd();
-  const envFiles = [".env.local", ".env"];
+  // Skip env file loading in production/serverless environments (like Vercel)
+  // Environment variables should be configured in the platform's dashboard
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    return;
+  }
 
-  for (const envFile of envFiles) {
-    const envPath = path.join(/* turbopackIgnore: true */ root, envFile);
-    const envData = loadEnvFile(envPath);
+  try {
+    const root = process.cwd();
+    const envFiles = [".env.local", ".env"];
 
-    for (const [key, value] of Object.entries(envData)) {
-      if (!process.env[key] && value !== undefined) {
-        process.env[key] = value;
+    for (const envFile of envFiles) {
+      const envPath = path.join(/* turbopackIgnore: true */ root, envFile);
+      const envData = loadEnvFile(envPath);
+
+      for (const [key, value] of Object.entries(envData)) {
+        if (!process.env[key] && value !== undefined) {
+          process.env[key] = value;
+        }
       }
     }
+  } catch (error) {
+    // Silently fail if env files can't be loaded
+    // This is expected in serverless/build environments
   }
 }
 
@@ -184,6 +196,9 @@ if (AI_PROVIDER !== "AUTO" && !isProviderConfigured(AI_PROVIDER as AIProviderVal
   throw new Error(`Missing API key or configuration for provider ${AI_PROVIDER}`);
 }
 
+// Check if we're in a build environment (no env vars available yet)
+const isBuildTime = typeof window === 'undefined' && !process.env.NODE_ENV?.includes('test') && ACTIVE_AI_PROVIDERS.length === 0 && AI_PROVIDER === 'AUTO';
+
 const SILICONFLOW_HEADERS = {
   "Content-Type": "application/json",
   Authorization: `Bearer ${SILICONFLOW_API_KEY}`,
@@ -235,6 +250,13 @@ function getActiveProvidersForAction(action: AIProviderCapability) {
 function getProvidersForAction(action: AIProviderCapability) {
   if (AI_PROVIDER === "AUTO") {
     const providers = getActiveProvidersForAction(action);
+    if (providers.length === 0) {
+      throw new Error(
+        `No AI provider is configured for AUTO mode. ` +
+        `Please set at least one API key (e.g., GROQ_API_KEY, SILICONFLOW_API_KEY, etc.) ` +
+        `in your environment variables.`
+      );
+    }
     return providers;
   }
 
