@@ -53,7 +53,7 @@ export function Logo({
       <svg
         width={markSize}
         height={markSize}
-        viewBox={t("auto.k_0_0_48_48_170")}
+        viewBox="0 0 48 48"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className={svgClassName}
@@ -84,14 +84,14 @@ export function Logo({
 
         {/* Background subtle hexagon */}
         <path
-          d={t("auto.k_m24_2_l44_13_l44_35_l24_46_l4_35_l4_13_z_171")}
+          d="M24 2L44 13L44 35L24 46L4 35L4 13Z"
           fill="url(#primary-gradient)"
           opacity="0.06"
         />
 
         {/* Outer ring - Neural network inspired */}
         <path
-          d={t("auto.k_m24_5_l41_14_5_l41_33_5_l24_43_l7_33_5_l_172")}
+          d="M24 5L41 14.5L41 33.5L24 43L7 33.5L7 14.5Z"
           stroke="url(#primary-gradient)"
           strokeWidth="1.2"
           fill="none"
@@ -102,7 +102,7 @@ export function Logo({
 
         {/* Inner hexagon */}
         <path
-          d={t("auto.k_m24_10_l36_17_l36_31_l24_38_l12_31_l12_1_173")}
+          d="M24 10L36 17L36 31L24 38L12 31L12 17Z"
           stroke="url(#primary-gradient)"
           strokeWidth="1.5"
           fill="none"
@@ -121,7 +121,7 @@ export function Logo({
 
         {/* Connection lines - neural pathways */}
         <path
-          d={t("auto.k_m24_12_l24_36_m14_18_l34_30_m34_18_l14_3_174")}
+          d="M24 12L24 36M14 18L34 30M34 18L14 30"
           stroke="url(#primary-gradient)"
           strokeWidth="0.8"
           opacity="0.5"
@@ -137,8 +137,8 @@ export function Logo({
           <animateTransform
             attributeName="transform"
             type="rotate"
-            from={t("auto.k_0_24_24_175")}
-            to={t("auto.k_360_24_24_176")}
+            from="0 24 24"
+            to="360 24 24"
             dur="3s"
             repeatCount="indefinite"
           />
@@ -147,8 +147,8 @@ export function Logo({
           <animateTransform
             attributeName="transform"
             type="rotate"
-            from={t("auto.k_120_24_24_177")}
-            to={t("auto.k_480_24_24_178")}
+            from="120 24 24"
+            to="480 24 24"
             dur="3s"
             repeatCount="indefinite"
           />
@@ -157,8 +157,8 @@ export function Logo({
           <animateTransform
             attributeName="transform"
             type="rotate"
-            from={t("auto.k_240_24_24_179")}
-            to={t("auto.k_600_24_24_180")}
+            from="240 24 24"
+            to="600 24 24"
             dur="3s"
             repeatCount="indefinite"
           />
