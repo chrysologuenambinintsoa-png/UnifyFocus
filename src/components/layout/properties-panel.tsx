@@ -439,19 +439,22 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
   const handleDeleteGeneration = async (genId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-        await fetch(`/api/user/generations?id=${encodeURIComponent(genId)}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
+      await fetch(`/api/user/generations?id=${encodeURIComponent(genId)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-    setGenerations(generations.filter((g) => g.id !== genId));
-    if (selectedGeneration?.id === genId) {
-      setSelectedGeneration(null);
+      setGenerations(generations.filter((g) => g.id !== genId));
+      if (selectedGeneration?.id === genId) {
+        setSelectedGeneration(null);
+      }
+      toast({
+        title: "Élément supprimé",
+        description: "La génération a été supprimée de l'historique.",
+      });
+    } catch (error) {
+      console.error("Failed to delete generation via API:", error);
     }
-    toast({
-      title: "Élément supprimé",
-      description: "La génération a été supprimée de l'historique.",
-    });
   };
 
   const handleClearAllHistory = async () => {
