@@ -160,20 +160,6 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("[POST /api/auth/oauth] Error:", err);
     const message = err instanceof Error ? err.message : "Erreur OAuth";
-    const fallbackUser = buildSessionUserPayload({
-      id: `fallback-${Date.now()}`,
-      email: "",
-      name: "Utilisateur",
-      avatar: null,
-      provider: "google",
-      credits: 50,
-      plan: "free",
-      role: "user",
-      isBlocked: false,
-      createdAt: new Date().toISOString(),
-    });
-    const fallbackResp = NextResponse.json({ user: fallbackUser, error: message, fallback: true });
-    setSessionCookies(fallbackResp, fallbackUser);
-    return fallbackResp;
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

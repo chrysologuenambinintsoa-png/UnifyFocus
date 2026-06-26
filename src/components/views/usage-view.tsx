@@ -271,9 +271,9 @@ export function UsageView() {
 
     async function fetchGenerations() {
       try {
-        const res = await fetch(
-          `/api/user/generations?userId=${encodeURIComponent(userId)}`
-        );
+        const res = await fetch(`/api/user/generations`, {
+          credentials: "include",
+        });
         if (!res.ok) return;
         const data: { generations: Generation[] } = await res.json();
         setGenerations(data.generations);

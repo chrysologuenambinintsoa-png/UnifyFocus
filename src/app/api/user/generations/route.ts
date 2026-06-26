@@ -1,20 +1,19 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth";
 
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
+    const user = await getSessionUser();
+    if (!user) {
       return NextResponse.json(
-        { error: "userId requis" },
-        { status: 400 }
+        { error: "Authentification requise" },
+        { status: 401 }
       );
     }
 
     const generations = await db.generation.findMany({
-      where: { userId },
+      where: { userId: user.id },
       orderBy: { createdAt: "desc" },
       take: 50,
     });
@@ -40,22 +39,22 @@ export async function GET(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    const id = searchParams.get("id");
-
-    if (!userId) {
-      return NextResponse.json({ error: "userId requis" }, { status: 400 });
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
     }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
 
     if (id) {
       // delete a single generation for the user (safe deleteMany to ensure user ownership)
-      const result = await db.generation.deleteMany({ where: { id, userId } });
+      const result = await db.generation.deleteMany({ where: { id, userId: user.id } });
       return NextResponse.json({ deleted: result.count });
     }
 
     // delete all generations for the user
-    const result = await db.generation.deleteMany({ where: { userId } });
+    const result = await db.generation.deleteMany({ where: { userId: user.id } });
     return NextResponse.json({ deleted: result.count });
   } catch (error) {
     console.error("Failed to delete generations:", error);

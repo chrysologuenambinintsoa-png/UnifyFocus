@@ -38,6 +38,7 @@ export function OAuthCallback() {
         // Send token to backend
         const res = await fetch("/api/auth/oauth", {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             provider,

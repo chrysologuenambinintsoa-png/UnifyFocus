@@ -63,20 +63,9 @@ export async function POST(req: Request) {
     return res;
   } catch (err) {
     console.error("[POST /api/auth/login] Error:", err);
-    const fallbackUser = buildSessionUserPayload({
-      id: `fallback-${Date.now()}`,
-      email: "",
-      name: "Utilisateur",
-      avatar: null,
-      provider: "email",
-      credits: 50,
-      plan: "free",
-      role: "user",
-      isBlocked: false,
-      createdAt: new Date().toISOString(),
-    });
-    const res = NextResponse.json({ user: fallbackUser });
-    setSessionCookies(res, fallbackUser);
-    return res;
+    return NextResponse.json(
+      { error: "Erreur lors de la connexion" },
+      { status: 500 }
+    );
   }
 }

@@ -310,6 +310,7 @@ export function AuthModal() {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
@@ -357,6 +358,7 @@ export function AuthModal() {
 
       const res = await fetch("/api/auth/signup", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: signupEmail,
@@ -428,6 +430,7 @@ export function AuthModal() {
         console.warn(`${provider} OAuth not configured, using demo mode`);
         const res = await fetch("/api/auth/oauth", {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             provider,

@@ -266,10 +266,10 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
     async function fetchGenerations() {
       setLoadingHistory(true);
       try {
-        const res = await fetch(
-          `/api/user/generations?userId=${encodeURIComponent(userId)}`,
-          { signal }
-        );
+        const res = await fetch(`/api/user/generations`, {
+          signal,
+          credentials: "include",
+        });
         if (!res.ok) return;
         const data: { generations: Generation[] } = await res.json();
         setGenerations(data.generations);
@@ -439,15 +439,10 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
   const handleDeleteGeneration = async (genId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      if (user) {
-        await fetch(
-          `/api/user/generations?userId=${encodeURIComponent(user.id)}&id=${encodeURIComponent(genId)}`,
-          { method: "DELETE" }
-        );
-      }
-    } catch (error) {
-      console.error("Failed to delete generation via API:", error);
-    }
+        await fetch(`/api/user/generations?id=${encodeURIComponent(genId)}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
 
     setGenerations(generations.filter((g) => g.id !== genId));
     if (selectedGeneration?.id === genId) {
@@ -461,12 +456,10 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
 
   const handleClearAllHistory = async () => {
     try {
-      if (user) {
-        await fetch(
-          `/api/user/generations?userId=${encodeURIComponent(user.id)}`,
-          { method: "DELETE" }
-        );
-      }
+      await fetch(`/api/user/generations`, {
+        method: "DELETE",
+        credentials: "include",
+      });
     } catch (error) {
       console.error("Failed to clear history via API:", error);
     }

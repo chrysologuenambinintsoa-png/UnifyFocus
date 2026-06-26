@@ -44,18 +44,6 @@ export function isAdminEmail(email: string): boolean {
 
 export async function getSessionUser(): Promise<User | null> {
   const cookieStore = await cookies();
-  const sessionUserCookie = cookieStore.get("sessionUser")?.value;
-  if (sessionUserCookie) {
-    try {
-      const parsed = JSON.parse(decodeURIComponent(sessionUserCookie)) as User;
-      if (parsed?.id && parsed?.email) {
-        return buildSessionUserPayload(parsed);
-      }
-    } catch {
-      // ignore invalid cookie and fall back to DB lookup
-    }
-  }
-
   const userId = cookieStore.get("userId")?.value;
   if (!userId) return null;
 

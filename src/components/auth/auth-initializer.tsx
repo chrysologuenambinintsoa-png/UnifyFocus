@@ -12,14 +12,25 @@ export function AuthInitializer() {
 
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          const data = await res.json();
-          if (data?.user) {
-            setAuth(data.user);
-            setCurrentView("dashboard");
-          }
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        if (!res.ok) {
+          return;
         }
+
+        const data = await res.json().catch(() => null);
+        if (data?.user) {
+          setAuth(data.user);
+          setCurrentView("dashboard");
+        }
+      } catch {
+        // Ignore network errors during initial load so the app can still render.
       } finally {
         finishInitialLoad();
         setInitialized(true);

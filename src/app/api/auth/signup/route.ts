@@ -65,20 +65,9 @@ export async function POST(req: Request) {
     return res;
   } catch (err) {
     console.error("[POST /api/auth/signup] Error:", err);
-    const fallbackUser = buildSessionUserPayload({
-      id: `fallback-${Date.now()}`,
-      email: (await req.json().catch(() => ({ email: "" })).email || "").toLowerCase(),
-      name: (await req.json().catch(() => ({ name: "" })).name || "").trim() || "Utilisateur",
-      avatar: null,
-      provider: "email",
-      credits: 50,
-      plan: "free",
-      role: "user",
-      isBlocked: false,
-      createdAt: new Date().toISOString(),
-    });
-    const res = NextResponse.json({ user: fallbackUser });
-    setSessionCookies(res, fallbackUser);
-    return res;
+    return NextResponse.json(
+      { error: "Erreur lors de l'inscription" },
+      { status: 500 }
+    );
   }
 }
