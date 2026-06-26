@@ -321,6 +321,7 @@ export function AuthModal() {
 
       const data = await res.json();
       setAuth(data.user);
+      setCurrentView("dashboard");
       closeAuthModal();
       toast({
         title: "Connexion réussie",
@@ -371,6 +372,7 @@ export function AuthModal() {
 
       const data = await res.json();
       setAuth(data.user);
+      setCurrentView("dashboard");
       closeAuthModal();
       toast({
         title: "Compte créé",
@@ -441,6 +443,7 @@ export function AuthModal() {
 
         const data = await res.json();
         setAuth(data.user);
+        setCurrentView("dashboard");
         closeAuthModal();
         toast({
           title: "Connexion réussie (mode démo)",

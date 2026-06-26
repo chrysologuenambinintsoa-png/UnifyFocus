@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 import {
   Check,
   Clock,
@@ -230,6 +231,20 @@ export function StatusBar({ className }: StatusBarProps) {
 
           {/* Version */}
           <span className="hidden lg:inline text-[9px]">v1.0.0</span>
+
+          {/* Developer credit with animation */}
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="hidden md:inline text-[9px] font-medium tracking-wider uppercase bg-gradient-to-r from-sky-400 via-violet-400 to-amber-400 bg-clip-text text-transparent bg-[length:200%_auto]"
+            style={{
+              backgroundPosition: "0% 50%",
+              animation: "gradientShift 4s linear infinite"
+            }}
+          >
+            Développé par NCH Madagascar
+          </motion.span>
         </div>
       </footer>
     </TooltipProvider>

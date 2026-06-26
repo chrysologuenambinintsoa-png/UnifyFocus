@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { User } from "@/store/app-store";
 
+function isPrismaConfigured(): boolean {
+  const databaseUrl = process.env.DATABASE_URL || "";
+  return databaseUrl.startsWith("postgresql://") || databaseUrl.startsWith("postgres://");
+}
+
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.toLowerCase();
 
 export function isAdminEmail(email: string): boolean {
@@ -14,21 +19,30 @@ export async function getSessionUser(): Promise<User | null> {
   const userId = cookieStore.get("userId")?.value;
   if (!userId) return null;
 
-  const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user || user.isBlocked) return null;
+  if (!isPrismaConfigured()) {
+    return null;
+  }
 
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    avatar: user.avatar,
-    provider: user.provider,
-    credits: user.credits,
-    plan: user.plan as "free" | "pro" | "enterprise",
-    role: user.role as "user" | "admin",
-    isBlocked: user.isBlocked,
-    createdAt: user.createdAt.toISOString(),
-  };
+  try {
+    const user = await db.user.findUnique({ where: { id: userId } });
+    if (!user || user.isBlocked) return null;
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+      provider: user.provider,
+      credits: user.credits,
+      plan: user.plan as "free" | "pro" | "enterprise",
+      role: user.role as "user" | "admin",
+      isBlocked: user.isBlocked,
+      createdAt: user.createdAt.toISOString(),
+    };
+  } catch (error) {
+    console.warn("Auth session lookup failed:", error);
+    return null;
+  }
 }
 
 export function checkAdmin(user: User | null) {

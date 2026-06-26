@@ -40,8 +40,7 @@ export function Logo({
   );
 
   const svgClassName = cn(
-    "shrink-0",
-    iconOnly && "rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-1.5 shadow-lg shadow-sky-500/10"
+    "shrink-0"
   );
   const { t } = useTranslation();
 

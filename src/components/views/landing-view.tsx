@@ -282,7 +282,7 @@ export default function LandingView() {
     },
     {
       prompt: '"Rédige un post LinkedIn sur l\'innovation technologique..."',
-      result: "🚀 L'innovation ne se limite pas à créer de nouvelles technologies. Il s'agit de repenser la façon dont nous résolvons les problèmes quotidiens. Chez UnifyFocus, nous croyons que l'IA est un catalyseur qui amplifie la créativité humaine plutôt que de la remplacer."
+      result: " L'innovation ne se limite pas à créer de nouvelles technologies. Il s'agit de repenser la façon dont nous résolvons les problèmes quotidiens. Chez UnifyFocus, nous croyons que l'IA est un catalyseur qui amplifie la créativité humaine plutôt que de la remplacer."
     },
     {
       prompt: '"Écris une fiche produit pour une application de méditation..."',
@@ -780,7 +780,7 @@ export default function LandingView() {
                 className="border-gold/30 bg-gold/10 text-gold px-4 py-1.5 text-sm"
               >
                 <Zap className="mr-1.5 size-3.5" />
-                Propulsé par l&apos;IA de nouvelle génération
+                Propulsé par l'IA de nouvelle génération
               </Badge>
             </motion.div>
 
@@ -789,9 +789,9 @@ export default function LandingView() {
               variants={fadeInUp}
               className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
             >
-              <span className="gradient-text">{t("auto.k_cr_ez_l_apos_extraordinaire_279")}</span>
+              <span className="gradient-text">Créez l&apos;extraordinaire</span>
               <br />
-              <span className="text-foreground">{t("auto.k_avec_l_apos_ia_280")}</span>
+              <span className="text-foreground">avec l&apos;IA</span>
             </motion.h1>
 
             {/* Subheading */}
@@ -1038,7 +1038,7 @@ export default function LandingView() {
               variants={fadeInUp}
               className="mt-4 text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto"
             >
-              Une suite complète d&apos;outils IA pour répondre à tous vos besoins créatifs.
+              Une suite complète d'outils IA pour répondre à tous vos besoins créatifs.
             </motion.p>
           </motion.div>
 
@@ -1276,7 +1276,7 @@ export default function LandingView() {
           <div className="flex flex-col items-center gap-2 sm:items-start">
             <Logo markSize={36} textClassName="text-sm sm:text-base" />
             <p className="text-xs text-muted-foreground">
-              &copy; 2025 UnifyFocus. Tous droits réservés.
+              &copy; 2026 UnifyFocus. Tous droits réservés.
             </p>
           </div>
 

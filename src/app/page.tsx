@@ -1,6 +1,5 @@
 "use client";
-import { useTranslation } from "@/lib/i18n";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { useAppStore } from "@/store/app-store";
 import LandingView from "@/components/views/landing-view";
@@ -23,8 +22,19 @@ import HelpView from "@/components/views/help-view";
 import AdminView from "@/components/views/admin-view";
 export default function Home() {
   const { currentView, isAuthenticated, initialLoadComplete } = useAppStore();
+  const [showSplash, setShowSplash] = useState(true);
 
-  if (!initialLoadComplete) {
+  useEffect(() => {
+    if (!initialLoadComplete) {
+      setShowSplash(true);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setShowSplash(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, [initialLoadComplete]);
+
+  if (showSplash) {
     return (
       <>
         <SplashScreen />
