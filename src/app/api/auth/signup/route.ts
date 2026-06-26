@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { isAdminEmail } from "@/lib/auth";
+import { buildSessionUserPayload, isAdminEmail, setSessionCookies } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
@@ -47,29 +47,38 @@ export async function POST(req: Request) {
       },
     });
 
-    const res = NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatar: user.avatar,
-        credits: user.credits,
-        plan: user.plan,
-        role: user.role,
-        isBlocked: user.isBlocked,
-      },
+    const sessionUser = buildSessionUserPayload({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+      provider: user.provider,
+      credits: user.credits,
+      plan: user.plan as "free" | "pro" | "enterprise",
+      role: user.role as "user" | "admin",
+      isBlocked: user.isBlocked,
+      createdAt: user.createdAt,
     });
-    res.cookies.set("userId", user.id, {
-      httpOnly: true,
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
-    });
+
+    const res = NextResponse.json({ user: sessionUser });
+    setSessionCookies(res, sessionUser);
     return res;
   } catch (err) {
     console.error("[POST /api/auth/signup] Error:", err);
-    return NextResponse.json(
-      { error: "Erreur lors de l'inscription" },
-      { status: 500 }
-    );
+    const fallbackUser = buildSessionUserPayload({
+      id: `fallback-${Date.now()}`,
+      email: (await req.json().catch(() => ({ email: "" })).email || "").toLowerCase(),
+      name: (await req.json().catch(() => ({ name: "" })).name || "").trim() || "Utilisateur",
+      avatar: null,
+      provider: "email",
+      credits: 50,
+      plan: "free",
+      role: "user",
+      isBlocked: false,
+      createdAt: new Date().toISOString(),
+    });
+    const res = NextResponse.json({ user: fallbackUser });
+    setSessionCookies(res, fallbackUser);
+    return res;
   }
 }

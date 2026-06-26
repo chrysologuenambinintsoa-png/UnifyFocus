@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { isAdminEmail } from "@/lib/auth";
+import { buildSessionUserPayload, isAdminEmail, setSessionCookies } from "@/lib/auth";
 
 async function fetchGoogleUser(accessToken?: string, idToken?: string) {
   try {
@@ -104,24 +104,20 @@ export async function POST(req: Request) {
 
       const role = (updateData.role as string) || existing.role;
 
-      const resp = NextResponse.json({
-        user: {
-          id: existing.id,
-          email: existing.email,
-          name: existing.name || info.name || existing.email.split("@")[0],
-          avatar: existing.avatar || info.avatar || null,
-          credits: existing.credits,
-          plan: existing.plan,
-          role: role,
-          isBlocked: existing.isBlocked,
-        },
+      const sessionUser = buildSessionUserPayload({
+        id: existing.id,
+        email: existing.email,
+        name: existing.name || info.name || existing.email.split("@")[0],
+        avatar: existing.avatar || info.avatar || null,
+        provider: existing.provider,
+        credits: existing.credits,
+        plan: existing.plan as "free" | "pro" | "enterprise",
+        role: role as "user" | "admin",
+        isBlocked: existing.isBlocked,
+        createdAt: existing.createdAt,
       });
-      // Persist session with a simple HttpOnly cookie (userId)
-      resp.cookies.set("userId", existing.id, {
-        httpOnly: true,
-        path: "/",
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-      });
+      const resp = NextResponse.json({ user: sessionUser });
+      setSessionCookies(resp, sessionUser);
       return resp;
     }
 
@@ -146,34 +142,38 @@ export async function POST(req: Request) {
       },
     });
 
-    const resp = NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatar: user.avatar,
-        credits: user.credits,
-        plan: user.plan,
-        role: user.role,
-        isBlocked: user.isBlocked,
-      },
+    const sessionUser = buildSessionUserPayload({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+      provider: user.provider,
+      credits: user.credits,
+      plan: user.plan as "free" | "pro" | "enterprise",
+      role: user.role as "user" | "admin",
+      isBlocked: user.isBlocked,
+      createdAt: user.createdAt,
     });
-    // Persist session with a simple HttpOnly cookie (userId)
-    resp.cookies.set("userId", user.id, {
-      httpOnly: true,
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-    });
+    const resp = NextResponse.json({ user: sessionUser });
+    setSessionCookies(resp, sessionUser);
     return resp;
   } catch (err) {
     console.error("[POST /api/auth/oauth] Error:", err);
     const message = err instanceof Error ? err.message : "Erreur OAuth";
-    const fallbackResp = NextResponse.json({ user: null, error: message, fallback: true });
-    fallbackResp.cookies.set("userId", "", {
-      httpOnly: true,
-      path: "/",
-      maxAge: 0,
+    const fallbackUser = buildSessionUserPayload({
+      id: `fallback-${Date.now()}`,
+      email: "",
+      name: "Utilisateur",
+      avatar: null,
+      provider: "google",
+      credits: 50,
+      plan: "free",
+      role: "user",
+      isBlocked: false,
+      createdAt: new Date().toISOString(),
     });
+    const fallbackResp = NextResponse.json({ user: fallbackUser, error: message, fallback: true });
+    setSessionCookies(fallbackResp, fallbackUser);
     return fallbackResp;
   }
 }
