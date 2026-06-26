@@ -231,9 +231,13 @@ export default function LandingView() {
           // Wait for webhook to process (Stripe can take 1-3 seconds)
           await new Promise((r) => setTimeout(r, 2000));
 
-          const res = await fetch("/api/auth/me");
+          const res = await fetch("/api/auth/me", {
+            method: "GET",
+            credentials: "include",
+            headers: { Accept: "application/json" },
+          });
           if (res.ok) {
-            const data = await res.json();
+            const data = await res.json().catch(() => null);
             if (data?.user) {
               console.log(
                 "[Checkout] User data after success:",

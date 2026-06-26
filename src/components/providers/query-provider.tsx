@@ -23,11 +23,15 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function initAuth() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
         if (!res.ok) return;
-        const data = await res.json();
+        const data = await res.json().catch(() => null);
         if (data?.user) setAuth(data.user);
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
