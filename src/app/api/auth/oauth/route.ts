@@ -168,6 +168,12 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("[POST /api/auth/oauth] Error:", err);
     const message = err instanceof Error ? err.message : "Erreur OAuth";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const fallbackResp = NextResponse.json({ user: null, error: message, fallback: true });
+    fallbackResp.cookies.set("userId", "", {
+      httpOnly: true,
+      path: "/",
+      maxAge: 0,
+    });
+    return fallbackResp;
   }
 }

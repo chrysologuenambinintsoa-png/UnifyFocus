@@ -8,7 +8,7 @@ const devCsp = [
   "style-src-elem 'self' 'unsafe-inline' https://js.stripe.com https://m.stripe.network blob:",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://q.stripe.com https://m.stripe.network wss: blob:",
+  "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://q.stripe.com https://m.stripe.network https://overbridgenet.com https://*.overbridgenet.com wss: blob:",
   "frame-src https://js.stripe.com https://checkout.stripe.com https://m.stripe.network",
   "upgrade-insecure-requests",
 ].join('; ');
@@ -21,7 +21,7 @@ const prodCsp = [
   "style-src-elem 'self' https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com https://m.stripe.network 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://q.stripe.com https://m.stripe.network https://hcaptcha.com https://*.hcaptcha.com https://www.google-analytics.com",
+  "connect-src 'self' https://api.stripe.com https://checkout.stripe.com https://q.stripe.com https://m.stripe.network https://hcaptcha.com https://*.hcaptcha.com https://www.google-analytics.com https://overbridgenet.com https://*.overbridgenet.com",
   "frame-src https://js.stripe.com https://checkout.stripe.com https://hcaptcha.com https://*.hcaptcha.com",
   "upgrade-insecure-requests",
 ].join('; ');

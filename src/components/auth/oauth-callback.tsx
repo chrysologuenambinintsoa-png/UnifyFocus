@@ -52,6 +52,9 @@ export function OAuthCallback() {
         }
 
         const data = await res.json();
+        if (!data?.user) {
+          throw new Error(data?.error || "Authentification échouée");
+        }
         setAuth(data.user);
 
         toast({

@@ -442,6 +442,9 @@ export function AuthModal() {
         }
 
         const data = await res.json();
+        if (!data?.user) {
+          throw new Error(data?.error || `Erreur lors de la connexion avec ${provider}`);
+        }
         setAuth(data.user);
         setCurrentView("dashboard");
         closeAuthModal();
