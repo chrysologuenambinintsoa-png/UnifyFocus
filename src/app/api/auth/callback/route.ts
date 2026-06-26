@@ -37,9 +37,9 @@ export async function GET(req: Request) {
     const p = provider.toLowerCase();
 
     if (p === "google") {
-      token = await exchangeGoogleCode(code);
+      token = await exchangeGoogleCode(code, req);
     } else if (p === "facebook") {
-      token = await exchangeFacebookCode(code);
+      token = await exchangeFacebookCode(code, req);
     }
 
     if (!token) {
@@ -68,9 +68,17 @@ function normalizeRedirectBase(raw: string) {
   return raw.replace(/(^["']|["']$)/g, "").replace(/\/$/, "");
 }
 
-async function exchangeGoogleCode(code: string) {
+function getRedirectBase(req: Request) {
   try {
-    const redirectBase = normalizeRedirectBase(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+    return normalizeRedirectBase(new URL(req.url).origin);
+  } catch {
+    return normalizeRedirectBase(process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "http://localhost:3000");
+  }
+}
+
+async function exchangeGoogleCode(code: string, req: Request) {
+  try {
+    const redirectBase = getRedirectBase(req);
     const res = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -99,9 +107,9 @@ async function exchangeGoogleCode(code: string) {
   }
 }
 
-async function exchangeFacebookCode(code: string) {
+async function exchangeFacebookCode(code: string, req: Request) {
   try {
-    const redirectBase = normalizeRedirectBase(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+    const redirectBase = getRedirectBase(req);
     const res = await fetch("https://graph.facebook.com/v20.0/oauth/access_token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
