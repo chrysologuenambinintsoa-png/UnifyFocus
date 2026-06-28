@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { generateAudioAI } from "@/lib/ai";
+import { generateAudioAI } from "@/lib/ai.server";
 import { normalizePrompt, extractPromptIntent } from "@/lib/prompt";
 import { NextResponse } from "next/server";
 

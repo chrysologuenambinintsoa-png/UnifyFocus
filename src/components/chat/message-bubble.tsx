@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { format } from "date-fns";
 import Logo from "@/components/ui/logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
-import { ThumbsUp, ThumbsDown, AlertCircle, Download, FileText, File } from "lucide-react";
+import { ThumbsUp, ThumbsDown, AlertCircle, Download, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/app-store";
+import { extractImagesFromResponse } from "@/lib/ai";
 
 export interface ChatMessage {
   id: string;
@@ -48,6 +49,62 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
   })();
 
   const isUser = message.role === "user";
+
+  const contentSegments = useMemo(() => {
+    const segments: Array<{ type: "text" | "code"; language?: string; content: string }> = [];
+    const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = codeBlockRegex.exec(message.content)) !== null) {
+      if (match.index > lastIndex) {
+        segments.push({
+          type: "text",
+          content: message.content.slice(lastIndex, match.index),
+        });
+      }
+      segments.push({
+        type: "code",
+        language: match[1] || "text",
+        content: match[2],
+      });
+      lastIndex = codeBlockRegex.lastIndex;
+    }
+
+    if (lastIndex < message.content.length) {
+      segments.push({
+        type: "text",
+        content: message.content.slice(lastIndex),
+      });
+    }
+
+    return segments;
+  }, [message.content]);
+
+  const inlineImageUrls = useMemo(() => extractImagesFromResponse(message.content), [message.content]);
+  const attachedImageUrls = message.attachments?.filter((url) => isImageUrl(url)) ?? [];
+  const imageUrls = [...new Set([...attachedImageUrls, ...inlineImageUrls])];
+  const fileAttachments = message.attachments?.filter((url) => !isImageUrl(url)) ?? [];
+
+  const renderContent = () =>
+    contentSegments.map((segment, index) => {
+      if (segment.type === "code") {
+        return (
+          <div key={`code-${index}`} className="my-3 overflow-hidden rounded-2xl bg-slate-950 p-4 text-sm text-slate-100 shadow-inner shadow-slate-900/30">
+            <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-slate-400">
+              {segment.language || "code"}
+            </div>
+            <pre className="whitespace-pre-wrap break-words font-mono text-[13px] leading-[1.6]">{segment.content.trim()}</pre>
+          </div>
+        );
+      }
+
+      return (
+        <p key={`text-${index}`} className="text-sm leading-relaxed break-words whitespace-pre-wrap text-foreground">
+          {segment.content.trim()}
+        </p>
+      );
+    });
 
   const handleRating = async (rating: "good" | "bad" | "incomplete") => {
     if (!user) return;
@@ -137,32 +194,35 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
               transition={{ duration: 0.2 }}
               className="rounded-3xl px-4 py-2.5 max-w-2xl bg-surface-2 border border-border shadow-sm hover:shadow-md transition-shadow"
             >
-              <p className="text-sm text-foreground leading-relaxed break-words font-normal">{message.content}</p>
-              {message.attachments && message.attachments.length > 0 && (
+              <div className="space-y-3">
+                {renderContent()}
+              </div>
+              {imageUrls.length > 0 && (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {imageUrls.map((url) => (
+                    <a key={url} href={url} target="_blank" rel="noreferrer" className="overflow-hidden rounded-xl border border-white/10 shadow-lg shadow-slate-950/20 transition-transform hover:-translate-y-0.5">
+                      <img src={url} alt="assistant image" className="h-36 w-full object-cover" />
+                    </a>
+                  ))}
+                </div>
+              )}
+              {fileAttachments.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {message.attachments.map((url) => {
-                    if (isImageUrl(url)) {
-                      return (
-                        <a key={url} href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded">
-                          <img src={url} alt="attachment" className="h-28 max-w-sm object-cover" />
-                        </a>
-                      );
-                    } else {
-                      const filename = getFilename(url);
-                      return (
-                        <a
-                          key={url}
-                          href={url}
-                          download
-                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-xs text-foreground font-medium"
-                          title={filename}
-                        >
-                          <FileText className="w-3.5 h-3.5 flex-shrink-0" />
-                          <span className="truncate max-w-[120px]">{filename}</span>
-                          <Download className="w-3.5 h-3.5 flex-shrink-0" />
-                        </a>
-                      );
-                    }
+                  {fileAttachments.map((url) => {
+                    const filename = getFilename(url);
+                    return (
+                      <a
+                        key={url}
+                        href={url}
+                        download
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-xs text-foreground font-medium"
+                        title={filename}
+                      >
+                        <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="truncate max-w-[120px]">{filename}</span>
+                        <Download className="w-3.5 h-3.5 flex-shrink-0" />
+                      </a>
+                    );
                   })}
                 </div>
               )}

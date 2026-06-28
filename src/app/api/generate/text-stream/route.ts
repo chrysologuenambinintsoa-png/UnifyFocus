@@ -1,4 +1,4 @@
-import { generateTextAIStreaming, requestCodeAIStreaming } from "@/lib/ai";
+import { generateTextAIStreaming, requestCodeAIStreaming } from "@/lib/ai.server";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
-import { chatWithAI } from "@/lib/ai";
+import { chatWithAIWithSearch } from "@/lib/ai.server";
+import { extractImagesFromResponse } from "@/lib/ai";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -67,8 +68,9 @@ export async function POST(req: Request) {
     }
 
     try {
-      // Generate response
-      const response = await chatWithAI(messages, model || "gpt-4o");
+      // Generate response with web search support when the user asks for recent or external information
+      const { response, searchResults, usedSearch } = await chatWithAIWithSearch(messages, model || "gpt-4o", true);
+      const responseAttachments = extractImagesFromResponse(response);
 
       // Deduct credit and save assistant message
       const [updatedUser] = await db.$transaction([
@@ -85,7 +87,7 @@ export async function POST(req: Request) {
             conversationId,
             role: "assistant",
             content: response,
-            attachments: undefined, // API response will not include attachments for now
+            attachments: responseAttachments.length > 0 ? responseAttachments : undefined,
           },
         });
       }
@@ -101,7 +103,8 @@ export async function POST(req: Request) {
       return NextResponse.json({
         response,
         credits: updatedUser.credits,
-        attachments: undefined, // Return empty for now, can be extended if AI provides URLs
+        attachments: responseAttachments.length > 0 ? responseAttachments : undefined,
+        ...(usedSearch ? { searchResults, usedSearch } : {}),
       });
     } catch (error) {
       console.error("Chat generation failed:", error);
