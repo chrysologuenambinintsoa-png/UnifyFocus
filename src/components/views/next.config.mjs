@@ -7,7 +7,7 @@ const cspHeader = `
     img-src 'self' blob: data: https://*.stripe.com;
     font-src 'self';
     frame-src 'self' https://js.stripe.com https://m.stripe.network https://hcaptcha.com https://*.hcaptcha.com;
-    connect-src 'self' https://api.stripe.com https://api.siliconflow.com https://api.groq.com https://api.github.com wss://*.hcaptcha.com https://accounts.youtube.com https://*.google.com;
+    connect-src 'self' https://api.stripe.com https://api.groq.com https://api.github.com wss://*.hcaptcha.com https://accounts.youtube.com https://*.google.com;
     object-src 'none';
     base-uri 'self';
     form-action 'self';

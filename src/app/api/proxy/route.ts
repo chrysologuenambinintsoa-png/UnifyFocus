@@ -4,9 +4,7 @@ function isAllowedHost(url: URL) {
   const hostname = url.hostname.toLowerCase();
   return (
     hostname === "s3.amazonaws.com" ||
-    hostname.endsWith(".amazonaws.com") ||
-    hostname.endsWith(".siliconflow.com") ||
-    hostname.endsWith(".siliconflow.cn")
+    hostname.endsWith(".amazonaws.com")
   );
 }
 

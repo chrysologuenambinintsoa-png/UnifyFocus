@@ -1,7 +1,6 @@
 ﻿import fs from "fs";
 import path from "path";
 import { normalizePrompt, extractPromptIntent } from "./prompt";
-import { GoogleGenAI } from "@google/genai";
 
 function loadEnvFile(filePath: string) {
   if (!fs.existsSync(filePath)) {
@@ -13,22 +12,15 @@ function loadEnvFile(filePath: string) {
 
   for (const line of content.split(/\r?\n/)) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) {
-      continue;
-    }
+    if (!trimmed || trimmed.startsWith("#")) continue;
 
     const equalsIndex = trimmed.indexOf("=");
-    if (equalsIndex === -1) {
-      continue;
-    }
+    if (equalsIndex === -1) continue;
 
     const key = trimmed.slice(0, equalsIndex).trim();
     let value = trimmed.slice(equalsIndex + 1).trim();
 
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
       value = value.slice(1, -1);
     }
 
@@ -39,849 +31,302 @@ function loadEnvFile(filePath: string) {
 }
 
 function ensureLocalEnvLoaded() {
-  // Skip if we already have AI provider configuration
-  if (process.env.HF_API_KEY && process.env.HF_API_BASE) {
-    return;
-  }
-
-  // Skip env file loading in production/serverless environments (like Vercel)
-  // Environment variables should be configured in the platform's dashboard
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-    return;
-  }
+  if (process.env.DEAPI_API_KEY) return;
+  if (process.env.VERCEL || process.env.NODE_ENV === "production") return;
 
   try {
     const root = process.cwd();
     const envFiles = [".env.local", ".env"];
-
     for (const envFile of envFiles) {
-      const envPath = path.join(/* turbopackIgnore: true */ root, envFile);
+      const envPath = path.join(root, envFile);
       const envData = loadEnvFile(envPath);
-
       for (const [key, value] of Object.entries(envData)) {
-        if (!process.env[key] && value !== undefined) {
-          process.env[key] = value;
-        }
+        if (!process.env[key] && value !== undefined) process.env[key] = value;
       }
     }
-  } catch (error) {
-    // Silently fail if env files can't be loaded
-    // This is expected in serverless/build environments
+  } catch {
+    // ignore
   }
 }
 
 ensureLocalEnvLoaded();
 
-const rawAiProvider = process.env.AI_PROVIDER?.trim().toUpperCase() ?? "AUTO";
-const AI_PROVIDER = rawAiProvider;
+const rawAiProvider = process.env.AI_PROVIDER?.trim().toUpperCase() ?? "DEAPI";
+const AI_PROVIDER = rawAiProvider === "AUTO" ? "DEAPI" : rawAiProvider;
 
 function envOrDefault(value: string | undefined, fallback: string) {
   const trimmed = value?.trim();
   return trimmed && trimmed !== "" ? trimmed : fallback;
 }
 
-function envArray(...values: Array<string | undefined>) {
-  return values
-    .map((value) => value?.trim())
-    .filter((value): value is string => Boolean(value));
+function normalizeDeapiApiBase(value: string | undefined) {
+  const trimmed = envOrDefault(value?.trim(), "");
+  if (!trimmed) return "https://api.deapi.ai";
+  if (/api\.ai-music\.com/i.test(trimmed)) return "https://api.deapi.ai";
+  if (/oai\.deapi\.ai/i.test(trimmed)) return "https://api.deapi.ai";
+  if (/api\.deapi\.ai/i.test(trimmed)) return trimmed.replace(/\/+$/, "");
+  return trimmed.replace(/\/+$/, "");
 }
 
-const SILICONFLOW_API_KEY = envOrDefault(process.env.SILICONFLOW_API_KEY, "");
-const SILICONFLOW_API_BASE = envOrDefault(process.env.SILICONFLOW_API_BASE?.replace(/\/+$/, ""), "https://api.siliconflow.com/v1");
-const SILICONFLOW_API_BASES = Array.from(
-  new Set([
-    SILICONFLOW_API_BASE,
-    "https://api.siliconflow.com/v1",
-  ].filter(Boolean))
-);
-const SILICONFLOW_MODEL = envOrDefault(process.env.SILICONFLOW_MODEL, "zai-org/GLM-5.2");
-const SILICONFLOW_MODEL_ALTS = envArray(
-  process.env.SILICONFLOW_MODEL_ALT_1,
-  process.env.SILICONFLOW_MODEL_ALT_2,
-  process.env.SILICONFLOW_MODEL_ALT_3,
-  process.env.SILICONFLOW_MODEL_ALT_4,
-  process.env.SILICONFLOW_MODEL_ALT_5,
-);
+const DEAPI_API_KEY = envOrDefault(process.env.DEAPI_API_KEY, "");
+const DEAPI_API_BASE = normalizeDeapiApiBase(process.env.DEAPI_API_BASE);
+const DEAPI_MODEL = envOrDefault(process.env.DEAPI_MODEL, "AceStep_1_5_Turbo");
+const DEAPI_IMAGE_MODEL = envOrDefault(process.env.DEAPI_IMAGE_MODEL, "Flux1schnell");
+const DEAPI_IMAGE_EDIT_MODEL = envOrDefault(process.env.DEAPI_IMAGE_EDIT_MODEL, "Flux1schnell");
+const DEAPI_VIDEO_MODEL = envOrDefault(process.env.DEAPI_VIDEO_MODEL, "Ltx2_3_22B_Dist_INT8");
+const DEAPI_VIDEO_EDIT_MODEL = envOrDefault(process.env.DEAPI_VIDEO_EDIT_MODEL, "Ltx2_19B_Dist_FP8");
 
-const SILICONFLOW_IMAGE_MODEL = envOrDefault(process.env.SILICONFLOW_IMAGE_MODEL, "Tongyi-MAI/Z-Image-Turbo");
-const SILICONFLOW_IMAGE_MODEL_ALTS = envArray(
-  process.env.SILICONFLOW_IMAGE_MODEL_ALT_1,
-  process.env.SILICONFLOW_IMAGE_MODEL_ALT_2,
-  process.env.SILICONFLOW_IMAGE_MODEL_ALT_3,
-  process.env.SILICONFLOW_IMAGE_MODEL_ALT_4,
-  process.env.SILICONFLOW_IMAGE_MODEL_ALT_5,
-);
-const SILICONFLOW_IMAGE_EDIT_MODEL = envOrDefault(process.env.SILICONFLOW_IMAGE_EDIT_MODEL, "Qwen/Qwen-Image-Edit");
-const SILICONFLOW_IMAGE_EDIT_MODEL_ALTS = envArray(
-  process.env.SILICONFLOW_IMAGE_EDIT_MODEL_ALT_1,
-  process.env.SILICONFLOW_IMAGE_EDIT_MODEL_ALT_2,
-);
-
-const SILICONFLOW_VIDEO_MODEL = envOrDefault(process.env.SILICONFLOW_VIDEO_MODEL, "Wan-AI/Wan2.2-T2V-A14B");
-const SILICONFLOW_VIDEO_MODEL_ALTS = envArray(process.env.SILICONFLOW_VIDEO_MODEL_ALT_1);
-const SILICONFLOW_VIDEO_EDIT_MODEL = envOrDefault(process.env.SILICONFLOW_VIDEO_EDIT_MODEL, "Wan-AI/Wan2.2-I2V-A14B");
-const SILICONFLOW_VIDEO_EDIT_MODEL_ALTS = envArray(process.env.SILICONFLOW_VIDEO_EDIT_MODEL_ALT_1);
-
-const GROQ_API_KEY = envOrDefault(process.env.GROQ_API_KEY, "");
-const GROQ_API_BASE = envOrDefault(process.env.GROQ_API_BASE?.replace(/\/+$|\?$|\s+$/g, ""), "https://api.groq.com/openai/v1");
-const GROQ_MODEL = envOrDefault(process.env.GROQ_MODEL, "gpt-4o");
-
-const GITHUB_MODEL_API_KEY = envOrDefault(process.env.GITHUB_MODEL_API_KEY, "");
-const GITHUB_MODEL_API_BASE = envOrDefault(process.env.GITHUB_MODEL_API_BASE?.replace(/\/+$|\?$|\s+$/g, ""), "https://api.github.com");
-const GITHUB_MODEL_MODEL = envOrDefault(process.env.GITHUB_MODEL_MODEL, "gpt-4o");
-
-const GEMINI_API_KEY = envOrDefault(process.env.GEMINI_API_KEY, "");
-const GEMINI_API_BASE = envOrDefault(process.env.GEMINI_API_BASE?.replace(/\/+$/, ""), "https://api.ai.google.com");
-const GEMINI_MODEL = envOrDefault(process.env.GEMINI_MODEL, "gemini-1.5-pro");
-const GEMINI_VIDEO_MODEL = envOrDefault(process.env.GEMINI_VIDEO_MODEL, "veo-2.0-generate-001");
-
-const HF_API_KEY = envOrDefault(process.env.HF_API_KEY, "");
-const HF_API_BASE = envOrDefault(process.env.HF_API_BASE?.replace(/\/+$/, ""), "https://api-inference.huggingface.co");
-const HF_VIDEO_MODEL = envOrDefault(process.env.HF_VIDEO_MODEL, "damo-vilab/text-to-video-ms-1.7b");
-
-const AIMUSIC_API_KEY = envOrDefault(process.env.AIMUSIC_API_KEY, "");
-const AIMUSIC_API_BASE = envOrDefault(process.env.AIMUSIC_API_BASE?.replace(/\/+$/, ""), "https://api.ai-music.com/v1");
-const AIMUSIC_MODEL = envOrDefault(process.env.AIMUSIC_MODEL, "audiomix-1");
-
-const AVAILABLE_AI_PROVIDERS = ["AIMUSIC", "HUGGINGFACE", "GEMINI", "GROQ", "SILICONFLOW", "GITHUB_MODEL"] as const;
+const AVAILABLE_AI_PROVIDERS = ["DEAPI"] as const;
 type AIProviderValue = (typeof AVAILABLE_AI_PROVIDERS)[number];
-
 type AIProviderCapability = "text" | "code" | "image" | "video" | "audio";
 
 function isProviderConfigured(provider: AIProviderValue) {
-  switch (provider) {
-    case "SILICONFLOW":
-      return !!SILICONFLOW_API_KEY;
-    case "GROQ":
-      return !!GROQ_API_KEY;
-    case "GITHUB_MODEL":
-      return !!GITHUB_MODEL_API_KEY;
-    case "GEMINI":
-      return !!GEMINI_API_KEY;
-    case "HUGGINGFACE":
-      return !!HF_API_KEY;
-    case "AIMUSIC":
-      return !!AIMUSIC_API_KEY;
-  }
+  if (provider === "DEAPI") return Boolean(DEAPI_API_KEY);
+  return false;
 }
 
-const FALLBACK_PROVIDER_ORDER: AIProviderValue[] = [
-  "SILICONFLOW",
-  "HUGGINGFACE",
-  "GEMINI",
-  "GROQ",
-  "GITHUB_MODEL",
-  "AIMUSIC",
-];
-
+const FALLBACK_PROVIDER_ORDER: AIProviderValue[] = ["DEAPI"];
 const FALLBACK_PROVIDER_ORDER_BY_ACTION: Record<AIProviderCapability, AIProviderValue[]> = {
-  text: ["GROQ", "SILICONFLOW", "GEMINI", "GITHUB_MODEL"],
-  code: ["GITHUB_MODEL", "GROQ", "SILICONFLOW", "GEMINI"],
-  image: ["SILICONFLOW"],
-  video: ["SILICONFLOW", "GEMINI", "HUGGINGFACE"],
-  audio: ["AIMUSIC"],
+  text: ["DEAPI"],
+  code: ["DEAPI"],
+  image: ["DEAPI"],
+  video: ["DEAPI"],
+  audio: ["DEAPI"],
 };
 
-const ACTIVE_AI_PROVIDERS = FALLBACK_PROVIDER_ORDER.filter(isProviderConfigured);
-
-// Note: We don't throw here during build time to allow the app to build.
-// The error will be thrown at runtime when AI features are actually used.
-// This is important because environment variables may not be fully loaded during build.
-
-if (AI_PROVIDER !== "AUTO" && !AVAILABLE_AI_PROVIDERS.includes(AI_PROVIDER as AIProviderValue)) {
-  throw new Error(`Unsupported AI_PROVIDER: ${AI_PROVIDER}`);
-}
-
-if (AI_PROVIDER !== "AUTO" && !isProviderConfigured(AI_PROVIDER as AIProviderValue)) {
-  throw new Error(`Missing API key or configuration for provider ${AI_PROVIDER}`);
-}
-
-// Check if we're in a build environment (no env vars available yet)
-const isBuildTime = typeof window === 'undefined' && !process.env.NODE_ENV?.includes('test') && ACTIVE_AI_PROVIDERS.length === 0 && AI_PROVIDER === 'AUTO';
-
-const SILICONFLOW_HEADERS = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${SILICONFLOW_API_KEY}`,
-};
-
-const GROQ_HEADERS = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${GROQ_API_KEY}`,
-};
-
-const GITHUB_MODEL_HEADERS = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${GITHUB_MODEL_API_KEY}`,
-};
-
-const AIMUSIC_HEADERS = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${AIMUSIC_API_KEY}`,
-};
-
-const HUGGINGFACE_HEADERS = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${HF_API_KEY}`,
-};
-
-const PROVIDER_CAPABILITIES: Record<AIProviderValue, AIProviderCapability[]> = {
-  AIMUSIC: ["text", "audio"],
-  HUGGINGFACE: ["video"],
-  GEMINI: ["text", "code", "image", "video"],
-  GROQ: ["text"],
-  SILICONFLOW: ["text", "code", "image", "video"],
-  GITHUB_MODEL: ["text", "code"],
-};
-
-function providerSupportsAction(
-  provider: AIProviderValue,
-  action: AIProviderCapability
-) {
-  return PROVIDER_CAPABILITIES[provider]?.includes(action);
+function providerSupportsAction(provider: AIProviderValue, action: AIProviderCapability) {
+  if (provider === "DEAPI") return ["text", "code", "image", "video", "audio"].includes(action);
+  return false;
 }
 
 function getActiveProvidersForAction(action: AIProviderCapability) {
   const order = FALLBACK_PROVIDER_ORDER_BY_ACTION[action] ?? FALLBACK_PROVIDER_ORDER;
-  return order.filter(
-    (provider) => isProviderConfigured(provider) && providerSupportsAction(provider, action)
-  ) as AIProviderValue[];
+  return order.filter((provider) => isProviderConfigured(provider) && providerSupportsAction(provider, action)) as AIProviderValue[];
 }
 
 function getProvidersForAction(action: AIProviderCapability) {
-  if (AI_PROVIDER === "AUTO") {
-    const providers = getActiveProvidersForAction(action);
+  if (action === "audio") {
+    const providers = getActiveProvidersForAction("audio");
     if (providers.length === 0) {
-      throw new Error(
-        `No AI provider is configured for AUTO mode. ` +
-        `Please set at least one API key (e.g., GROQ_API_KEY, SILICONFLOW_API_KEY, etc.) ` +
-        `in your environment variables.`
-      );
+      throw new Error("No deAPI.ai provider is configured. Please set DEAPI_API_KEY in your environment variables.");
     }
     return providers;
   }
 
-  const provider = AI_PROVIDER as AIProviderValue;
-  if (!AVAILABLE_AI_PROVIDERS.includes(provider)) {
+  if (AI_PROVIDER !== "DEAPI") {
     throw new Error(`Unsupported AI_PROVIDER: ${AI_PROVIDER}`);
   }
-  if (!isProviderConfigured(provider)) {
-    throw new Error(`AI provider ${provider} is not configured for use.`);
-  }
-  if (!providerSupportsAction(provider, action)) {
-    throw new Error(`AI provider ${provider} does not support ${action} generation.`);
+
+  const providers = [AI_PROVIDER as AIProviderValue].filter(
+    (provider) => isProviderConfigured(provider) && providerSupportsAction(provider, action)
+  );
+
+  if (providers.length === 0) {
+    throw new Error("No deAPI.ai provider is configured. Please set DEAPI_API_KEY in your environment variables.");
   }
 
-  return [provider];
+  return providers;
 }
 
-function getApiErrorMessage(data: unknown, defaultMessage: string) {
-  if (data && typeof data === "object") {
-    if ("error" in data) {
-      const errorPayload = (data as any).error;
-      if (typeof errorPayload === "string") {
-        return errorPayload;
-      }
-      if (errorPayload && typeof errorPayload === "object") {
-        return (
-          (errorPayload as { message?: string }).message ??
-          JSON.stringify(errorPayload)
-        );
-      }
-    }
-
-    if ("message" in data && typeof (data as any).message === "string") {
-      return (data as any).message;
-    }
-  }
-
-  return defaultMessage;
-}
+const DEAPI_HEADERS = {
+  Authorization: `Bearer ${DEAPI_API_KEY}`,
+  Accept: "application/json",
+};
 
 function normalizeErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    const cause = (error as any).cause;
-    const causeMessage =
-      cause instanceof Error && cause.message ? ` (${cause.message})` : "";
-    return `${error.message}${causeMessage}`;
-  }
-
-  return typeof error === "string" ? error : JSON.stringify(error);
+  return error instanceof Error ? error.message : String(error);
 }
 
-async function siliconflowFetch(path: string, body: unknown) {
-  let lastError: unknown = null;
-  for (const base of SILICONFLOW_API_BASES) {
-    console.log(`[ai] siliconflowFetch trying base: ${base}${path}`);
-    try {
-      const response = await fetch(`${base}${path}`, {
-        method: "POST",
-        headers: SILICONFLOW_HEADERS,
-        body: JSON.stringify(body),
-      });
-
-      let data: unknown;
-      try {
-        data = await response.json();
-      } catch {
-        data = null;
-      }
-
-      if (!response.ok) {
-        const errorMessage = getApiErrorMessage(data, response.statusText);
-        throw new Error(`SiliconFlow request failed: ${errorMessage}`);
-      }
-
-      return data as any;
-    } catch (fetchError) {
-      lastError = fetchError;
-      // try next base
-    }
-  }
-
-  throw new Error(`SiliconFlow fetch failed: ${normalizeErrorMessage(lastError)}`);
-}
-
-async function groqFetch(path: string, body: unknown) {
-  const url = `${GROQ_API_BASE}${path}`;
-  const response = await fetch(url, {
+async function deapiFetch(path: string, body: unknown) {
+  const response = await fetch(`${DEAPI_API_BASE}${path}`, {
     method: "POST",
-    headers: GROQ_HEADERS,
+    headers: {
+      ...DEAPI_HEADERS,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(body),
   });
 
-  let data: unknown;
-  try {
-    data = await response.json();
-  } catch {
-    data = null;
-  }
-
   if (!response.ok) {
-    const errorMessage = getApiErrorMessage(data, response.statusText);
-    throw new Error(`Groq request failed: ${errorMessage}`);
+    const text = await response.text().catch(() => "");
+    throw new Error(`deAPI.ai request failed (${response.status}): ${text}`);
   }
 
-  return data as any;
+  return await response.json();
 }
 
-async function githubModelFetch(path: string, body: unknown) {
-  const url = `${GITHUB_MODEL_API_BASE}${path}`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: GITHUB_MODEL_HEADERS,
-    body: JSON.stringify(body),
-  });
-
-  let data: unknown;
-  try {
-    data = await response.json();
-  } catch {
-    data = null;
+async function deapiFetchAndPoll(path: string, body: unknown) {
+  const json = await deapiFetch(path, body);
+  const requestId = json?.data?.request_id ?? json?.request_id;
+  if (!requestId) {
+    return json;
   }
-
-  if (!response.ok) {
-    const errorMessage = getApiErrorMessage(data, response.statusText);
-    throw new Error(`GitHub model request failed: ${errorMessage}`);
-  }
-
-  return data as any;
+  return await pollDeapiJobStatus(requestId);
 }
 
-async function aiMusicFetch(path: string, body: unknown) {
-  const url = `${AIMUSIC_API_BASE}${path}`;
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: AIMUSIC_HEADERS,
-      body: JSON.stringify(body),
+function dataUrlToBlob(dataUrl: string) {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+  if (!match) throw new Error("Invalid data URL for source audio.");
+  const mimeType = match[1];
+  const base64Data = match[2];
+  const binary = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+  return new Blob([binary], { type: mimeType });
+}
+
+function getFileExtensionForMimeType(mimeType: string) {
+  switch (mimeType.toLowerCase()) {
+    case "audio/mpeg":
+    case "audio/mp3":
+      return "mp3";
+    case "audio/wav":
+      return "wav";
+    case "audio/flac":
+      return "flac";
+    case "audio/ogg":
+      return "ogg";
+    case "audio/x-m4a":
+    case "audio/mp4":
+      return "m4a";
+    default:
+      return "bin";
+  }
+}
+
+async function pollDeapiJobStatus(requestId: string, maxAttempts: number = 60, interval: number = 2000) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const response = await fetch(`${DEAPI_API_BASE}/api/v2/jobs/${requestId}`, {
+      method: "GET",
+      headers: DEAPI_HEADERS,
     });
-
-    let data: unknown;
-    try {
-      data = await response.json();
-    } catch {
-      data = null;
-    }
 
     if (!response.ok) {
-      const errorMessage = getApiErrorMessage(data, response.statusText);
-      throw new Error(`AI Music API request failed: ${errorMessage}`);
+      const text = await response.text().catch(() => "");
+      throw new Error(`deAPI.ai status request failed (${response.status}): ${text}`);
     }
 
-    return data as any;
-  } catch (fetchError) {
-    if (fetchError instanceof Error) {
-      const messageLower = fetchError.message.toLowerCase();
-      if (messageLower.includes("getaddrinfo") || messageLower.includes("enotfound") || messageLower.includes("network")) {
-        throw new Error(
-          `AI Music API network error while requesting ${url}: ${fetchError.message}. ` +
-            `Check AIMUSIC_API_BASE and DNS/connectivity to ${AIMUSIC_API_BASE}.`
-        );
-      }
+    const payload = await response.json();
+    const data = payload?.data;
+
+    if (!data) {
+      throw new Error(`Invalid deAPI.ai job status response: ${JSON.stringify(payload)}`);
     }
-    throw fetchError;
+
+    if (data.status === "done") {
+      return data;
+    }
+
+    if (data.status === "error") {
+      throw new Error(`deAPI.ai job failed: ${data.error_message ?? data.message ?? JSON.stringify(data)}`);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, interval));
   }
+
+  throw new Error("deAPI.ai job polling timed out.");
 }
 
-async function aiMusicAudioFetch(body: unknown) {
-  const endpoints = [
-    "/audio/generations",
-    "/audios/generations",
-    "/audio",
-    "/audios",
-  ];
-
-  let lastError: unknown = null;
-  for (const path of endpoints) {
-    try {
-      return await aiMusicFetch(path, body);
-    } catch (error) {
-      lastError = error;
-      if (typeof error === "object" && error !== null) {
-        const message = normalizeErrorMessage(error).toLowerCase();
-        if (message.includes("not found") || message.includes("404")) {
-          continue;
-        }
-      }
-      break;
-    }
+async function deapiAudioFetch(body: Record<string, unknown>, sourceAudio?: string) {
+  const formData = new FormData();
+  for (const [key, value] of Object.entries(body)) {
+    if (value === undefined || value === null) continue;
+    formData.append(key, String(value));
   }
 
-  throw new Error(
-    `AI Music audio request failed: ${normalizeErrorMessage(lastError)}`
-  );
-}
-
-async function siliconflowImageFetch(body: unknown) {
-  let lastError: unknown = null;
-  for (const base of SILICONFLOW_API_BASES) {
-    try {
-      const response = await fetch(`${base}/images/generations`, {
-        method: "POST",
-        headers: SILICONFLOW_HEADERS,
-        body: JSON.stringify(body),
-      });
-
-      let data: unknown;
-      try {
-        data = await response.json();
-      } catch {
-        data = null;
-      }
-
-      if (!response.ok) {
-        const errorMessage = getApiErrorMessage(data, response.statusText);
-        throw new Error(`SiliconFlow image request failed: ${errorMessage}`);
-      }
-
-      return data as any;
-    } catch (fetchError) {
-      lastError = fetchError;
-      // try next base
-    }
+  if (sourceAudio) {
+    const blob = dataUrlToBlob(sourceAudio);
+    const extension = getFileExtensionForMimeType(blob.type);
+    formData.append("reference_audio", blob, `source.${extension}`);
   }
 
-  throw new Error(`SiliconFlow image fetch failed: ${normalizeErrorMessage(lastError)}`);
-}
-
-async function siliconflowVideoFetch(body: unknown) {
-  let lastError: unknown = null;
-  for (const base of SILICONFLOW_API_BASES) {
-    try {
-      const response = await fetch(`${base}/videos/generations`, {
-        method: "POST",
-        headers: SILICONFLOW_HEADERS,
-        body: JSON.stringify(body),
-      });
-
-      let data: unknown;
-      try {
-        data = await response.json();
-      } catch {
-        data = null;
-      }
-
-      if (!response.ok) {
-        const errorMessage = getApiErrorMessage(data, response.statusText);
-        throw new Error(`SiliconFlow video request failed: ${errorMessage}`);
-      }
-
-      return data as any;
-    } catch (fetchError) {
-      lastError = fetchError;
-      // try next base
-    }
-  }
-
-  throw new Error(`SiliconFlow video fetch failed: ${normalizeErrorMessage(lastError)}`);
-}
-
-async function huggingFaceVideoFetch(body: unknown) {
-  const url = HF_API_BASE.includes("/models/")
-    ? HF_API_BASE
-    : `${HF_API_BASE}/models/${HF_VIDEO_MODEL}`;
-
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method: "POST",
-      headers: HUGGINGFACE_HEADERS,
-      body: JSON.stringify(body),
-    });
-  } catch (fetchError) {
-    const message = fetchError instanceof Error ? fetchError.message : String(fetchError);
-    throw new Error(`HuggingFace video fetch failed for ${url}: ${message}`);
-  }
-
-  let data: unknown;
-  try {
-    data = await response.json();
-  } catch {
-    data = null;
-  }
+  const response = await fetch(`${DEAPI_API_BASE}/api/v2/audio/music`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${DEAPI_API_KEY}`,
+      Accept: "application/json",
+    },
+    body: formData,
+  });
 
   if (!response.ok) {
-    const errorMessage = getApiErrorMessage(data, response.statusText);
-    throw new Error(`HuggingFace video request failed: ${errorMessage}`);
+    const text = await response.text().catch(() => "");
+    throw new Error(`deAPI.ai audio request failed (${response.status}): ${text}`);
   }
 
-  if (data === null) {
-    const contentType = response.headers.get("content-type") || "";
-    if (contentType.startsWith("video/") || contentType === "application/octet-stream") {
-      const buffer = await response.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      const base64 = Buffer.from(bytes).toString("base64");
-      return { data: [{ b64_json: base64 }] };
-    }
+  const json = await response.json();
+  const requestId = json?.data?.request_id ?? json?.request_id;
+  if (!requestId) {
+    return json;
   }
 
-  return data as any;
+  return await pollDeapiJobStatus(requestId);
 }
 
-function parseTextResponse(response: any) {
-  return (
-    response?.choices?.[0]?.message?.content?.trim?.() ||
-    response?.output?.[0]?.content?.[0]?.text?.trim?.() ||
-    response?.output?.[0]?.text?.trim?.() ||
-    response?.outputs?.[0]?.content?.[0]?.text?.trim?.() ||
-    response?.outputs?.[0]?.text?.trim?.() ||
-    response?.response?.trim?.() ||
-    response?.output_text?.trim?.() ||
-    response?.text?.trim?.() ||
-    "Désolé, l'IA n'a pas pu générer de texte pour cette requête."
-  );
+function parseTextResponse(data: any) {
+  const content = data?.choices?.[0]?.message?.content ?? data?.output_text ?? data?.text ?? data?.data?.[0]?.text;
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) return content.join("");
+  return typeof data === "string" ? data : JSON.stringify(data);
 }
 
-function parseImageResponse(response: any) {
-  if (response?.data?.[0]?.url) {
-    return response.data[0].url.trim();
-  }
-
-  if (response?.data?.[0]?.b64_json) {
-    return `data:image/png;base64,${response.data[0].b64_json.trim()}`;
-  }
-
-  return (
-    response?.output?.[0]?.content?.[0]?.image?.url?.trim?.() ||
-    response?.output?.[0]?.image?.url?.trim?.() ||
-    response?.output?.[0]?.image?.data ||
-    response?.image?.url?.trim?.() ||
-    response?.url?.trim?.() ||
-    ""
-  );
+function parseImageResponse(data: any) {
+  const image =
+    data?.data?.[0]?.url ??
+    data?.data?.result_url ??
+    data?.images?.[0]?.url ??
+    data?.result_url ??
+    data?.output?.[0]?.url;
+  if (typeof image === "string") return image;
+  return typeof data === "string" ? data : JSON.stringify(data);
 }
 
-function parseVideoResponse(response: any) {
-  if (response?.data?.[0]?.url) {
-    return response.data[0].url.trim();
-  }
-
-  if (response?.data?.[0]?.b64_json) {
-    return `data:video/mp4;base64,${response.data[0].b64_json.trim()}`;
-  }
-
-  return (
-    response?.output?.[0]?.content?.[0]?.video?.url?.trim?.() ||
-    response?.output?.[0]?.video?.url?.trim?.() ||
-    response?.video?.url?.trim?.() ||
-    response?.url?.trim?.() ||
-    response?.response?.trim?.() ||
-    ""
-  );
+function parseVideoResponse(data: any) {
+  const video =
+    data?.data?.[0]?.url ??
+    data?.data?.result_url ??
+    data?.videos?.[0]?.url ??
+    data?.result_url ??
+    data?.output?.[0]?.url;
+  if (typeof video === "string") return video;
+  return typeof data === "string" ? data : null;
 }
 
-function parseAudioResponse(response: any) {
-  if (response?.data?.[0]?.url) {
-    return response.data[0].url.trim();
-  }
+function parseAudioResponse(data: any) {
+  const audio =
+    data?.data?.[0]?.url ??
+    data?.data?.result_url ??
+    data?.result_url ??
+    data?.audios?.[0]?.url ??
+    data?.audio?.[0]?.url ??
+    data?.audio?.url ??
+    data?.output?.[0]?.url ??
+    data?.url;
 
-  if (response?.data?.[0]?.b64_json) {
-    return `data:audio/mpeg;base64,${response.data[0].b64_json.trim()}`;
-  }
-
-  if (response?.data?.[0]?.b64_audio) {
-    return `data:audio/mpeg;base64,${response.data[0].b64_audio.trim()}`;
-  }
-
-  if (response?.audio?.[0]?.url) {
-    return response.audio[0].url.trim();
-  }
-
-  if (response?.audio?.url) {
-    return response.audio.url.trim();
-  }
-
-  if (response?.output?.[0]?.content?.[0]?.audio?.url) {
-    return response.output[0].content[0].audio.url.trim();
-  }
-
-  if (response?.output?.[0]?.audio?.url) {
-    return response.output[0].audio.url.trim();
-  }
-
-  if (response?.url?.trim) {
-    return response.url.trim();
-  }
-
-  throw new Error("AI Music API did not return a valid audio URL or base64 payload.");
+  if (typeof audio === "string") return audio;
+  return typeof data === "string" ? data : JSON.stringify(data);
 }
 
-// Helper to summarize provider responses without logging large base64 payloads
-function summarizeResponse(resp: any) {
-  try {
-    if (!resp || typeof resp !== "object") return String(resp);
-    const summary: Record<string, any> = {};
-    for (const k of Object.keys(resp)) {
-      const v = resp[k];
-      if (typeof v === "string") {
-        // avoid printing large base64 strings
-        if (/^(data:|\s*\/{0,1}data:|[A-Za-z0-9+/=]{200,})/.test(v)) {
-          summary[k] = `string(length=${v.length})`;
-        } else {
-          summary[k] = v;
-        }
-      } else if (Array.isArray(v)) {
-        summary[k] = `array(len=${v.length})`;
-      } else if (v && typeof v === "object") {
-        summary[k] = `object(keys=${Object.keys(v).length})`;
-      } else {
-        summary[k] = typeof v;
-      }
-    }
-    return summary;
-  } catch (e) {
-    return String(resp);
-  }
-}
-
-function formatToSize(format?: string) {
+function formatToSize(format: string | undefined) {
   switch (format) {
-    case "16:9":
-      return "1280x720";
-    case "9:16":
-      return "720x1280";
-    case "1:1":
+    case "square":
+      return "1024x1024";
+    case "portrait":
+      return "1024x1536";
+    case "landscape":
+      return "1536x1024";
     default:
       return "1024x1024";
   }
 }
 
-function parseDuration(duration?: string) {
-  if (!duration) return 5;
-  const parsed = Number(duration.replace(/[^0-9]/g, ""));
-  return Number.isNaN(parsed) ? 5 : parsed;
+function parseDuration(duration: string | undefined) {
+  const value = Number(duration);
+  return Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
-interface ImageGenerationOptions {
-  style?: string;
-  format?: string;
-  quality?: string;
-  sourceImage?: string;
-}
-
-interface VideoGenerationOptions {
-  duration?: string;
-  style?: string;
-  format?: string;
-  sourceVideo?: string;
-}
-
-interface CodeGenerationOptions {
-  language?: string;
-  framework?: string;
-  complexity?: string;
-}
-
-const GEMINI_CLIENT = GEMINI_API_KEY
-  ? new GoogleGenAI({
-      apiKey: GEMINI_API_KEY,
-      httpOptions: GEMINI_API_BASE ? { baseUrl: GEMINI_API_BASE } : undefined,
-    })
-  : null;
-
-function getActiveTextProviders(): AIProviderValue[] {
-  return getActiveProvidersForAction("text");
-}
-
-function getActiveImageProviders(): AIProviderValue[] {
-  return getActiveProvidersForAction("image");
-}
-
-function getActiveVideoProviders(): AIProviderValue[] {
-  return getActiveProvidersForAction("video");
-}
-
-function getActiveAudioProviders(): AIProviderValue[] {
-  return getActiveProvidersForAction("audio");
-}
-
-function getActiveCodeProviders(): AIProviderValue[] {
-  return getActiveProvidersForAction("code");
-}
-
-function normalizeGroqModel(model?: string) {
-  const effectiveModel = model?.trim() || GROQ_MODEL;
-  const normalized = effectiveModel.toLowerCase();
-
-  if (normalized === "gpt-4o-mini") {
-    return "gpt-4o";
-  }
-
-  return effectiveModel;
-}
-
-function isGroqModelAccessError(message: string) {
-  return /model.*does not exist|do not have access|not found|permission/i.test(
-    message
-  );
-}
-
-function getGroqModelCandidates(model?: string) {
-  const candidates = new Set<string>();
-  candidates.add(normalizeGroqModel(model));
-  candidates.add(GROQ_MODEL);
-  candidates.add("gpt-3.5-turbo");
-  return Array.from(candidates);
-}
-
-async function requestTextFromProvider(
-  provider: AIProviderValue,
-  systemMessage: string,
-  userMessage: string,
-  model?: string
-) {
-  if (provider === "GEMINI") {
-    if (!GEMINI_CLIENT) {
-      throw new Error("Gemini provider is not configured.");
-    }
-
-    const data = await GEMINI_CLIENT.models.generateContent({
-      model: model?.trim() || GEMINI_MODEL,
-      contents: [systemMessage, userMessage],
-      config: {
-        temperature: 0.75,
-        maxOutputTokens: 700,
-      },
-    });
-
-    return parseTextResponse(data);
-  }
-
-  if (provider === "GROQ") {
-    const candidates = getGroqModelCandidates(model);
-    let lastError: unknown;
-
-    for (const candidate of candidates) {
-      try {
-        const data = await groqFetch("/chat/completions", {
-          model: candidate,
-          messages: [
-            { role: "system", content: systemMessage },
-            { role: "user", content: userMessage },
-          ],
-          temperature: 0.75,
-          max_tokens: 700,
-        });
-
-        return parseTextResponse(data);
-      } catch (error) {
-        lastError = error;
-        const message = normalizeErrorMessage(error).toLowerCase();
-        const isAccessError = isGroqModelAccessError(message);
-
-        if (!isAccessError || candidate === candidates[candidates.length - 1]) {
-          throw error;
-        }
-
-        // Try next fallback model.
-      }
-    }
-
-    throw lastError instanceof Error
-      ? lastError
-      : new Error("Groq request failed for all model candidates.");
-  }
-
-  if (provider === "SILICONFLOW") {
-    const data = await siliconflowFetch("/chat/completions", {
-      model: SILICONFLOW_MODEL,
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: userMessage },
-      ],
-      temperature: 0.75,
-      max_tokens: 700,
-    });
-
-    return parseTextResponse(data);
-  }
-
-  if (provider === "AIMUSIC") {
-    const data = await aiMusicFetch("/chat/completions", {
-      model: AIMUSIC_MODEL,
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: userMessage },
-      ],
-      temperature: 0.75,
-      max_tokens: 700,
-    });
-
-    return parseTextResponse(data);
-  }
-
-  if (provider === "GITHUB_MODEL") {
-    const data = await githubModelFetch("/chat/completions", {
-      model: GITHUB_MODEL_MODEL,
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: userMessage },
-      ],
-      temperature: 0.75,
-      max_tokens: 700,
-    });
-
-    return parseTextResponse(data);
-  }
-
-  throw new Error(`Unsupported AI provider: ${provider}`);
-}
-
-async function requestCodeFromProvider(
-  provider: AIProviderValue,
-  prompt: string,
-  options: CodeGenerationOptions
-) {
-  const systemMessage = `Tu es un assistant IA expert en génération et refactorisation de code. Réponds en français et fournis du code propre, documenté et prêt à utiliser.`;
-  const userMessage = `Génère ou modifie du code en ${options.language ?? "javascript"} ${
-    options.framework && options.framework !== "aucun"
-      ? `pour ${options.framework}`
-      : ""
-  } avec une complexité ${options.complexity ?? "intermédiaire"}. Voici le prompt :\n\n${prompt}`;
-
-  if (provider === "GITHUB_MODEL") {
-    const data = await githubModelFetch("/chat/completions", {
-      model: GITHUB_MODEL_MODEL,
+async function requestTextFromProvider(provider: AIProviderValue, systemMessage: string, userMessage: string, model?: string) {
+  if (provider === "DEAPI") {
+    const data = await deapiFetch("/api/v2/chat/completions", {
+      model: model ?? DEAPI_MODEL,
       messages: [
         { role: "system", content: systemMessage },
         { role: "user", content: userMessage },
@@ -889,692 +334,430 @@ async function requestCodeFromProvider(
       temperature: 0.7,
       max_tokens: 1200,
     });
-
-    return parseTextResponse(data);
-  }
-
-  if (provider === "GEMINI") {
-    if (!GEMINI_CLIENT) {
-      throw new Error("Gemini provider is not configured.");
-    }
-    const data = await GEMINI_CLIENT.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: [systemMessage, userMessage],
-      config: {
-        temperature: 0.7,
-        maxOutputTokens: 1200,
-      },
-    });
-    return parseTextResponse(data);
-  }
-
-  if (provider === "SILICONFLOW") {
-    const data = await siliconflowFetch("/chat/completions", {
-      model: SILICONFLOW_MODEL,
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: userMessage },
-      ],
-      temperature: 0.7,
-      max_tokens: 1200,
-    });
-
     return parseTextResponse(data);
   }
 
   throw new Error(`Unsupported AI provider: ${provider}`);
 }
 
-export async function generateTextAI(
-  prompt: string,
-  options: { style?: string; length?: string; tone?: string },
-  model?: string
-) {
+async function requestCodeFromProvider(provider: AIProviderValue, prompt: string, options: { language?: string; framework?: string; complexity?: string }) {
+  const systemMessage = "Tu es un assistant IA expert en génération et refactorisation de code.";
+  const userMessage = `Génère ou modifie du code en ${options.language ?? "javascript"} ${options.framework && options.framework !== "aucun" ? `pour ${options.framework}` : ""} avec une complexité ${options.complexity ?? "intermédiaire"}. Voici le prompt :\n\n${prompt}`;
+
+  if (provider === "DEAPI") {
+    const data = await deapiFetch("/api/v2/chat/completions", {
+      model: DEAPI_MODEL,
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: userMessage },
+      ],
+      temperature: 0.7,
+      max_tokens: 1400,
+    });
+    return parseTextResponse(data);
+  }
+
+  throw new Error(`Unsupported AI provider: ${provider}`);
+}
+
+async function requestImageFromProvider(provider: AIProviderValue, prompt: string, options: { format?: string; quality?: string; sourceImage?: string }) {
+  if (provider === "DEAPI") {
+    const isEditMode = Boolean(options.sourceImage);
+    if (isEditMode) {
+      throw new Error("deAPI image editing is not supported by this provider configuration.");
+    }
+    const body: Record<string, unknown> = {
+      model: DEAPI_IMAGE_MODEL,
+      prompt,
+      width: 1024,
+      height: 1024,
+      guidance: 1,
+      steps: 4,
+      seed: -1,
+    };
+    if (options.quality === "hd") {
+      body.width = 1024;
+      body.height = 1024;
+    } else if (options.quality === "ultra-hd") {
+      body.width = 2048;
+      body.height = 2048;
+    }
+    const data = await deapiFetchAndPoll("/api/v2/images/generations", body);
+    return parseImageResponse(data);
+  }
+
+  throw new Error(`Unsupported AI provider: ${provider}`);
+}
+
+async function requestVideoFromProvider(provider: AIProviderValue, prompt: string, options: { duration?: string; sourceVideo?: string }) {
+  if (provider === "DEAPI") {
+    const isEditMode = Boolean(options.sourceVideo);
+    if (isEditMode) {
+      throw new Error("deAPI video editing is not supported by this provider configuration.");
+    }
+    const duration = parseDuration(options.duration);
+    const body: Record<string, unknown> = {
+      model: DEAPI_VIDEO_MODEL,
+      prompt,
+      width: 768,
+      height: 768,
+      guidance: 1,
+      steps: 4,
+      frames: duration ? Math.max(1, Math.min(120, Math.round(duration * 8))) : 16,
+      fps: 8,
+      seed: -1,
+    };
+    const data = await deapiFetchAndPoll("/api/v2/videos/generations", body);
+    return parseVideoResponse(data) || parseTextResponse(data);
+  }
+
+  throw new Error(`Unsupported AI provider: ${provider}`);
+}
+
+async function requestAudioFromProvider(provider: AIProviderValue, prompt: string, options: { sourceAudio?: string; seed?: number } = {}) {
+  if (provider === "DEAPI") {
+    const seed = typeof options.seed === "number" ? options.seed : Math.floor(Math.random() * 1e9);
+    const body: any = {
+      model: DEAPI_MODEL,
+      caption: prompt,
+      lyrics: "[Instrumental]",
+      duration: 30,
+      inference_steps: 8,
+      guidance_scale: 1,
+      format: "mp3",
+      seed,
+    };
+    const data = await deapiAudioFetch(body, options.sourceAudio);
+    return parseAudioResponse(data);
+  }
+
+  throw new Error(`Audio generation is not supported for provider ${provider}. Please configure DEAPI_API_KEY for audio generation.`);
+}
+
+export async function generateTextAI(prompt: string, options: { style?: string; length?: string; tone?: string }, model?: string) {
   const normalizedPrompt = normalizePrompt(prompt);
   const intent = extractPromptIntent(prompt);
-
-  const systemMessage = `Tu es un assistant IA professionnel qui génère du contenu clair, utile et élégant en français.`;
-  // Provide the normalized prompt and lightweight metadata to the model to improve understanding.
+  const systemMessage = "Tu es un assistant IA professionnel qui génère du contenu clair, utile et élégant en français.";
   const userMessage = `Génère un texte ${options.style ?? "professionnel"} de longueur ${options.length ?? "moyenne"} au ton ${options.tone ?? "informatif"}. Voici le prompt (normalisé) :\n\n${normalizedPrompt}\n\n[Prompt Metadata]: ${JSON.stringify(intent)}`;
-
   const providers = getProvidersForAction("text");
-
   const errors: string[] = [];
   for (const provider of providers) {
     try {
       return await requestTextFromProvider(provider, systemMessage, userMessage, model);
     } catch (error) {
-      errors.push(`${provider}: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`${provider}: ${normalizeErrorMessage(error)}`);
     }
   }
-
-  throw new Error(
-    `Text generation failed for all available providers. Details: ${errors.join(" | ")}`
-  );
+  throw new Error(`Text generation failed. Details: ${errors.join(" | ")}`);
 }
 
-export async function chatWithAI(
-  messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
-  model?: string
-) {
+export async function chatWithAI(messages: Array<{ role: "system" | "user" | "assistant"; content: string }>, model?: string) {
   const providers = getProvidersForAction("text");
-
   const errors: string[] = [];
   for (const provider of providers) {
     try {
-      if (provider === "GROQ") {
-        const normalizedModel = model?.trim() || GROQ_MODEL;
-        // normalize any user message content before sending
-        const normalizedMessages = messages.map((m) => ({ ...m, content: normalizePrompt(m.content) }));
-        const data = await groqFetch("/chat/completions", {
-          model: normalizedModel,
-          messages: normalizedMessages,
-          temperature: 0.75,
-          max_tokens: 2000,
-        });
-        return parseTextResponse(data);
-      }
-
-      if (provider === "SILICONFLOW") {
-        const normalizedMessages = messages.map((m) => ({ ...m, content: normalizePrompt(m.content) }));
-        const data = await siliconflowFetch("/chat/completions", {
-          model: SILICONFLOW_MODEL,
-          messages: normalizedMessages,
-          temperature: 0.75,
-          max_tokens: 2000,
-        });
-        return parseTextResponse(data);
-      }
-
-      if (provider === "GITHUB_MODEL") {
-        const normalizedMessages = messages.map((m) => ({ ...m, content: normalizePrompt(m.content) }));
-        const data = await githubModelFetch("/chat/completions", {
-          model: GITHUB_MODEL_MODEL,
-          messages: normalizedMessages,
-          temperature: 0.75,
-          max_tokens: 2000,
-        });
-        return parseTextResponse(data);
-      }
+      const normalizedMessages = messages.map((m) => ({ ...m, content: normalizePrompt(m.content) }));
+      return await requestTextFromProvider(provider, "", normalizedMessages.map((message) => `${message.role}: ${message.content}`).join("\n"), model);
     } catch (error) {
-      errors.push(`${provider}: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`${provider}: ${normalizeErrorMessage(error)}`);
     }
   }
-
-  throw new Error(
-    `Chat failed for all available providers. Details: ${errors.join(" | ")}`
-  );
+  throw new Error(`Chat failed. Details: ${errors.join(" | ")}`);
 }
 
-export async function generateCodeAI(
-  prompt: string,
-  options: CodeGenerationOptions
-) {
+export async function generateCodeAI(prompt: string, options: { language?: string; framework?: string; complexity?: string }) {
   const providers = getProvidersForAction("code");
-
   const errors: string[] = [];
   for (const provider of providers) {
     try {
       return await requestCodeFromProvider(provider, prompt, options);
     } catch (error) {
-      errors.push(`${provider}: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`${provider}: ${normalizeErrorMessage(error)}`);
     }
   }
-
-  throw new Error(
-    `Code generation failed for all available providers. Details: ${errors.join(" | ")}`
-  );
+  throw new Error(`Code generation failed. Details: ${errors.join(" | ")}`);
 }
 
-async function requestImageFromProvider(
-  provider: AIProviderValue,
-  prompt: string,
-  options: ImageGenerationOptions
-) {
-  if (provider === "SILICONFLOW") {
-    const isEditMode = !!options.sourceImage;
-    let body: any = {
-      model: isEditMode ? SILICONFLOW_IMAGE_EDIT_MODEL : SILICONFLOW_IMAGE_MODEL,
-      prompt,
-      size: formatToSize(options.format),
-    };
-
-    if (isEditMode) {
-      body.prompt = `Transforme l'image source selon le prompt suivant : ${prompt}`;
-      
-      // Add image in proper format - only use image field for SiliconFlow
-      const src = String(options.sourceImage);
-      if (src.startsWith("data:")) {
-        // Extract base64 from data URL
-        const parts = src.split(",");
-        if (parts.length === 2) {
-          body.image = parts[1]; // Send just the base64 part
-        } else {
-          body.image = src; // Fallback to full data URL
-        }
-      } else {
-        body.image = src;
-      }
-    }
-
-    // Adjust size for quality settings
-    if (options.quality === "hd") {
-      body.size = "1024x1024";
-    } else if (options.quality === "ultra-hd") {
-      body.size = "2048x2048";
-    }
-
-    try {
-      console.log(`[ai] siliconflow image request: model=${body.model}, size=${body.size}, edit=${isEditMode}`);
-      const data = await siliconflowImageFetch(body);
-      try {
-        console.log(`[ai] siliconflow image response summary:`, summarizeResponse(data));
-      } catch {}
-      return parseImageResponse(data);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.log(`[ai] image request failed with ${body.model}: ${msg}`);
-      
-      // Retry with alternate models
-      const altModels = [
-        ...SILICONFLOW_IMAGE_MODEL_ALTS,
-        ...(isEditMode ? SILICONFLOW_IMAGE_EDIT_MODEL_ALTS : []),
-      ].filter((m) => m && m !== body.model);
-      
-      for (const altModel of altModels) {
-        const altBody = { ...body, model: altModel };
-        console.log(`[ai] retrying image with alternate model: ${altModel}`);
-        try {
-          const data2 = await siliconflowImageFetch(altBody);
-          try {
-            console.log(`[ai] siliconflow image response summary (retry):`, summarizeResponse(data2));
-          } catch {}
-          return parseImageResponse(data2);
-        } catch (retryErr) {
-          console.log(`[ai] alternate model ${altModel} failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`);
-        }
-      }
-      throw err;
-    }
-  }
-
-  throw new Error(
-    `Image generation is not supported for provider ${provider}. Available image providers are SILICONFLOW.`
-  );
-}
-
-export async function generateImageAI(
-  prompt: string,
-  options: ImageGenerationOptions
-) {
+export async function generateImageAI(prompt: string, options: { format?: string; quality?: string; sourceImage?: string }) {
   const providers = getProvidersForAction("image");
-
   const errors: string[] = [];
   for (const provider of providers) {
     try {
       return await requestImageFromProvider(provider, prompt, options);
     } catch (error) {
-      errors.push(`${provider}: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`${provider}: ${normalizeErrorMessage(error)}`);
     }
   }
-
-  throw new Error(
-    `Image generation failed for all available providers. Details: ${errors.join(" | ")}`
-  );
+  throw new Error(`Image generation failed. Details: ${errors.join(" | ")}`);
 }
 
-async function requestVideoFromProvider(
-  provider: AIProviderValue,
-  prompt: string,
-  options: VideoGenerationOptions
-) {
-  if (provider === "SILICONFLOW") {
-    const isEditMode = !!options.sourceVideo;
-    let body: any = {
-      model: isEditMode ? SILICONFLOW_VIDEO_EDIT_MODEL : SILICONFLOW_VIDEO_MODEL,
-      prompt,
-    };
-    
-    // Only add optional parameters if they're relevant for SiliconFlow
-    const duration = parseDuration(options.duration);
-    if (duration && duration > 0) {
-      body.duration = duration;
-    }
-
-    if (isEditMode) {
-      body.prompt = `Transforme la vidéo source selon le prompt suivant : ${prompt}`;
-      
-      // Add video in proper format - only use video field for SiliconFlow
-      const src = String(options.sourceVideo);
-      if (src.startsWith("data:")) {
-        // Extract base64 from data URL
-        const parts = src.split(",");
-        if (parts.length === 2) {
-          body.video = parts[1]; // Send just the base64 part
-        } else {
-          body.video = src; // Fallback to full data URL
-        }
-      } else {
-        body.video = src;
-      }
-    }
-
-    try {
-      console.log(`[ai] siliconflow video request: model=${body.model}, duration=${body.duration}, edit=${isEditMode}`);
-      const data = await siliconflowVideoFetch(body);
-      try {
-        console.log(`[ai] siliconflow video response summary:`, summarizeResponse(data));
-      } catch {}
-      const result = parseVideoResponse(data);
-      return result || parseTextResponse(data);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.log(`[ai] video request failed with ${body.model}: ${msg}`);
-      
-      // Retry with alternate models
-      const altModels = [
-        ...SILICONFLOW_VIDEO_MODEL_ALTS,
-        ...(isEditMode ? SILICONFLOW_VIDEO_EDIT_MODEL_ALTS : []),
-      ].filter((m) => m && m !== body.model);
-      
-      for (const altModel of altModels) {
-        const altBody = { ...body, model: altModel };
-        console.log(`[ai] retrying video with alternate model: ${altModel}`);
-        try {
-          const data2 = await siliconflowVideoFetch(altBody);
-          try {
-            console.log(`[ai] siliconflow video response summary (retry):`, summarizeResponse(data2));
-          } catch {}
-          const result2 = parseVideoResponse(data2);
-          return result2 || parseTextResponse(data2);
-        } catch (retryErr) {
-          console.log(`[ai] alternate model ${altModel} failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`);
-        }
-      }
-      throw err;
-    }
-  }
-
-  if (provider === "GEMINI") {
-    if (!GEMINI_CLIENT) {
-      throw new Error("Gemini provider is not configured.");
-    }
-
-    const params: any = {
-      model: GEMINI_VIDEO_MODEL,
-      prompt,
-      config: {
-        // Gemini auto-selects the best video generation approach based on prompt.
-        // A shorter poll interval is used because Gemini operations may complete quickly.
-        responseMimeType: "video/mp4",
-      },
-    };
-
-    if (options.sourceVideo) {
-      const src = String(options.sourceVideo);
-      const match = src.match(/^data:([^;]+);base64,(.+)$/);
-      if (match) {
-        params.video = {
-          data: match[2],
-          mimeType: match[1],
-        };
-      } else {
-        params.video = {
-          uri: src,
-        };
-      }
-
-      params.prompt = `Recompose ou transforme la vidéo source selon le prompt suivant : ${prompt}`;
-    }
-
-    let operation = await GEMINI_CLIENT.models.generateVideos(params);
-    const start = Date.now();
-    while (!operation.done && Date.now() - start < 120000) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      operation = await GEMINI_CLIENT.operations.getVideosOperation({ operation });
-    }
-
-    const videoAsset = operation.response?.generatedVideos?.[0]?.video;
-    if (videoAsset?.uri) {
-      return videoAsset.uri.trim();
-    }
-
-    if (videoAsset?.videoBytes) {
-      return `data:${videoAsset.mimeType ?? "video/mp4"};base64,${videoAsset.videoBytes}`.trim();
-    }
-
-    if (operation.response) {
-      return parseVideoResponse(operation.response) || parseTextResponse(operation.response);
-    }
-
-    throw new Error("Gemini video generation did not return a valid video.");
-  }
-
-  if (provider === "HUGGINGFACE") {
-    const body: any = {
-      inputs: prompt,
-      options: {
-        wait_for_model: true,
-      },
-    };
-
-    if (options.sourceVideo) {
-      body.inputs = `Transforme la vidéo source selon le prompt suivant : ${prompt}`;
-      body.video = options.sourceVideo;
-    }
-
-    const data = await huggingFaceVideoFetch(body);
-    const maybeUrl = parseVideoResponse(data);
-    if (maybeUrl) {
-      return maybeUrl;
-    }
-
-    throw new Error("HuggingFace video API did not return a valid video URL or base64 payload.");
-  }
-
-  throw new Error(`Unsupported AI provider: ${provider}`);
-}
-
-async function requestAudioFromProvider(
-  provider: AIProviderValue,
-  prompt: string,
-  options: { sourceAudio?: string }
-) {
-  if (provider === "AIMUSIC") {
-    const body: any = {
-      model: AIMUSIC_MODEL,
-      prompt,
-      response_format: "url",
-    };
-
-    if (options.sourceAudio) {
-      body.audio = options.sourceAudio;
-      body.prompt = `Transforme l'audio source selon le prompt suivant : ${prompt}`;
-    }
-
-    const data = await aiMusicAudioFetch(body);
-    return parseAudioResponse(data);
-  }
-
-  throw new Error(
-    `Audio generation is not supported for provider ${provider}. Available audio providers are AIMUSIC.`
-  );
-}
-
-export async function generateAudioAI(
-  prompt: string,
-  options: { sourceAudio?: string }
-) {
+export async function generateAudioAI(prompt: string, options: { sourceAudio?: string } = {}) {
   const providers = getProvidersForAction("audio");
-
   const errors: string[] = [];
   for (const provider of providers) {
     try {
       return await requestAudioFromProvider(provider, prompt, options);
     } catch (error) {
-      errors.push(`${provider}: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`${provider}: ${normalizeErrorMessage(error)}`);
     }
   }
-
-  throw new Error(
-    `Audio generation failed for all available providers. Details: ${errors.join(" | ")}`
-  );
+  throw new Error(`Audio generation failed. Details: ${errors.join(" | ")}`);
 }
 
-export async function generateVideoAI(
-  prompt: string,
-  options: VideoGenerationOptions
-) {
+export async function generateVideoAI(prompt: string, options: { duration?: string; sourceVideo?: string }) {
   const providers = getProvidersForAction("video");
-
   const errors: string[] = [];
   for (const provider of providers) {
     try {
       return await requestVideoFromProvider(provider, prompt, options);
     } catch (error) {
-      errors.push(`${provider}: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`${provider}: ${normalizeErrorMessage(error)}`);
     }
   }
-
-  throw new Error(
-    `Video generation failed for all available providers. Details: ${errors.join(" | ")}`
-  );
+  throw new Error(`Video generation failed. Details: ${errors.join(" | ")}`);
 }
-
-// ============================================================================
-// Streaming Functions for Real-time Text/Code Generation
-// ============================================================================
 
 interface StreamingCallback {
   (chunk: string): void;
 }
 
-async function streamTextFromProvider(
-  provider: AIProviderValue,
-  systemMessage: string,
-  userMessage: string,
-  onChunk: StreamingCallback
-) {
-  if (provider === "GROQ") {
-    const response = await fetch(`${GROQ_API_BASE}/chat/completions`, {
-      method: "POST",
-      headers: GROQ_HEADERS,
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        messages: [
-          { role: "system", content: systemMessage },
-          { role: "user", content: userMessage },
-        ],
-        temperature: 0.75,
-        max_tokens: 2000,
-        stream: true,
-      }),
+async function streamTextFromProvider(provider: AIProviderValue, systemMessage: string, userMessage: string, onChunk: StreamingCallback) {
+  if (provider === "DEAPI") {
+    const data = await deapiFetch("/api/v2/chat/completions", {
+      model: DEAPI_MODEL,
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: userMessage },
+      ],
+      temperature: 0.75,
+      max_tokens: 2000,
     });
-
-    if (!response.ok) {
-      throw new Error(`Groq request failed: ${response.statusText}`);
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) throw new Error("No response body");
-
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith("data: ")) {
-          const data = trimmed.slice(6);
-          if (data === "[DONE]") continue;
-          try {
-            const parsed = JSON.parse(data);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              onChunk(content);
-            }
-          } catch {
-            // Ignore parse errors for incomplete chunks
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
-  if (provider === "SILICONFLOW") {
-    const response = await fetch(`${SILICONFLOW_API_BASE}/chat/completions`, {
-      method: "POST",
-      headers: SILICONFLOW_HEADERS,
-      body: JSON.stringify({
-        model: SILICONFLOW_MODEL,
-        messages: [
-          { role: "system", content: systemMessage },
-          { role: "user", content: userMessage },
-        ],
-        temperature: 0.75,
-        max_tokens: 2000,
-        stream: true,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`SiliconFlow request failed: ${response.statusText}`);
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) throw new Error("No response body");
-
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith("data: ")) {
-          const data = trimmed.slice(6);
-          if (data === "[DONE]") continue;
-          try {
-            const parsed = JSON.parse(data);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              onChunk(content);
-            }
-          } catch {
-            // Ignore parse errors for incomplete chunks
-          }
-        }
-      }
-    }
-
-    return;
-  }
-
-  if (provider === "GITHUB_MODEL") {
-    const response = await fetch(`${GITHUB_MODEL_API_BASE}/chat/completions`, {
-      method: "POST",
-      headers: GITHUB_MODEL_HEADERS,
-      body: JSON.stringify({
-        model: GITHUB_MODEL_MODEL,
-        messages: [
-          { role: "system", content: systemMessage },
-          { role: "user", content: userMessage },
-        ],
-        temperature: 0.75,
-        max_tokens: 2000,
-        stream: true,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`GitHub Model request failed: ${response.statusText}`);
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) throw new Error("No response body");
-
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith("data: ")) {
-          const data = trimmed.slice(6);
-          if (data === "[DONE]") continue;
-          try {
-            const parsed = JSON.parse(data);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              onChunk(content);
-            }
-          } catch {
-            // Ignore parse errors for incomplete chunks
-          }
-        }
-      }
-    }
-
+    const text = parseTextResponse(data);
+    onChunk(text);
     return;
   }
 
   throw new Error(`Unsupported AI provider: ${provider}`);
 }
 
-export async function generateTextAIStreaming(
-  prompt: string,
-  options: { style?: string; length?: string; tone?: string },
-  onChunk: StreamingCallback,
-  model?: string
-) {
-  const systemMessage = `Tu es un assistant IA professionnel qui génère du contenu clair, utile et élégant en français.`;
+export async function generateTextAIStreaming(prompt: string, options: { style?: string; length?: string; tone?: string }, onChunk: StreamingCallback, model?: string) {
+  const systemMessage = "Tu es un assistant IA professionnel qui génère du contenu clair, utile et élégant en français.";
   const userMessage = `Génère un texte ${options.style ?? "professionnel"} de longueur ${options.length ?? "moyenne"} au ton ${options.tone ?? "informatif"}. Donne un résultat cohérent et structuré pour le prompt suivant :\n\n${prompt}`;
-
   const providers = getProvidersForAction("text");
-
   const errors: string[] = [];
   for (const provider of providers) {
     try {
       await streamTextFromProvider(provider, systemMessage, userMessage, onChunk);
       return;
     } catch (error) {
-      errors.push(`${provider}: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`${provider}: ${normalizeErrorMessage(error)}`);
     }
   }
-
-  throw new Error(
-    `Text generation failed for all available providers. Details: ${errors.join(" | ")}`
-  );
+  throw new Error(`Text streaming failed. Details: ${errors.join(" | ")}`);
 }
 
-export async function requestCodeAIStreaming(
-  prompt: string,
-  options: CodeGenerationOptions,
-  onChunk: StreamingCallback,
-  model?: string
-) {
-  const systemMessage = `Tu es un assistant IA expert en génération et refactorisation de code. Réponds en français et fournis du code propre, documenté et prêt à utiliser. Fournis uniquement le code, sans explications textuelles autour.`;
-  const userMessage = `Génère ou modifie du code en ${options.language ?? "javascript"} ${
-    options.framework && options.framework !== "aucun"
-      ? `pour ${options.framework}`
-      : ""
-  } avec une complexité ${options.complexity ?? "intermédiaire"}. Voici le prompt :\n\n${prompt}`;
-
+export async function requestCodeAIStreaming(prompt: string, options: { language?: string; framework?: string; complexity?: string }, onChunk: StreamingCallback, model?: string) {
+  const systemMessage = "Tu es un assistant IA expert en génération et refactorisation de code. Réponds en français et fournis du code propre, documenté et prêt à utiliser.";
+  const userMessage = `Génère ou modifie du code en ${options.language ?? "javascript"} ${options.framework && options.framework !== "aucun" ? `pour ${options.framework}` : ""} avec une complexité ${options.complexity ?? "intermédiaire"}. Voici le prompt :\n\n${prompt}`;
   const providers = getProvidersForAction("code");
-
   const errors: string[] = [];
   for (const provider of providers) {
     try {
       await streamTextFromProvider(provider, systemMessage, userMessage, onChunk);
       return;
     } catch (error) {
-      errors.push(`${provider}: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`${provider}: ${normalizeErrorMessage(error)}`);
     }
   }
+  throw new Error(`Code streaming failed. Details: ${errors.join(" | ")}`);
+}
 
-  throw new Error(
-    `Code generation failed for all available providers. Details: ${errors.join(" | ")}`
-  );
+// ============================================================================
+// Web Search Capability
+// ============================================================================
+
+const SEARCH_CREDENTIALS = {
+  apiKey: envOrDefault(process.env.SEARCH_API_KEY, ""),
+  searchEngineId: envOrDefault(process.env.SEARCH_ENGINE_ID, ""),
+};
+
+interface SearchResultItem {
+  title: string;
+  url: string;
+  snippet: string;
+}
+
+// Fallback: Use DuckDuckGo HTML scraping if no API key
+async function searchWithDuckDuckGo(query: string, numResults: number = 5): Promise<SearchResultItem[]> {
+  try {
+    // Using a simple fetch approach - in production, use a proper API
+    const encodedQuery = encodeURIComponent(query);
+    const response = await fetch(`https://api.duckduckgo.com/?q=${encodedQuery}&format=json&no_redirect=1&no_html=1&skip_disambig=1`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    const results: SearchResultItem[] = [];
+    
+    // Extract from AbstractText and RelatedTopics
+    if (data.AbstractText) {
+      results.push({
+        title: data.Heading || query,
+        url: data.AbstractURL || "",
+        snippet: data.AbstractText,
+      });
+    }
+    
+    if (Array.isArray(data.RelatedTopics)) {
+      for (const topic of data.RelatedTopics.slice(0, numResults)) {
+        if (topic.Text && topic.FirstURL) {
+          results.push({
+            title: topic.Text.split(" - ")[0] || query,
+            url: topic.FirstURL,
+            snippet: topic.Text,
+          });
+        }
+      }
+    }
+    
+    return results.slice(0, numResults);
+  } catch {
+    return [];
+  }
+}
+
+// Google Custom Search API
+async function searchWithGoogle(query: string, numResults: number = 5): Promise<SearchResultItem[]> {
+  try {
+    const encodedQuery = encodeURIComponent(query);
+    const url = `https://www.googleapis.com/customsearch/v1?key=${SEARCH_CREDENTIALS.apiKey}&cx=${SEARCH_CREDENTIALS.searchEngineId}&q=${encodedQuery}&num=${numResults}`;
+    
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(10000),
+    });
+    
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    
+    if (!data.items) return [];
+    
+    return data.items.map((item: any): SearchResultItem => ({
+      title: item.title,
+      url: item.link,
+      snippet: item.snippet,
+    })).slice(0, numResults);
+  } catch {
+    return [];
+  }
+}
+
+export interface SearchResult {
+  title: string;
+  url: string;
+  snippet: string;
+}
+
+export interface SearchResponse {
+  query: string;
+  results: SearchResult[];
+  searchTime: number;
+  hasMoreResults: boolean;
+}
+
+/**
+ * Perform a web search and return results
+ */
+export async function webSearch(query: string, numResults: number = 5): Promise<SearchResponse> {
+  const startTime = Date.now();
+  let results: SearchResult[] = [];
+  
+  if (SEARCH_CREDENTIALS.apiKey && SEARCH_CREDENTIALS.searchEngineId) {
+    results = await searchWithGoogle(query, numResults);
+  } else {
+    results = await searchWithDuckDuckGo(query, numResults);
+  }
+  
+  return {
+    query,
+    results,
+    searchTime: Date.now() - startTime,
+    hasMoreResults: results.length === numResults,
+  };
+}
+
+/**
+ * Chat with AI with web search capability
+ * This function will detect if the user wants to search the web and include search results in the context
+ */
+export async function chatWithAIWithSearch(
+  messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
+  model?: string,
+  enableSearch: boolean = false
+): Promise<{ response: string; searchResults?: SearchResponse; usedSearch: boolean }> {
+  // Check if search is enabled and if the message seems to need web search
+  const lastUserMessage = messages.length > 0 ? messages[messages.length - 1].content : "";
+  const shouldSearch = enableSearch && /recherche|search|chercher|trouver|actualité|news|dernier|recent|maintenant|aujourd'hui/i.test(lastUserMessage);
+  
+  let searchResults: SearchResponse | undefined;
+  let usedSearch = false;
+  let enhancedMessages = [...messages];
+  
+  if (shouldSearch) {
+    try {
+      searchResults = await webSearch(lastUserMessage, 3);
+      usedSearch = searchResults.results.length > 0;
+      
+      if (usedSearch && searchResults.results.length > 0) {
+        // Add search context to the system message
+        const searchContext = `\n\n[Contexte de recherche web - ${new Date().toLocaleDateString('fr-FR')}]\nVoici quelques résultats pertinents pour aider à répondre:\n${searchResults.results.map((r, i) => `${i + 1}. ${r.title}: ${r.snippet} (Source: ${r.url})`).join('\n')}\n\nUtilisez ces informations pour fournir une réponse précise et citez les sources quand c'est pertinent.`;
+        
+        enhancedMessages = [
+          { ...messages[0], content: messages[0].content + searchContext },
+          ...messages.slice(1),
+        ];
+      }
+    } catch (error) {
+      console.error('Web search failed:', error);
+      // Continue without search results
+    }
+  }
+  
+  // Call the regular chat function with potentially enhanced messages
+  const response = await chatWithAI(enhancedMessages, model);
+  
+  return {
+    response,
+    searchResults: usedSearch ? searchResults : undefined,
+    usedSearch,
+  };
+}
+
+/**
+ * Extract image URLs from AI response text
+ */
+export function extractImagesFromResponse(text: string): string[] {
+  const imageRegex = /https?:\/\/[^\s"<>]+\.(?:jpe?g|png|gif|webp|svg|bmp)(?:\?[^\s"<>]*)?/gi;
+  const matches = text.match(imageRegex);
+  return matches ? [...new Set(matches)] : [];
+}
+
+/**
+ * Extract code blocks from AI response with language detection
+ */
+export function extractCodeBlocks(text: string): Array<{ language: string; code: string }> {
+  const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
+  const blocks: Array<{ language: string; code: string }> = [];
+  let match;
+  
+  while ((match = codeBlockRegex.exec(text)) !== null) {
+    blocks.push({
+      language: match[1] || 'text',
+      code: match[2],
+    });
+  }
+  
+  return blocks;
 }

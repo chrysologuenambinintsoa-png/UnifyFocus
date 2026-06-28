@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function OAuthCallback() {
   const searchParams = useSearchParams();
-  const { setAuth } = useAppStore();
+  const { setAuth, setCurrentView } = useAppStore();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -57,6 +57,7 @@ export function OAuthCallback() {
           throw new Error(data?.error || "Authentification échouée");
         }
         setAuth(data.user);
+        setCurrentView("dashboard");
 
         toast({
           title: "Connexion réussie",

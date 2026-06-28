@@ -31,11 +31,6 @@ export function setSessionCookies(res: NextResponse, user: User) {
   });
 }
 
-function isPrismaConfigured(): boolean {
-  const databaseUrl = process.env.DATABASE_URL || "";
-  return databaseUrl.startsWith("postgresql://") || databaseUrl.startsWith("postgres://");
-}
-
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.toLowerCase();
 
 export function isAdminEmail(email: string): boolean {
@@ -47,9 +42,7 @@ export async function getSessionUser(): Promise<User | null> {
   const userId = cookieStore.get("userId")?.value;
   if (!userId) return null;
 
-  if (!isPrismaConfigured()) {
-    return null;
-  }
+  
 
   try {
     const user = await db.user.findUnique({ where: { id: userId } });

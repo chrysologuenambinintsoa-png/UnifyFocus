@@ -16,6 +16,11 @@ import {
   Download,
   RefreshCw,
   Plus,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Headphones,
   MessageSquare,
   Menu,
   ChevronRight,
@@ -94,9 +99,9 @@ const TAB_CONFIG = [
 ] as const;
 
 const TEXT_SUBTABS = [
-  { key: "text-generation", label: "Génération", icon: Music, credits: 1, description: "Génération de musique" },
-  { key: "text-to-music", label: "Texte → Musique", icon: Music, credits: 2, description: "Créez une piste à partir d'un prompt textuel" },
-  { key: "music-to-music", label: "Musique → Musique", icon: Sparkles, credits: 2, description: "Transformez une idée musicale existante" },
+  { key: "text-generation", label: "Générer une Musique", icon: Music, credits: 1, description: "Composez une musique unique - choisissez genre, ambiance et durée" },
+  { key: "text-to-music", label: "Texte → Musique", icon: Music, credits: 2, description: "Transformez vos paroles ou descriptions en compositions musicales" },
+  { key: "music-to-music", label: "Musique → Musique", icon: Sparkles, credits: 2, description: "Réinventez un morceau en changeant son style ou son ambiance" },
 ];
 
 const IMAGE_SUBTABS = [
@@ -1026,6 +1031,109 @@ function CodeOptions({
 }
 
 // ---------------------------------------------------------------------------
+// Music Options Component (Style/Genre Selector)
+// ---------------------------------------------------------------------------
+
+function MusicOptions({
+  genre,
+  setGenre,
+  ambiance,
+  setAmbiance,
+  duree,
+  setDuree,
+}: {
+  genre: string;
+  setGenre: (v: string) => void;
+  ambiance: string;
+  setAmbiance: (v: string) => void;
+  duree: string;
+  setDuree: (v: string) => void;
+}) {
+  const options = [
+    {
+      label: "Genre Musical",
+      value: genre,
+      onChange: setGenre,
+      choices: [
+        { label: "Électro", value: "electro" },
+        { label: "Ambient", value: "ambient" },
+        { label: "Orchestral", value: "orchestral" },
+        { label: "Pop", value: "pop" },
+        { label: "Jazz", value: "jazz" },
+        { label: "Rock", value: "rock" },
+        { label: "Classique", value: "classique" },
+        { label: "Hip-Hop", value: "hiphop" },
+        { label: "Lo-Fi", value: "lofi" },
+        { label: "Cinématique", value: "cinematique" },
+      ],
+    },
+    {
+      label: "Ambiance",
+      value: ambiance,
+      onChange: setAmbiance,
+      choices: [
+        { label: "Calme", value: "calme" },
+        { label: "Énergique", value: "energique" },
+        { label: "Mélancolique", value: "melancolique" },
+        { label: "Épique", value: "epique" },
+        { label: "Romantique", value: "romantique" },
+        { label: "Mystérieux", value: "mysterieux" },
+        { label: "Joyeux", value: "joyeux" },
+        { label: "Dramatique", value: "dramatique" },
+      ],
+    },
+    {
+      label: "Durée",
+      value: duree,
+      onChange: setDuree,
+      choices: [
+        { label: "30 secondes", value: "30" },
+        { label: "1 minute", value: "60" },
+        { label: "2 minutes", value: "120" },
+        { label: "3 minutes", value: "180" },
+      ],
+    },
+  ];
+
+  return (
+    <GlassCard variant="accent" className="p-4">
+      <div className="space-y-4">
+        {options.map((opt) => (
+          <div key={opt.label} className="space-y-2">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {opt.label}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {opt.choices.map((choice) => {
+                const isActive = opt.value === choice.value;
+                return (
+                  <motion.button
+                    key={choice.value}
+                    onClick={() => opt.onChange(choice.value)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`
+                      px-3 py-1.5 rounded-lg text-sm transition-all duration-200
+                      ${
+                        isActive
+                          ? "bg-blue-500 text-white shadow-md shadow-blue-500/25"
+                          : "bg-white/5 text-muted-foreground hover:bg-white/10 border border-white/10"
+                      }
+                    `}
+                  >
+                    {choice.label}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </GlassCard>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Empty State
 // ---------------------------------------------------------------------------
 
@@ -1127,11 +1235,13 @@ function ProfessionalGeneratingAnimation({ tab, subtype, streamingContent }: { t
     code: "code",
   };
 
-  const actionLabel = actionLabelMap[tab] || "contenu";
+  const isMusicMode = tab === "text" && subtype && ["text-generation", "text-to-music", "music-to-music"].includes(subtype);
+  const actionLabel = isMusicMode ? "musique" : actionLabelMap[tab] || "contenu";
+  const actionVerb = subtype === "music-to-music" ? "Transformation" : "Génération";
   
   const statusMessages = [
     "Analyse de votre demande...",
-    `Génération du ${actionLabel} en cours...`,
+    `${actionVerb} de la ${actionLabel} en cours...`,
     "Optimisation des résultats...",
     "Finalisation...",
   ];
@@ -2094,6 +2204,9 @@ function AudioResult({
 }) {
   const { toast } = useToast();
   const [audioSrcIsValid, setAudioSrcIsValid] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!result) {
@@ -2114,6 +2227,14 @@ function AudioResult({
     }
   }, [result]);
 
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
   const handleDownload = useCallback(() => {
     if (!audioSrcIsValid) {
       toast({
@@ -2127,6 +2248,23 @@ function AudioResult({
     downloadHref(result, `unifyfocus-audio-${Date.now()}.mp3`);
     toast({ title: "Téléchargement lancé", description: "Audio téléchargé avec succès." });
   }, [audioSrcIsValid, result, toast]);
+
+  const togglePlayback = useCallback(() => {
+    if (!audioRef.current) return;
+    if (audioRef.current.paused) {
+      void audioRef.current.play();
+      setIsPlaying(true);
+    } else {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    if (!audioRef.current) return;
+    audioRef.current.muted = !audioRef.current.muted;
+    setIsMuted(audioRef.current.muted);
+  }, []);
 
   return (
     <motion.div
@@ -2173,7 +2311,16 @@ function AudioResult({
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
+            className="flex items-center gap-2"
           >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleMute}
+              className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              {isMuted ? <VolumeX className="w-4 h-4 text-muted-foreground" /> : <Volume2 className="w-4 h-4 text-muted-foreground" />}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -2186,12 +2333,56 @@ function AudioResult({
         )}
       </div>
 
-      <GlassCard variant="output" className="overflow-hidden max-w-3xl mx-auto">
+      <GlassCard variant="output" className="overflow-hidden max-w-3xl mx-auto border border-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.03),0_20px_60px_rgba(15,23,42,0.35)]">
         <div className={`absolute top-0 left-0 right-0 h-1 ${TAB_COLORS[meta.color].bgActive} opacity-80`} />
         <div className="p-5">
           {audioSrcIsValid ? (
-            <div className="rounded-xl bg-slate-950/70 p-6 border border-white/10">
-              <audio controls src={result} className="w-full" />
+            <div className="rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.12),_transparent_40%),linear-gradient(135deg,_rgba(15,23,42,0.95),_rgba(30,41,59,0.9))] p-5 shadow-inner">
+              <div className="mb-4 flex items-center justify-between rounded-xl border border-white/10 bg-black/20 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${TAB_COLORS[meta.color].bgActive}`}>
+                    <Headphones className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Lecteur audio</p>
+                    <p className="text-xs text-muted-foreground">Lecture instantanée et contrôle de volume</p>
+                  </div>
+                </div>
+                <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium text-emerald-400">
+                  Prêt à lire
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                <div className="mb-4 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={togglePlayback}
+                    className={`flex h-12 w-12 items-center justify-center rounded-full ${TAB_COLORS[meta.color].bgActive} text-white shadow-lg transition-transform duration-200 hover:scale-105`}
+                  >
+                    {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+                  </button>
+                  <div className="flex-1">
+                    <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Lecture</span>
+                      <span>{isPlaying ? "En cours" : "En pause"}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-white/10">
+                      <div className={`h-2 rounded-full ${TAB_COLORS[meta.color].bgActive} w-3/4`} />
+                    </div>
+                  </div>
+                </div>
+
+                <audio
+                  ref={audioRef}
+                  controls
+                  src={result}
+                  className="w-full [&::-webkit-media-controls-panel]:bg-slate-900 [&::-webkit-media-controls-panel]:rounded-xl"
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onEnded={() => setIsPlaying(false)}
+                />
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center p-10">
