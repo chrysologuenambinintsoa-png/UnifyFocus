@@ -31,32 +31,21 @@ function loadEnvFile(filePath: string) {
 }
 
 function ensureLocalEnvLoaded() {
-  // Only skip loading in production/Vercel environments
-  if (process.env.VERCEL || process.env.NODE_ENV === "production") {
-    console.log("[Env] Skipping local env load (production/vercel environment)");
-    return;
-  }
+  if (process.env.DEAPI_API_KEY || process.env.GROQ_API_KEY) return;
+  if (process.env.VERCEL || process.env.NODE_ENV === "production") return;
 
   try {
     const root = process.cwd();
-    console.log("[Env] Loading environment from:", root);
     const envFiles = [".env.local", ".env"];
     for (const envFile of envFiles) {
       const envPath = path.join(root, envFile);
       const envData = loadEnvFile(envPath);
-      console.log(`[Env] Loaded ${envFile}:`, Object.keys(envData).filter(k => k.includes('GEMINI') || k.includes('DEAPI') || k.includes('AI_PROVIDER')));
       for (const [key, value] of Object.entries(envData)) {
-        // Always load from .env.local, only set if not already defined for .env
-        if (envFile === ".env.local" || !process.env[key]) {
-          if (value !== undefined) {
-            process.env[key] = value;
-            console.log(`[Env] Set ${key} from ${envFile}`);
-          }
-        }
+        if (!process.env[key] && value !== undefined) process.env[key] = value;
       }
     }
-  } catch (err) {
-    console.error("[Env] Error loading env files:", err);
+  } catch {
+    // ignore
   }
 }
 
@@ -72,8 +61,20 @@ function envOrDefault(value: string | undefined, fallback: string) {
 
 function normalizeDeapiApiBase(value: string | undefined) {
   const trimmed = envOrDefault(value?.trim(), "");
-  // Default to the primary endpoint. The calling functions will append the correct paths.
-  return trimmed || "https://api.deapi.ai";
+  if (!trimmed) return "https://api.deapi.ai";
+  if (/api\.ai-music\.com/i.test(trimmed)) return "https://api.deapi.ai";
+  if (/oai\.deapi\.ai/i.test(trimmed)) return "https://api.deapi.ai";
+  if (/api\.deapi\.ai/i.test(trimmed)) return trimmed.replace(/\/+$/, "");
+  return trimmed.replace(/\/+$/, "");
+}
+
+function normalizeGroqApiBase(value: string | undefined) {
+  const trimmed = envOrDefault(value?.trim(), "");
+  if (!trimmed) return "https://api.groq.com/openai/v1";
+  if (/^https?:\/\/api\.groq\.com\/v1\/?$/i.test(trimmed)) {
+    return "https://api.groq.com/openai/v1";
+  }
+  return trimmed.replace(/\/+$/, "");
 }
 
 const DEAPI_API_KEY = envOrDefault(process.env.DEAPI_API_KEY, "");
@@ -84,48 +85,32 @@ const DEAPI_IMAGE_EDIT_MODEL = envOrDefault(process.env.DEAPI_IMAGE_EDIT_MODEL, 
 const DEAPI_VIDEO_MODEL = envOrDefault(process.env.DEAPI_VIDEO_MODEL, "Ltx2_3_22B_Dist_INT8");
 const DEAPI_VIDEO_EDIT_MODEL = envOrDefault(process.env.DEAPI_VIDEO_EDIT_MODEL, "Ltx2_19B_Dist_FP8");
 
-// Groq API Configuration (OpenAI-compatible)
-const Groq_API_KEY = envOrDefault(process.env.Groq_API_KEY, "");
-const Groq_API_BASE = envOrDefault(process.env.Groq_API_BASE, "https://api.groq.com/openai/v1");
-const Groq_MODEL = envOrDefault(process.env.Groq_MODEL, "llama-3.3-70b-versatile");
+const GROQ_API_KEY = envOrDefault(process.env.GROQ_API_KEY, "");
+const GROQ_API_BASE = normalizeGroqApiBase(process.env.GROQ_API_BASE);
+const GROQ_MODEL = envOrDefault(process.env.GROQ_MODEL, "gpt-4o");
 
-// Debug logging
-console.log("[AI Config] Groq_API_BASE:", Groq_API_BASE);
-console.log("[AI Config] Groq_MODEL:", Groq_MODEL);
-console.log("[AI Config] DEAPI_API_BASE:", DEAPI_API_BASE);
-console.log("[AI Config] AI_PROVIDER:", AI_PROVIDER);
- 
-// --- 1. Add Configuration for the New Provider ---
-const OctoAI_API_KEY = envOrDefault(process.env.OCTOAI_API_KEY, "");
-const OctoAI_API_BASE = envOrDefault(process.env.OCTOAI_API_BASE, "https://text.octoai.run/v1");
-const OctoAI_MODEL = envOrDefault(process.env.OCTOAI_MODEL, "mixtral-8x7b-instruct");
-
-const AVAILABLE_AI_PROVIDERS = ["DEAPI", "Groq", "OctoAI"] as const;
+const AVAILABLE_AI_PROVIDERS = ["DEAPI", "GROQ"] as const;
 type AIProviderValue = (typeof AVAILABLE_AI_PROVIDERS)[number];
 type AIProviderCapability = "text" | "code" | "image" | "video" | "audio";
-// --- End of Step 1 ---
+
 function isProviderConfigured(provider: AIProviderValue) {
   if (provider === "DEAPI") return Boolean(DEAPI_API_KEY);
-  if (provider === "Groq") return Boolean(Groq_API_KEY);
-  if (provider === "OctoAI") return Boolean(OctoAI_API_KEY);
+  if (provider === "GROQ") return Boolean(GROQ_API_KEY);
   return false;
 }
 
-const FALLBACK_PROVIDER_ORDER: AIProviderValue[] = ["DEAPI", "Groq"];
+const FALLBACK_PROVIDER_ORDER: AIProviderValue[] = ["DEAPI", "GROQ"];
 const FALLBACK_PROVIDER_ORDER_BY_ACTION: Record<AIProviderCapability, AIProviderValue[]> = {
-  // Prefer Groq for text/code but fall back to DEAPI if Groq is unavailable or fails
-  text: ["Groq", "DEAPI"],
-  // --- 2. Register the new provider in the fallback order ---
-  code: ["Groq", "OctoAI", "DEAPI"],
+  text: ["GROQ", "DEAPI"],
+  code: ["GROQ", "DEAPI"],
   image: ["DEAPI"],
   video: ["DEAPI"],
   audio: ["DEAPI"],
 };
-// --- End of Step 2 ---
+
 function providerSupportsAction(provider: AIProviderValue, action: AIProviderCapability) {
   if (provider === "DEAPI") return ["text", "code", "image", "video", "audio"].includes(action);
-  if (provider === "Groq") return ["text", "code"].includes(action);
-  if (provider === "OctoAI") return ["text", "code"].includes(action); // Assuming it supports text and code
+  if (provider === "GROQ") return ["text", "code"].includes(action);
   return false;
 }
 
@@ -135,34 +120,39 @@ function getActiveProvidersForAction(action: AIProviderCapability) {
 }
 
 function getProvidersForAction(action: AIProviderCapability) {
-  if (AI_PROVIDER === "AUTO") {
-    const providers = getActiveProvidersForAction(action);
+  if (action === "audio") {
+    const providers = getActiveProvidersForAction("audio");
     if (providers.length === 0) {
-      throw new Error(`No suitable AI provider configured for ${action}. Please set DEAPI_API_KEY or Gemini_API_KEY.`);
+      throw new Error("No audio provider is configured. Please set DEAPI_API_KEY in your environment variables.");
     }
     return providers;
   }
 
-  if (!AVAILABLE_AI_PROVIDERS.includes(AI_PROVIDER as any)) {
+  if (AI_PROVIDER === "AUTO") {
+    const providers = getActiveProvidersForAction(action);
+    if (providers.length === 0) {
+      throw new Error(`No suitable AI provider configured for ${action}. Please set DEAPI_API_KEY or GROQ_API_KEY.`);
+    }
+    return providers;
+  }
+
+  if (AI_PROVIDER !== "DEAPI" && AI_PROVIDER !== "GROQ") {
     throw new Error(`Unsupported AI_PROVIDER: ${AI_PROVIDER}`);
   }
 
-  const explicitProviders = [AI_PROVIDER as AIProviderValue].filter(
+  const providers = [AI_PROVIDER as AIProviderValue].filter(
     (provider) => isProviderConfigured(provider) && providerSupportsAction(provider, action)
   );
 
-  if (explicitProviders.length > 0) {
-    return explicitProviders;
-  }
-
-  const fallbackProviders = getActiveProvidersForAction(action);
-  if (fallbackProviders.length === 0) {
+  if (providers.length === 0) {
     throw new Error(
-      "No AI provider is configured. Please set Groq_API_KEY or DEAPI_API_KEY in your environment variables."
+      AI_PROVIDER === "GROQ"
+        ? "No Groq provider is configured or this action is not supported. Please set GROQ_API_KEY."
+        : "No deAPI.ai provider is configured. Please set DEAPI_API_KEY in your environment variables."
     );
   }
 
-  return fallbackProviders;
+  return providers;
 }
 
 const DEAPI_HEADERS = {
@@ -170,9 +160,9 @@ const DEAPI_HEADERS = {
   Accept: "application/json",
 };
 
-const OctoAI_HEADERS = {
-  Authorization: `Bearer ${OctoAI_API_KEY}`,
-  "Content-Type": "application/json",
+const GROQ_HEADERS = {
+  Authorization: `Bearer ${GROQ_API_KEY}`,
+  Accept: "application/json",
 };
 
 function normalizeErrorMessage(error: unknown) {
@@ -197,30 +187,11 @@ async function deapiFetch(path: string, body: unknown) {
   return await response.json();
 }
 
-// --- 3. Create a fetch helper for the new provider ---
-async function octoAiFetch(path: string, body: unknown) {
-  const response = await fetch(`${OctoAI_API_BASE}${path}`, {
-    method: "POST",
-    headers: OctoAI_HEADERS,
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    // This is a standard OpenAI-compatible API, so the error format is likely similar
-    const errorJson = JSON.parse(text);
-    throw new Error(`OctoAI request failed (${response.status}): ${errorJson?.error?.message ?? text}`);
-  }
-
-  return await response.json();
-}
-
-// Groq fetch function (OpenAI-compatible)
 async function groqFetch(path: string, body: unknown) {
-  const response = await fetch(`${Groq_API_BASE}${path}`, {
+  const response = await fetch(`${GROQ_API_BASE}${path}`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${Groq_API_KEY}`,
+      ...GROQ_HEADERS,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
@@ -228,14 +199,7 @@ async function groqFetch(path: string, body: unknown) {
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    const errorJson = (() => {
-      try {
-        return JSON.parse(text);
-      } catch {
-        return text;
-      }
-    })();
-    throw new Error(`Groq request failed (${response.status}): ${errorJson?.error?.message ?? text}`);
+    throw new Error(`Groq request failed (${response.status}): ${text}`);
   }
 
   return await response.json();
@@ -394,19 +358,14 @@ function parseAudioResponse(data: any) {
 function formatToSize(format: string | undefined) {
   switch (format) {
     case "square":
-      return { size: "1024x1024", width: 1024, height: 1024 };
+      return "1024x1024";
     case "portrait":
-      return { size: "1024x1536", width: 1024, height: 1536 };
+      return "1024x1536";
     case "landscape":
-      return { size: "1536x1024", width: 1536, height: 1024 };
+      return "1536x1024";
     default:
-      return { size: "1024x1024", width: 1024, height: 1024 };
+      return "1024x1024";
   }
-}
-
-function clampSteps(steps: number | undefined) {
-  if (steps === undefined || !Number.isFinite(steps)) return 10;
-  return Math.max(1, Math.min(10, Math.floor(steps)));
 }
 
 function parseDuration(duration: string | undefined) {
@@ -414,228 +373,67 @@ function parseDuration(duration: string | undefined) {
   return Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
-function getModelForProvider(provider: AIProviderValue, requestedModel?: string): string {
-  if (!requestedModel) {
-    if (provider === "DEAPI") return DEAPI_MODEL;
-    if (provider === "Groq") return Groq_MODEL;
-    if (provider === "OctoAI") return OctoAI_MODEL;
-  }
-  
-  // For Groq, only accept models that look like Groq models (not gpt-*, not gemini-*)
-  if (provider === "Groq" && typeof requestedModel === 'string') {
-    const lower = requestedModel.toLowerCase();
-    if (!lower.startsWith("gpt-") && !lower.startsWith("gemini-") && !lower.startsWith("claude-")) {
-      return requestedModel;
-    }
-    // Invalid model for Groq, use default
-    console.log(`[AI] Ignoring incompatible model ${requestedModel} for Groq, using ${Groq_MODEL}`);
-    return Groq_MODEL;
-  }
-  
-  // Basic validation for other providers
-  if (provider === "OctoAI" && typeof requestedModel === 'string' && !requestedModel.toLowerCase().startsWith("gemini")) return requestedModel;
-  if (provider === "DEAPI") return requestedModel ?? DEAPI_MODEL;
-  
-  return provider === "Groq" ? Groq_MODEL : provider === "OctoAI" ? OctoAI_MODEL : DEAPI_MODEL;
-}
-
-type TextRequestParams = {
-  systemMessage: string;
-  userMessage: string;
-  model?: string;
-  maxTokens: number;
-};
-
-async function handleOpenAICompatibleRequest(provider: "DEAPI" | "OctoAI", params: TextRequestParams) {
-  const { systemMessage, userMessage, model, maxTokens } = params;
-  const fetchFn = provider === "DEAPI" ? deapiFetch : octoAiFetch;
-  const modelToUse = getModelForProvider(provider, model);
-
-  const body = {
-    model: modelToUse,
-    messages: [
-      { role: "system", content: systemMessage },
-      { role: "user", content: userMessage },
-    ],
-    temperature: 0.7,
-    max_tokens: maxTokens,
-  };
-
-  if (provider === "DEAPI") {
-    const deapiPaths = ["/api/v1/chat/completions", "/v1/chat/completions", "/api/v2/chat/completions"];
-    let data: any = null;
-    let lastErr: unknown = null;
-    for (const p of deapiPaths) {
-      try {
-        data = await fetchFn(p, body);
-        break;
-      } catch (err) {
-        lastErr = err;
-        const errMsg = (err as Error)?.message;
-        if (typeof errMsg === "string" && !errMsg.includes("404")) break;
-      }
-    }
-    if (!data) throw lastErr ?? new Error("deAPI.ai chat request failed");
-    return parseTextResponse(data);
-  } else {
-    const data = await fetchFn("/chat/completions", body);
-    return parseTextResponse(data);
-  }
-}
-
-async function handleGroqRequest(params: TextRequestParams) {
-  const { systemMessage, userMessage, model, maxTokens } = params;
-  const modelToUse = getModelForProvider("Groq", model);
-
-  const data = await groqFetch("/chat/completions", {
-    model: modelToUse,
-    messages: [
-      { role: "system", content: systemMessage },
-      { role: "user", content: userMessage },
-    ],
-    temperature: 0.7,
-    max_tokens: maxTokens,
-  });
-
-  return parseTextResponse(data);
-}
-
 async function requestTextFromProvider(provider: AIProviderValue, systemMessage: string, userMessage: string, model?: string) {
-  const params: TextRequestParams = { systemMessage, userMessage, model, maxTokens: 1200 };
-  if (provider === "DEAPI" || provider === "OctoAI") {
-    return handleOpenAICompatibleRequest(provider, params);
+  if (provider === "DEAPI") {
+    const data = await deapiFetch("/api/v2/chat/completions", {
+      model: model ?? DEAPI_MODEL,
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: userMessage },
+      ],
+      temperature: 0.7,
+      max_tokens: 1200,
+    });
+    return parseTextResponse(data);
   }
-  if (provider === "Groq") {
-    return handleGroqRequest(params);
+
+  if (provider === "GROQ") {
+    const data = await groqFetch("/chat/completions", {
+      model: model ?? GROQ_MODEL,
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: userMessage },
+      ],
+      temperature: 0.7,
+      max_tokens: 1200,
+    });
+    return parseTextResponse(data);
   }
-  throw new Error(`Unsupported AI provider for text: ${provider}`);
+
+  throw new Error(`Unsupported AI provider: ${provider}`);
 }
 
 async function requestCodeFromProvider(provider: AIProviderValue, prompt: string, options: { language?: string; framework?: string; complexity?: string }) {
   const systemMessage = "Tu es un assistant IA expert en génération et refactorisation de code.";
   const userMessage = `Génère ou modifie du code en ${options.language ?? "javascript"} ${options.framework && options.framework !== "aucun" ? `pour ${options.framework}` : ""} avec une complexité ${options.complexity ?? "intermédiaire"}. Voici le prompt :\n\n${prompt}`;
-  
-  const params: TextRequestParams = { systemMessage, userMessage, maxTokens: 1400 };
-  if (provider === "DEAPI" || provider === "OctoAI") {
-    return handleOpenAICompatibleRequest(provider, params);
-  }
-  if (provider === "Groq") {
-    return handleGroqRequest(params);
-  }
-  throw new Error(`Unsupported AI provider for code: ${provider}`);
-}
 
-async function requestImageFromProvider(
-  provider: AIProviderValue,
-  prompt: string,
-  options: { format?: string; quality?: string; sourceImage?: string; seed?: number; steps?: number }
-) {
   if (provider === "DEAPI") {
-    const { size, width, height } = formatToSize(options.format);
-    const steps = clampSteps(options.steps);
-    const seed = Number.isFinite(options.seed ?? NaN) ? options.seed : 0;
-
-    if (options.sourceImage) {
-      const formData = new FormData();
-      const imageBlob = dataUrlToBlob(options.sourceImage);
-      formData.append("image", imageBlob, "source.png");
-      formData.append("model", DEAPI_IMAGE_EDIT_MODEL);
-      formData.append("prompt", prompt);
-      formData.append("size", size);
-      formData.append("width", String(width));
-      formData.append("height", String(height));
-      if (options.quality) formData.append("quality", options.quality);
-
-      const response = await fetch(`${DEAPI_API_BASE}/api/v2/images/edit`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${DEAPI_API_KEY}`,
-          Accept: "application/json",
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const text = await response.text().catch(() => "");
-        throw new Error(`deAPI.ai image edit request failed (${response.status}): ${text}`);
-      }
-
-      const data = await response.json();
-      return parseImageResponse(data);
-    }
-
-    const data = await deapiFetchAndPoll("/api/v2/images/generations", {
-      model: DEAPI_IMAGE_MODEL,
-      prompt,
-      size,
-      width,
-      height,
-      seed,
-      steps,
-      quality: options.quality ?? "standard",
-    });
-    return parseImageResponse(data);
-  }
-
-  throw new Error(`Unsupported AI provider: ${provider}`);
-}
-
-async function requestAudioFromProvider(
-  provider: AIProviderValue,
-  prompt: string,
-  options: { sourceAudio?: string }
-) {
-  if (provider === "DEAPI") {
-    // deAPI.ai requires several fields for audio generation; provide sensible defaults
-    const body: Record<string, unknown> = {
+    const data = await deapiFetch("/api/v2/chat/completions", {
       model: DEAPI_MODEL,
-      prompt,
-      caption: prompt,
-      lyrics: prompt,
-      // duration in seconds
-      duration: 30,
-      // Model-generation controls - constrained to deAPI limits
-      inference_steps: 6, // deAPI expects <= 8
-      guidance_scale: 0.9, // deAPI expects <= 1
-      // seed 0 indicates random seed
-      seed: 0,
-      // desired output format
-      format: "mp3",
-    };
-
-    const data = await deapiAudioFetch(body, options.sourceAudio);
-    return parseAudioResponse(data);
-  }
-
-  throw new Error(`Unsupported AI provider: ${provider}`);
-}
-
-async function requestVideoFromProvider(
-  provider: AIProviderValue,
-  prompt: string,
-  options: { duration?: string; sourceVideo?: string }
-) {
-  if (provider === "DEAPI") {
-    const data = await deapiFetchAndPoll("/api/v2/video", {
-      model: DEAPI_VIDEO_MODEL,
-      prompt,
-      duration: parseDuration(options.duration),
-      source_video: options.sourceVideo,
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: userMessage },
+      ],
+      temperature: 0.7,
+      max_tokens: 1400,
     });
-    return parseVideoResponse(data);
+    return parseTextResponse(data);
+  }
+
+  if (provider === "GROQ") {
+    const data = await groqFetch("/chat/completions", {
+      model: GROQ_MODEL,
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: userMessage },
+      ],
+      temperature: 0.7,
+      max_tokens: 1400,
+    });
+    return parseTextResponse(data);
   }
 
   throw new Error(`Unsupported AI provider: ${provider}`);
-}
-
-async function streamTextFromProvider(
-  provider: AIProviderValue,
-  systemMessage: string,
-  userMessage: string,
-  onChunk: StreamingCallback
-) {
-  const text = await requestTextFromProvider(provider, systemMessage, userMessage);
-  onChunk(text);
 }
 
 export async function generateTextAI(prompt: string, options: { style?: string; length?: string; tone?: string }, model?: string) {
@@ -682,10 +480,7 @@ export async function generateCodeAI(prompt: string, options: { language?: strin
   throw new Error(`Code generation failed. Details: ${errors.join(" | ")}`);
 }
 
-export async function generateImageAI(
-  prompt: string,
-  options: { format?: string; quality?: string; sourceImage?: string; seed?: number; steps?: number }
-) {
+export async function generateImageAI(prompt: string, options: { format?: string; quality?: string; sourceImage?: string }) {
   const providers = getProvidersForAction("image");
   const errors: string[] = [];
   for (const provider of providers) {
@@ -722,10 +517,6 @@ export async function generateVideoAI(prompt: string, options: { duration?: stri
     }
   }
   throw new Error(`Video generation failed. Details: ${errors.join(" | ")}`);
-}
-
-interface StreamingCallback {
-  (chunk: string): void;
 }
 
 export async function generateTextAIStreaming(prompt: string, options: { style?: string; length?: string; tone?: string }, onChunk: StreamingCallback, model?: string) {
@@ -926,3 +717,5 @@ export function extractCodeBlocks(text: string): Array<{ language: string; code:
   
   return blocks;
 }
+
+

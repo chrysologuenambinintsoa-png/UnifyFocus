@@ -2,6 +2,13 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { buildSessionUserPayload, isAdminEmail, setSessionCookies } from "@/lib/auth";
 
+export async function GET() {
+  return NextResponse.json(
+    { error: "Method not allowed. Use POST for login." },
+    { status: 405 }
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();

@@ -221,7 +221,7 @@ export function ConversationSidebar({
               </Label>
               <Select
                 value={selectedModel}
-                onValueChange={(value) => {
+                onValueChange={async (value) => {
                   setSelectedModel(value);
                   // Update user settings
                   if (user) {
@@ -230,6 +230,24 @@ export function ConversationSidebar({
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ defaultModel: value }),
                     }).catch(console.error);
+                  }
+                  // Update current conversation model if one is selected
+                  if (currentConversation) {
+                    try {
+                      await fetch(`/api/conversations/${currentConversation.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ model: value }),
+                      });
+                      // Update local conversations list
+                      setConversations(
+                        conversations.map((c) =>
+                          c.id === currentConversation.id ? { ...c, model: value } : c
+                        )
+                      );
+                    } catch (error) {
+                      console.error("Failed to update conversation model:", error);
+                    }
                   }
                 }}
               >

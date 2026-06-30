@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { User } from "@/store/app-store";
 
-export function buildSessionUserPayload(user: Partial<User> & { id: string; email: string; name: string | null; avatar: string | null; provider?: string; credits?: number; plan?: "free" | "pro" | "enterprise"; role?: "user" | "admin"; isBlocked?: boolean; createdAt?: string | Date }): User {
+export function buildSessionUserPayload(user: Omit<Partial<User>, "createdAt"> & { id: string; email: string; name: string | null; avatar: string | null; provider?: string; credits?: number; plan?: "free" | "pro" | "enterprise"; role?: "user" | "admin"; isBlocked?: boolean; createdAt?: string | Date }): User {
   return {
     id: user.id,
     email: user.email,

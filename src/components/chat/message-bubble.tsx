@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import Logo from "@/components/ui/logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
-import { ThumbsUp, ThumbsDown, AlertCircle, Download, FileText } from "lucide-react";
+import { ThumbsUp, ThumbsDown, AlertCircle, Download, FileText, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/app-store";
 import { extractImagesFromResponse } from "@/lib/ai";
@@ -39,6 +39,7 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
   const { user } = useAppStore();
   const [isRating, setIsRating] = useState(false);
   const [userRating, setUserRating] = useState<"good" | "bad" | "incomplete" | null>(message.rating || null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const time = (() => {
     try {
@@ -86,23 +87,61 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
   const imageUrls = [...new Set([...attachedImageUrls, ...inlineImageUrls])];
   const fileAttachments = message.attachments?.filter((url) => !isImageUrl(url)) ?? [];
 
+  const copyToClipboard = async (code: string, codeId: string) => {
+    await navigator.clipboard.writeText(code);
+    setCopiedCode(codeId);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
   const renderContent = () =>
     contentSegments.map((segment, index) => {
       if (segment.type === "code") {
+        const codeId = `${message.id}-code-${index}`;
         return (
-          <div key={`code-${index}`} className="my-3 overflow-hidden rounded-2xl bg-slate-950 p-4 text-sm text-slate-100 shadow-inner shadow-slate-900/30">
-            <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-slate-400">
-              {segment.language || "code"}
+          <div key={`code-${index}`} className="my-4 overflow-hidden rounded-xl bg-slate-950 border border-slate-800 shadow-lg">
+            {/* Code Header */}
+            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
+                </div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 ml-2">
+                  {segment.language || "code"}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(segment.content.trim(), codeId)}
+                className="h-7 px-2.5 text-[11px] font-medium text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                {copiedCode === codeId ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
+                    Copié
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 mr-1.5" />
+                    Copier
+                  </>
+                )}
+              </Button>
             </div>
-            <pre className="whitespace-pre-wrap break-words font-mono text-[13px] leading-[1.6]">{segment.content.trim()}</pre>
+            {/* Code Content */}
+            <pre className="p-4 overflow-x-auto text-[13px] leading-relaxed text-slate-100 font-mono">
+              {segment.content.trim()}
+            </pre>
           </div>
         );
       }
 
       return (
-        <p key={`text-${index}`} className="text-sm leading-relaxed break-words whitespace-pre-wrap text-foreground">
+        <div key={`text-${index}`} className="text-[15px] leading-relaxed break-words whitespace-pre-wrap text-slate-200">
           {segment.content.trim()}
-        </p>
+        </div>
       );
     });
 
@@ -130,8 +169,8 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
   };
 
   return (
-    <div className="w-full px-4">
-      <div className="grid grid-cols-[40px_minmax(0,1fr)_40px] gap-3 items-end w-full">
+    <div className="w-full px-4 sm:px-6 py-2">
+      <div className="grid grid-cols-[40px_minmax(0,1fr)_40px] gap-3 items-end w-full max-w-5xl mx-auto">
         {/* left avatar for assistant, empty for user */}
         <div className="col-start-1 flex items-start pt-1">
           {!isUser ? (
@@ -140,7 +179,7 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.2 }}
             >
-              <Logo iconOnly markSize={32} className="rounded-lg" />
+              <Logo iconOnly markSize={32} />
             </motion.div>
           ) : (
             <div className="w-8" />
@@ -154,15 +193,15 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.2 }}
-              className="rounded-3xl px-4 py-2.5 max-w-[85%] bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg transition-shadow"
+              className="rounded-2xl px-5 py-3.5 max-w-[85%] bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/30 transition-all"
             >
-              <p className="text-sm font-medium break-words leading-relaxed">{message.content}</p>
+              <div className="text-[15px] font-medium break-words leading-relaxed">{message.content}</div>
               {message.attachments && message.attachments.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {message.attachments.map((url) => {
                     if (isImageUrl(url)) {
                       return (
-                        <a key={url} href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded">
+                        <a key={url} href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border-2 border-white/20 hover:border-white/40 transition-all">
                           <img src={url} alt="attachment" className="h-24 max-w-xs object-cover" />
                         </a>
                       );
@@ -173,7 +212,7 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
                           key={url}
                           href={url}
                           download
-                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-xs text-blue-50 font-medium"
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all text-xs text-white font-medium border border-white/10"
                           title={filename}
                         >
                           <FileText className="w-3.5 h-3.5 flex-shrink-0" />
@@ -185,14 +224,14 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
                   })}
                 </div>
               )}
-              <div className="text-[11px] text-blue-100 mt-1.5 opacity-80">{time}</div>
+              <div className="text-[11px] text-white/80 mt-2 font-medium">{time}</div>
             </motion.div>
           ) : (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.2 }}
-              className="rounded-3xl px-4 py-2.5 max-w-2xl bg-surface-2 border border-border shadow-sm hover:shadow-md transition-shadow"
+              className="rounded-2xl px-5 py-4 max-w-2xl bg-slate-800/80 border-2 border-slate-700 shadow-lg hover:shadow-xl hover:border-slate-600 transition-all backdrop-blur-sm"
             >
               <div className="space-y-3">
                 {renderContent()}
@@ -200,7 +239,7 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
               {imageUrls.length > 0 && (
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   {imageUrls.map((url) => (
-                    <a key={url} href={url} target="_blank" rel="noreferrer" className="overflow-hidden rounded-xl border border-white/10 shadow-lg shadow-slate-950/20 transition-transform hover:-translate-y-0.5">
+                    <a key={url} href={url} target="_blank" rel="noreferrer" className="overflow-hidden rounded-xl border-2 border-slate-700 shadow-md hover:shadow-lg transition-all hover:scale-[1.02]">
                       <img src={url} alt="assistant image" className="h-36 w-full object-cover" />
                     </a>
                   ))}
@@ -215,7 +254,7 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
                         key={url}
                         href={url}
                         download
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-xs text-foreground font-medium"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 transition-all text-xs text-slate-200 font-medium border border-slate-600"
                         title={filename}
                       >
                         <FileText className="w-3.5 h-3.5 flex-shrink-0" />
@@ -226,7 +265,7 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
                   })}
                 </div>
               )}
-              <div className="text-[11px] text-muted-foreground mt-1.5 opacity-70">{time}</div>
+              <div className="text-[11px] text-slate-500 mt-2 font-medium">{time}</div>
             </motion.div>
           )}
           
@@ -236,51 +275,51 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, delay: 0.1 }}
-              className="flex items-center gap-1 mt-2"
+              className="flex items-center gap-1.5 mt-2"
             >
               <Button
                 variant="ghost"
                 size="sm"
-                className={`h-6 w-6 p-0 rounded-full transition-all ${
+                className={`h-8 w-8 p-0 rounded-full transition-all ${
                   userRating === "good"
-                    ? "bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30"
-                    : "text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10"
+                    ? "bg-emerald-900/50 text-emerald-400 hover:bg-emerald-800/50"
+                    : "text-slate-500 hover:text-emerald-400 hover:bg-emerald-900/30"
                 }`}
                 onClick={() => handleRating("good")}
                 disabled={isRating}
                 title="Bonne réponse"
               >
-                <ThumbsUp className="w-3.5 h-3.5" />
+                <ThumbsUp className="w-4 h-4" />
               </Button>
               
               <Button
                 variant="ghost"
                 size="sm"
-                className={`h-6 w-6 p-0 rounded-full transition-all ${
+                className={`h-8 w-8 p-0 rounded-full transition-all ${
                   userRating === "bad"
-                    ? "bg-red-500/20 text-red-500 hover:bg-red-500/30"
-                    : "text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                    ? "bg-red-900/50 text-red-400 hover:bg-red-800/50"
+                    : "text-slate-500 hover:text-red-400 hover:bg-red-900/30"
                 }`}
                 onClick={() => handleRating("bad")}
                 disabled={isRating}
                 title="Mauvaise réponse"
               >
-                <ThumbsDown className="w-3.5 h-3.5" />
+                <ThumbsDown className="w-4 h-4" />
               </Button>
 
               <Button
                 variant="ghost"
                 size="sm"
-                className={`h-6 w-6 p-0 rounded-full transition-all ${
+                className={`h-8 w-8 p-0 rounded-full transition-all ${
                   userRating === "incomplete"
-                    ? "bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/30"
-                    : "text-muted-foreground hover:text-yellow-500 hover:bg-yellow-500/10"
+                    ? "bg-amber-900/50 text-amber-400 hover:bg-amber-800/50"
+                    : "text-slate-500 hover:text-amber-400 hover:bg-amber-900/30"
                 }`}
                 onClick={() => handleRating("incomplete")}
                 disabled={isRating}
                 title="Réponse incomplète"
               >
-                <AlertCircle className="w-3.5 h-3.5" />
+                <AlertCircle className="w-4 h-4" />
               </Button>
             </motion.div>
           )}
@@ -295,7 +334,7 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
               transition={{ duration: 0.2 }}
             >
               <Avatar className="w-8 h-8">
-                <AvatarFallback className="bg-blue-500 text-white text-xs font-semibold">U</AvatarFallback>
+                <AvatarFallback className="bg-slate-700 text-white text-xs font-semibold">U</AvatarFallback>
               </Avatar>
             </motion.div>
           ) : (

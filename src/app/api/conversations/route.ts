@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId,
         title: title || "Nouvelle conversation",
-        model: model || "gpt-4o",
+        model: model || "gpt-4",
         type: type || "text",
       },
     });

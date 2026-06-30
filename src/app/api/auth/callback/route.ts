@@ -7,6 +7,13 @@ import { NextResponse } from "next/server";
  * Redirects to oauth endpoint with token
  */
 
+export async function POST(req: Request) {
+  return NextResponse.json(
+    { error: "Method not allowed. Use GET for OAuth callback." },
+    { status: 405 }
+  );
+}
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);

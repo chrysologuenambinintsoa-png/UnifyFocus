@@ -52,6 +52,9 @@ model AppSetting {
   value       String
   label       String
   description String?
+  type        String?  @default("text")
+  category    String?  @default("General")
+  options     String?
   updatedAt   DateTime @updatedAt
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { UserRole } from "@prisma/client";
 
 type RouteContext = { params: { id: string } };
@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     const body = await req.json();
     const { role, isBlocked } = body;
 
-    const user = await prisma.user.update({
+    const user = await db.user.update({
       where: { id },
       data: {
         role: role as UserRole,

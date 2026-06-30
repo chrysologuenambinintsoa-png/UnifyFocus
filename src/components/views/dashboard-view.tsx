@@ -23,6 +23,19 @@ import {
   Wand2,
   Code,
   MessageSquare,
+  BarChart3,
+  PieChart,
+  Calendar,
+  User,
+  Settings,
+  Bell,
+  ChevronRight,
+  Award,
+  Target,
+  Rocket,
+  Crown,
+  Star,
+  Music,
 } from "lucide-react";
 
 import { useAppStore, type Generation } from "@/store/app-store";
@@ -40,6 +53,8 @@ import {
   BarChart,
   Bar,
   Cell,
+  PieChart as RechartsPieChart,
+  Pie,
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,7 +62,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 /* ─── Animation Variants ───────────────────────────────────────────── */
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
 };
 
@@ -59,7 +74,7 @@ const fadeIn = {
 const staggerContainer = {
   hidden: {},
   visible: {
-    transition: { staggerChildren: 0.08 },
+    transition: { staggerChildren: 0.06 },
   },
 };
 
@@ -157,15 +172,33 @@ function getStatusConfig(status: Generation["status"]): {
 
 /* ─── Feature Cards Data ───────────────────────────────────────────── */
 
-const TEXT_FEATURES = [
+const MUSIC_FEATURES = [
   {
-    id: "text-generation",
-    label: "Texte",
-    description: "Génération de contenu texte",
-    icon: Type,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-    credits: 1,
+    id: "text-to-music",
+    label: "Texte → Musique",
+    description: "Créez de la musique depuis du texte",
+    icon: Music,
+    color: "text-emerald-500",
+    bgColor: "bg-emerald-500/10",
+    credits: 3,
+  },
+  {
+    id: "music-to-music",
+    label: "Musique → Musique",
+    description: "Transformez vos morceaux",
+    icon: Music,
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-600/10",
+    credits: 3,
+  },
+  {
+    id: "music-to-text",
+    label: "Musique → Texte",
+    description: "Transcription de musique",
+    icon: FileText,
+    color: "text-teal-500",
+    bgColor: "bg-teal-500/10",
+    credits: 2,
   },
 ];
 
@@ -297,6 +330,91 @@ function FeatureCard({ feature, onClick }: FeatureCardProps) {
   );
 }
 
+/* ─── Stat Card Component ──────────────────────────────────────────── */
+
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  description: string;
+  icon: React.ElementType;
+  gradient: string;
+  iconColor: string;
+  trend?: {
+    value: number;
+    label: string;
+  };
+}
+
+function StatCard({ title, value, description, icon: Icon, gradient, iconColor, trend }: StatCardProps) {
+  return (
+    <motion.div
+      variants={fadeInUp}
+      className="relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:shadow-lg"
+      whileHover={{ y: -2, boxShadow: "0 8px 30px oklch(0.78 0.155 75 / 10%)" }}
+    >
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />
+      <div className="relative">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <p className="text-sm text-muted-foreground font-medium">{title}</p>
+            <p className="text-3xl font-bold mt-2 tracking-tight">{value}</p>
+            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+            {trend && (
+              <div className="flex items-center gap-1 mt-2 text-xs">
+                <TrendingUp className="size-3 text-emerald-500" />
+                <span className="text-emerald-500 font-medium">+{trend.value}%</span>
+                <span className="text-muted-foreground">{trend.label}</span>
+              </div>
+            )}
+          </div>
+          <div className={`flex size-12 items-center justify-center rounded-lg ${iconColor}`}>
+            <Icon className="size-6" />
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── Quick Action Card ────────────────────────────────────────────── */
+
+interface QuickActionCardProps {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  gradient: string;
+  onClick: () => void;
+  badge?: string;
+}
+
+function QuickActionCard({ title, description, icon: Icon, gradient, onClick, badge }: QuickActionCardProps) {
+  return (
+    <motion.button
+      onClick={onClick}
+      className="group relative flex flex-col items-start gap-3 p-5 rounded-xl border border-border bg-card hover:border-gold/30 transition-all duration-300 text-left w-full"
+      whileHover={{ y: -3, boxShadow: "0 12px 40px oklch(0.78 0.155 75 / 15%)" }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+      <div className="relative flex items-start gap-3 w-full">
+        <div className={`flex size-11 items-center justify-center rounded-lg bg-background/80 backdrop-blur-sm border border-border/50 group-hover:scale-110 transition-transform duration-300`}>
+          <Icon className={`size-5 ${badge ? "text-gold" : "text-foreground"}`} />
+        </div>
+        {badge && (
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+            {badge}
+          </Badge>
+        )}
+      </div>
+      <div className="relative">
+        <h4 className="font-semibold text-sm">{title}</h4>
+        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+      </div>
+      <ChevronRight className="relative size-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300 -translate-x-1 group-hover:translate-x-0" />
+    </motion.button>
+  );
+}
+
 /* ─── Component ────────────────────────────────────────────────────── */
 
 export function DashboardView() {
@@ -354,6 +472,20 @@ export function DashboardView() {
     () => generations.filter((g) => g.type === "audio").length,
     [generations]
   );
+  const codeCount = useMemo(
+    () => generations.filter((g) => g.type === "code").length,
+    [generations]
+  );
+
+  const completedCount = useMemo(
+    () => generations.filter((g) => g.status === "completed").length,
+    [generations]
+  );
+
+  const totalCreditsUsed = useMemo(
+    () => generations.reduce((sum, g) => sum + g.credits, 0),
+    [generations]
+  );
 
   // Generate chart data from generations
   const chartData = useMemo(() => {
@@ -383,15 +515,22 @@ export function DashboardView() {
     { name: "Musique", value: audioCount, color: "#22c55e" },
     { name: "Image", value: imageCount, color: "#a855f7" },
     { name: "Vidéo", value: videoCount, color: "#f43f5e" },
-  ].filter(d => d.value > 0), [textCount, audioCount, imageCount, videoCount]);
+    { name: "Code", value: codeCount, color: "#06b6d4" },
+  ].filter(d => d.value > 0), [textCount, audioCount, imageCount, videoCount, codeCount]);
+
+  // Success rate
+  const successRate = useMemo(() => {
+    if (generations.length === 0) return 0;
+    return Math.round((completedCount / generations.length) * 100);
+  }, [generations, completedCount]);
 
   /* ── Handlers ─────────────────────────────────────────────────── */
-  function handleNavigateToEditor(type: "text" | "image" | "video") {
+  function handleNavigateToEditor(type: "text" | "image" | "video" | "code") {
     setEditorTab(type);
     setCurrentView("editor");
   }
 
-  function handleFeatureClick(featureId: string, type: "text" | "image" | "video") {
+  function handleFeatureClick(featureId: string, type: "text" | "image" | "video" | "code") {
     setEditorTab(type);
     setCurrentView("editor");
     // Store the specific feature mode if needed
@@ -401,8 +540,6 @@ export function DashboardView() {
   function handleChatClick() {
     setCurrentView("chat");
   }
-
-
 
   /* ── Early guard (shouldn't normally render without user) ─────── */
   if (!user) return null;
@@ -420,15 +557,14 @@ export function DashboardView() {
         <div className="absolute inset-0 bg-grid opacity-30" />
         <div className="relative px-6 py-8 sm:px-10 sm:py-12">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
+            <div className="flex-1">
               <motion.h1 
                 className="text-2xl sm:text-3xl font-bold tracking-tight"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                Bienvenue sur{" "}
-                <span className="gradient-text">UnifyFocus</span>
+                Bonjour, <span className="gradient-text">{user.name || user.email}</span>
               </motion.h1>
               <motion.p 
                 className="text-muted-foreground mt-2 max-w-lg"
@@ -436,18 +572,46 @@ export function DashboardView() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                Créez du contenu professionnel avec l'IA générative. Texte, images et vidéos en quelques clics.
+                Bienvenue sur votre espace de travail. Créez du contenu professionnel avec l'IA générative.
               </motion.p>
+              <motion.div 
+                className="flex items-center gap-2 mt-3"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.35 }}
+              >
+                <Badge variant="secondary" className="text-xs">
+                  {user.plan === "enterprise" ? (
+                    <>
+                      <Crown className="size-3 mr-1" />
+                      Plan Enterprise
+                    </>
+                  ) : user.plan === "pro" ? (
+                    <>
+                      <Star className="size-3 mr-1" />
+                      Plan Pro
+                    </>
+                  ) : (
+                    "Plan Free"
+                  )}
+                </Badge>
+                {successRate > 0 && (
+                  <Badge variant="outline" className="text-xs">
+                    <Target className="size-3 mr-1" />
+                    {successRate}% de réussite
+                  </Badge>
+                )}
+              </motion.div>
             </div>
             {!isAdmin && (
               <motion.div 
-                className="flex items-center gap-4"
+                className="flex items-center gap-3"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.4 }}
               >
-                <div className="flex items-center gap-2.5 rounded-lg bg-muted/50 px-4 py-2 border border-border/50">
-                  <Coins className="size-4 text-muted-foreground" />
+                <div className="flex items-center gap-2.5 rounded-lg bg-muted/50 px-4 py-2.5 border border-border/50">
+                  <Coins className="size-4 text-gold" />
                   <div>
                     <p className="text-xs text-muted-foreground">Crédits</p>
                     <p className="text-sm font-semibold text-foreground tabular-nums">{user.credits}</p>
@@ -465,74 +629,91 @@ export function DashboardView() {
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="mx-auto max-w-7xl space-y-8"
+          className="mx-auto max-w-7xl space-y-6"
         >
           {/* ─── Quick Stats Row ─────────────────────────────────── */}
           <motion.section variants={fadeInUp} transition={{ duration: 0.45 }}>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {/* Total generations */}
-              <Card className="relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-lg bg-gold/10">
-                      <Sparkles className="size-5 text-gold" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{generations.length}</p>
-                      <p className="text-xs text-muted-foreground">Total générations</p>
-                    </div>
-                  </div>
-                </CardContent>
-                <div className="absolute inset-0 bg-gradient-to-br from-gold/5 to-transparent" />
-              </Card>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard
+                title="Total Générations"
+                value={generations.length}
+                description="Toutes les créations"
+                icon={Sparkles}
+                gradient="from-gold/10 to-gold/5"
+                iconColor="bg-gold/10 text-gold"
+                trend={{ value: 12, label: "cette semaine" }}
+              />
+              <StatCard
+                title="Contenus Créés"
+                value={completedCount}
+                description="Générations réussies"
+                icon={Award}
+                gradient="from-emerald-500/10 to-emerald-500/5"
+                iconColor="bg-emerald-500/10 text-emerald-500"
+                trend={{ value: 8, label: "cette semaine" }}
+              />
+              <StatCard
+                title="Crédits Utilisés"
+                value={totalCreditsUsed}
+                description="Total consommé"
+                icon={Coins}
+                gradient="from-blue-500/10 to-blue-500/5"
+                iconColor="bg-blue-500/10 text-blue-500"
+              />
+              <StatCard
+                title="Taux de Réussite"
+                value={`${successRate}%`}
+                description="Générations complètes"
+                icon={Target}
+                gradient="from-purple-500/10 to-purple-500/5"
+                iconColor="bg-purple-500/10 text-purple-500"
+              />
+            </div>
+          </motion.section>
 
-              {/* Text generations */}
-              <Card className="relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-lg bg-blue-500/10">
-                      <FileText className="size-5 text-blue-500" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{textCount}</p>
-                      <p className="text-xs text-muted-foreground">Textes générés</p>
-                    </div>
-                  </div>
-                </CardContent>
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent" />
-              </Card>
-
-              {/* Image generations */}
-              <Card className="relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-lg bg-purple-500/10">
-                      <ImageIcon className="size-5 text-purple-500" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{imageCount}</p>
-                      <p className="text-xs text-muted-foreground">Images créées</p>
-                    </div>
-                  </div>
-                </CardContent>
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent" />
-              </Card>
-
-              {/* Video generations */}
-              <Card className="relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-lg bg-rose-500/10">
-                      <Video className="size-5 text-rose-500" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{videoCount}</p>
-                      <p className="text-xs text-muted-foreground">Vidéos produites</p>
-                    </div>
-                  </div>
-                </CardContent>
-                <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent" />
-              </Card>
+          {/* ─── Quick Actions ───────────────────────────────────── */}
+          <motion.section variants={fadeInUp} transition={{ duration: 0.45, delay: 0.05 }}>
+            <div className="flex items-center gap-2 mb-4">
+              <Rocket className="size-5 text-gold" />
+              <h2 className="text-lg font-semibold">Actions Rapides</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <QuickActionCard
+                title="Créer de la Musique"
+                description="Génération audio IA"
+                icon={Music}
+                gradient="from-emerald-500/10 to-emerald-500/5"
+                onClick={() => handleNavigateToEditor("text")}
+              />
+              <QuickActionCard
+                title="Créer une Image"
+                description="Génération visuelle"
+                icon={ImageIcon}
+                gradient="from-purple-500/10 to-purple-500/5"
+                onClick={() => handleNavigateToEditor("image")}
+              />
+              <QuickActionCard
+                title="Produire une Vidéo"
+                description="Contenu vidéo IA"
+                icon={Video}
+                gradient="from-rose-500/10 to-rose-500/5"
+                onClick={() => handleNavigateToEditor("video")}
+              />
+              <QuickActionCard
+                title="Générer du Code"
+                description="Assistant développeur"
+                icon={Code}
+                gradient="from-green-500/10 to-green-500/5"
+                onClick={() => handleNavigateToEditor("code")}
+              />
+              <QuickActionCard
+                title="Chat IA"
+                description="Conversation intelligente"
+                icon={MessageSquare}
+                gradient="from-violet-500/10 to-violet-500/5"
+                onClick={handleChatClick}
+                badge="Populaire"
+              />
             </div>
           </motion.section>
 
@@ -540,20 +721,20 @@ export function DashboardView() {
           <motion.section variants={fadeInUp} transition={{ duration: 0.45, delay: 0.1 }}>
             <div className="mb-4 flex items-center gap-2">
               <Layers className="size-5 text-gold" />
-              <h2 className="text-lg font-semibold">Outils de génération</h2>
+              <h2 className="text-lg font-semibold">Outils de Génération</h2>
             </div>
             
-            <div className="space-y-6">
-              {/* Text Generation Features */}
+            <div className="space-y-4">
+              {/* Music Generation Features */}
               <div className="rounded-2xl border border-border bg-card/50 backdrop-blur-sm p-5">
                 <div className="mb-4 flex items-center gap-2">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/10">
-                    <FileText className="size-4 text-blue-500" />
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                    <Music className="size-4 text-emerald-500" />
                   </div>
-                  <h3 className="font-medium">Génération de texte</h3>
+                  <h3 className="font-medium">Génération de Musique</h3>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {TEXT_FEATURES.map((feature) => (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {MUSIC_FEATURES.map((feature) => (
                     <FeatureCard 
                       key={feature.id} 
                       feature={feature} 
@@ -569,7 +750,7 @@ export function DashboardView() {
                   <div className="flex size-8 items-center justify-center rounded-lg bg-purple-500/10">
                     <ImageIcon className="size-4 text-purple-500" />
                   </div>
-                  <h3 className="font-medium">Génération d'images</h3>
+                  <h3 className="font-medium">Génération d'Images</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {IMAGE_FEATURES.map((feature) => (
@@ -588,7 +769,7 @@ export function DashboardView() {
                   <div className="flex size-8 items-center justify-center rounded-lg bg-rose-500/10">
                     <Video className="size-4 text-rose-500" />
                   </div>
-                  <h3 className="font-medium">Génération de vidéos</h3>
+                  <h3 className="font-medium">Génération de Vidéos</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {VIDEO_FEATURES.map((feature) => (
@@ -607,14 +788,14 @@ export function DashboardView() {
                   <div className="flex size-8 items-center justify-center rounded-lg bg-green-500/10">
                     <Code className="size-4 text-green-500" />
                   </div>
-                  <h3 className="font-medium">Génération de codes</h3>
+                  <h3 className="font-medium">Génération de Codes</h3>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {CODE_FEATURES.map((feature) => (
                     <FeatureCard 
                       key={feature.id} 
                       feature={feature} 
-                      onClick={() => handleFeatureClick(feature.id, "text")}
+                      onClick={() => handleFeatureClick(feature.id, "code")}
                     />
                   ))}
                 </div>
@@ -648,13 +829,13 @@ export function DashboardView() {
           {generations.length > 0 && (
             <motion.section variants={fadeInUp} transition={{ duration: 0.45, delay: 0.15 }}>
               <div className="mb-4 flex items-center gap-2">
-                <Activity className="size-5 text-gold" />
-                <h2 className="text-lg font-semibold">Statistiques</h2>
+                <BarChart3 className="size-5 text-gold" />
+                <h2 className="text-lg font-semibold">Statistiques & Analyses</h2>
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Activity Chart */}
                 <motion.div 
-                  className="rounded-xl border border-border bg-card p-5"
+                  className="lg:col-span-2 rounded-xl border border-border bg-card p-5"
                   whileHover={{ y: -2, boxShadow: "0 8px 30px oklch(0.78 0.155 75 / 10%)" }}
                   transition={{ duration: 0.2 }}
                 >
@@ -667,7 +848,7 @@ export function DashboardView() {
                       <p className="text-xs text-muted-foreground">Générations par jour</p>
                     </div>
                   </div>
-                  <div className="h-[200px]">
+                  <div className="h-[250px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData}>
                         <defs>
@@ -679,6 +860,12 @@ export function DashboardView() {
                         <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.7 0.02 50 / 10%)" vertical={false} />
                         <XAxis 
                           dataKey="name" 
+                          stroke="oklch(0.5 0.01 50)" 
+                          fontSize={12} 
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis 
                           stroke="oklch(0.5 0.01 50)" 
                           fontSize={12} 
                           tickLine={false}
@@ -713,26 +900,29 @@ export function DashboardView() {
                 >
                   <div className="mb-4 flex items-center gap-2">
                     <div className="flex size-8 items-center justify-center rounded-lg bg-gold/10">
-                      <TrendingUp className="size-4 text-gold" />
+                      <PieChart className="size-4 text-gold" />
                     </div>
                     <div>
                       <h3 className="font-medium">Répartition</h3>
                       <p className="text-xs text-muted-foreground">Par type de contenu</p>
                     </div>
                   </div>
-                  <div className="h-[200px]">
+                  <div className="h-[250px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={typeDistribution} layout="vertical">
-                        <XAxis type="number" hide />
-                        <YAxis 
-                          dataKey="name" 
-                          type="category" 
-                          stroke="oklch(0.5 0.01 50)" 
-                          fontSize={12} 
-                          tickLine={false}
-                          axisLine={false}
-                          width={60}
-                        />
+                      <RechartsPieChart>
+                        <Pie
+                          data={typeDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={90}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {typeDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
                         <Tooltip 
                           contentStyle={{ 
                             background: "var(--card)", 
@@ -741,14 +931,20 @@ export function DashboardView() {
                             fontSize: "12px"
                           }}
                         />
-                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                          {typeDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Bar>
-                      </BarChart>
+                      </RechartsPieChart>
                     </ResponsiveContainer>
                   </div>
+                  {typeDistribution.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 mt-4">
+                      {typeDistribution.map((item) => (
+                        <div key={item.name} className="flex items-center gap-2">
+                          <div className="size-3 rounded-full" style={{ backgroundColor: item.color }} />
+                          <span className="text-xs text-muted-foreground">{item.name}</span>
+                          <span className="text-xs font-semibold ml-auto">{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               </div>
             </motion.section>
@@ -761,7 +957,7 @@ export function DashboardView() {
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="size-5 text-gold" />
-                <h2 className="text-lg font-semibold">Générations récentes</h2>
+                <h2 className="text-lg font-semibold">Générations Récentes</h2>
               </div>
               {generations.length > 0 && (
                 <Badge variant="outline" className="text-xs">

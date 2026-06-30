@@ -33,8 +33,6 @@ import {
   Camera,
   Type,
   Film,
-  FileSpreadsheet,
-  FileOutput,
   MoreVertical,
   Maximize2,
   Minimize2,
@@ -489,7 +487,110 @@ const TAB_COLORS = {
 };
 
 // ---------------------------------------------------------------------------
-// Animated Background Component
+// Custom Hooks
+// ---------------------------------------------------------------------------
+
+function useEditorState(editorTab: string, selectedSubtool: string, setSelectedSubtool: (key: string) => void) {
+  const currentSubTabs = useMemo(() => {
+    switch (editorTab) {
+      case 'text': return TEXT_SUBTABS;
+      case 'image': return IMAGE_SUBTABS;
+      case 'video': return VIDEO_SUBTABS;
+      case 'code': return CODE_SUBTABS;
+      default: return [];
+    }
+  }, [editorTab]);
+
+  const activeSubTabConfig = useMemo(() => {
+    return currentSubTabs.find(st => st.key === selectedSubtool) || currentSubTabs[0];
+  }, [currentSubTabs, selectedSubtool]);
+
+  useEffect(() => {
+    if (!currentSubTabs.some((tab) => tab.key === selectedSubtool)) {
+      setSelectedSubtool(currentSubTabs[0]?.key || "text-generation");
+    }
+  }, [currentSubTabs, selectedSubtool, setSelectedSubtool]);
+
+  return { currentSubTabs, activeSubTabConfig };
+}
+
+function useFileAttachments(editorTab: string) {
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+
+  useEffect(() => {
+    setAttachedFiles([]);
+  }, [editorTab]);
+
+  const handleFilesSelected = useCallback(
+    (files: FileList | File[]) => {
+      const allowedTypes = ALLOWED_FILE_TYPES[editorTab];
+      const newFiles: AttachedFile[] = [];
+      const remainingSlots = MAX_FILES - attachedFiles.length;
+
+      if (remainingSlots <= 0) {
+        return { success: false, message: `Vous ne pouvez pas ajouter plus de ${MAX_FILES} fichiers.` };
+      }
+
+      for (let i = 0; i < Math.min(files.length, remainingSlots); i++) {
+        const candidate = files[i];
+        const isFileLike =
+          candidate &&
+          typeof (candidate as any).name === "string" &&
+          typeof (candidate as any).size === "number";
+        if (!isFileLike) continue;
+
+        const file = candidate as File;
+        const ext = "." + file.name.split(".").pop()?.toLowerCase();
+        if (!allowedTypes.includes(ext) && !allowedTypes.includes(file.type)) {
+          continue;
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+          continue;
+        }
+
+        newFiles.push({
+          id: `${Date.now()}-${i}-${file.name}`,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          url: URL.createObjectURL(file),
+          file: file,
+        });
+      }
+
+      if (newFiles.length > 0) {
+        setAttachedFiles((prev) => [...prev, ...newFiles]);
+        return { success: true, count: newFiles.length };
+      }
+
+      return { success: false, message: "Aucun fichier valide ajouté." };
+    },
+    [editorTab, attachedFiles.length]
+  );
+
+  const handleRemoveFile = useCallback((id: string) => {
+    setAttachedFiles((prev) => {
+      const file = prev.find((f) => f.id === id);
+      if (file) {
+        URL.revokeObjectURL(file.url);
+      }
+      return prev.filter((f) => f.id !== id);
+    });
+  }, []);
+
+  const clearFiles = useCallback(() => {
+    setAttachedFiles((prev) => {
+      prev.forEach((file) => URL.revokeObjectURL(file.url));
+      return [];
+    });
+  }, []);
+
+  return { attachedFiles, handleFilesSelected, handleRemoveFile, clearFiles };
+}
+
+// ---------------------------------------------------------------------------
+// UI Components
 // ---------------------------------------------------------------------------
 
 function AnimatedBackground() {
@@ -541,10 +642,6 @@ function AnimatedBackground() {
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Modern Glassmorphic Components
-// ---------------------------------------------------------------------------
 
 function GlassCard({
   children,
@@ -2902,25 +2999,7 @@ export function AiEditorView() {
     }
   }, [setSelectedSubtool]);
 
-  const currentSubTabs = useMemo(() => {
-    switch (editorTab) {
-      case 'text': return TEXT_SUBTABS;
-      case 'image': return IMAGE_SUBTABS;
-      case 'video': return VIDEO_SUBTABS;
-      case 'code': return CODE_SUBTABS;
-      default: return [];
-    }
-  }, [editorTab]);
-
-  const activeSubTabConfig = useMemo(() => {
-    return currentSubTabs.find(st => st.key === selectedSubtool) || currentSubTabs[0];
-  }, [currentSubTabs, selectedSubtool]);
-
-  useEffect(() => {
-    if (!currentSubTabs.some((tab) => tab.key === selectedSubtool)) {
-      setSelectedSubtool(currentSubTabs[0]?.key || "text-generation");
-    }
-  }, [currentSubTabs, selectedSubtool, setSelectedSubtool]);
+  const { currentSubTabs, activeSubTabConfig } = useEditorState(editorTab, selectedSubtool, setSelectedSubtool);
 
   const getPlaceholder = useCallback(() => {
     const placeholders: Record<string, string> = {
@@ -2939,7 +3018,7 @@ export function AiEditorView() {
   const [lastResult, setLastResult] = useState<ResultPayload | null>(null);
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
   const [streamingContent, setStreamingContent] = useState("");
-  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const { attachedFiles, handleFilesSelected, handleRemoveFile, clearFiles } = useFileAttachments(editorTab);
 
   const activeTabConfig = useMemo(
     () => TAB_CONFIG.find((t) => t.key === editorTab)!,
@@ -2965,7 +3044,7 @@ export function AiEditorView() {
           "video-to-video",
           "video-to-text",
         ].includes(selectedSubtool),
-      [selectedSubtool]
+    [selectedSubtool]
   );
 
   const canGenerate = useMemo(
@@ -3056,13 +3135,6 @@ export function AiEditorView() {
     });
   }, []);
 
-  const clearAttachedFiles = useCallback(() => {
-    setAttachedFiles((prev) => {
-      prev.forEach((file) => URL.revokeObjectURL(file.url));
-      return [];
-    });
-  }, []);
-
   const handleGenerate = useCallback(async () => {
     if (!user || !canGenerate) return;
 
@@ -3135,7 +3207,7 @@ export function AiEditorView() {
       });
 
       setPrompt("");
-      clearAttachedFiles();
+      clearFiles();
 
       if (
         currentConversation &&
@@ -3167,7 +3239,7 @@ export function AiEditorView() {
       setIsGenerating(false);
       setStreamingContent("");
     }
-  }, [user, canGenerate, editorTab, prompt, currentOptions, selectedModel, currentConversation, setIsGenerating, addGeneration, setAuth, toast]);
+  }, [user, canGenerate, editorTab, prompt, currentOptions, selectedModel, currentConversation, setIsGenerating, addGeneration, setAuth, toast, attachedFiles, readFileAsDataUrl, clearFiles]);
 
   const handleRegenerate = useCallback(() => {
     handleGenerate();
@@ -3185,7 +3257,6 @@ export function AiEditorView() {
       toast({
         title: "Aucun historique",
         description: "Il n'y a rien à supprimer.",
-        variant: "destructive",
       });
       return;
     }
@@ -3240,10 +3311,6 @@ export function AiEditorView() {
     }
   }, [setCurrentConversation, setSelectedModel]);
 
-  useEffect(() => {
-    setAttachedFiles([]);
-  }, [editorTab]);
-
   const getModelName = (modelId: string) => {
     const model = AVAILABLE_MODELS.find((m) => m.id === modelId);
     return model?.name || modelId;
@@ -3266,79 +3333,24 @@ export function AiEditorView() {
     [prompt]
   );
 
-  const handleFilesSelected = useCallback(
+  const handleFilesSelectedWrapper = useCallback(
     (files: FileList | File[]) => {
-      const allowedTypes = ALLOWED_FILE_TYPES[editorTab];
-      const newFiles: AttachedFile[] = [];
-      const remainingSlots = MAX_FILES - attachedFiles.length;
-
-      if (remainingSlots <= 0) {
+      const result = handleFilesSelected(files);
+      if (result && !result.success) {
         toast({
-          title: "Limite atteinte",
-          description: `Vous ne pouvez pas ajouter plus de ${MAX_FILES} fichiers.`,
+          title: "Erreur",
+          description: result.message || "Impossible d'ajouter les fichiers.",
           variant: "destructive",
         });
-        return;
-      }
-
-      for (let i = 0; i < Math.min(files.length, remainingSlots); i++) {
-        const candidate = files[i];
-        const isFileLike =
-          candidate &&
-          typeof (candidate as any).name === "string" &&
-          typeof (candidate as any).size === "number";
-        if (!isFileLike) continue;
-
-        const file = candidate as File;
-        const ext = "." + file.name.split(".").pop()?.toLowerCase();
-        if (!allowedTypes.includes(ext) && !allowedTypes.includes(file.type)) {
-          toast({
-            title: "Type de fichier non supporté",
-            description: `Le fichier "${file.name}" n'est pas autorisé.`,
-            variant: "destructive",
-          });
-          continue;
-        }
-
-        if (file.size > MAX_FILE_SIZE) {
-          toast({
-            title: "Fichier trop volumineux",
-            description: `Le fichier "${file.name}" dépasse ${MAX_FILE_SIZE / 1024 / 1024}MB.`,
-            variant: "destructive",
-          });
-          continue;
-        }
-
-        newFiles.push({
-          id: `${Date.now()}-${i}-${file.name}`,
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          url: URL.createObjectURL(file),
-          file: file,
-        });
-      }
-
-      if (newFiles.length > 0) {
-        setAttachedFiles((prev) => [...prev, ...newFiles]);
+      } else if (result && result.success && result.count) {
         toast({
           title: "Fichiers ajoutés",
-          description: `${newFiles.length} fichier(s) ajouté(s) avec succès.`,
+          description: `${result.count} fichier(s) ajouté(s) avec succès.`,
         });
       }
     },
-    [editorTab, attachedFiles.length, toast]
+    [handleFilesSelected, toast]
   );
-
-  const handleRemoveFile = useCallback((id: string) => {
-    setAttachedFiles((prev) => {
-      const file = prev.find((f) => f.id === id);
-      if (file) {
-        URL.revokeObjectURL(file.url);
-      }
-      return prev.filter((f) => f.id !== id);
-    });
-  }, []);
 
   const getAcceptString = useMemo(() => {
     const types = ALLOWED_FILE_TYPES[editorTab] ?? [];
@@ -3480,6 +3492,57 @@ export function AiEditorView() {
     }
 
     return <EmptyState tab={editorTab} />;
+  };
+
+  const renderOptions = () => {
+    switch (editorTab) {
+      case "text":
+        return (
+          <MusicOptions
+            genre={editorOptions.textStyle}
+            setGenre={(v) => setEditorOptions({ ...editorOptions, textStyle: v })}
+            ambiance={editorOptions.textLength}
+            setAmbiance={(v) => setEditorOptions({ ...editorOptions, textLength: v })}
+            duree={editorOptions.textTone}
+            setDuree={(v) => setEditorOptions({ ...editorOptions, textTone: v })}
+          />
+        );
+      case "image":
+        return (
+          <ImageOptions
+            style={editorOptions.imageStyle}
+            setStyle={(v) => setEditorOptions({ ...editorOptions, imageStyle: v })}
+            format={editorOptions.imageFormat}
+            setFormat={(v) => setEditorOptions({ ...editorOptions, imageFormat: v })}
+            quality={editorOptions.imageQuality}
+            setQuality={(v) => setEditorOptions({ ...editorOptions, imageQuality: v })}
+          />
+        );
+      case "video":
+        return (
+          <VideoOptions
+            duration={editorOptions.videoDuration}
+            setDuration={(v) => setEditorOptions({ ...editorOptions, videoDuration: v })}
+            style={editorOptions.videoStyle}
+            setStyle={(v) => setEditorOptions({ ...editorOptions, videoStyle: v })}
+            format={editorOptions.videoFormat}
+            setFormat={(v) => setEditorOptions({ ...editorOptions, videoFormat: v })}
+          />
+        );
+      case "code":
+        return (
+          <CodeOptions
+            language={editorOptions.codeLanguage}
+            setLanguage={(v) => setEditorOptions({ ...editorOptions, codeLanguage: v })}
+            framework={editorOptions.codeFramework}
+            setFramework={(v) => setEditorOptions({ ...editorOptions, codeFramework: v })}
+            complexity={editorOptions.codeComplexity}
+            setComplexity={(v) => setEditorOptions({ ...editorOptions, codeComplexity: v })}
+          />
+        );
+      default:
+        return null;
+    }
   };
 
   const tabConfig = TAB_CONFIG.find((t) => t.key === editorTab);
@@ -3641,6 +3704,16 @@ export function AiEditorView() {
             </GlassCard>
           </motion.div>
 
+          {/* Options Panel */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-6"
+          >
+            {renderOptions()}
+          </motion.div>
+
           <div className="space-y-6">
             {/* Result Area */}
             <motion.div
@@ -3689,7 +3762,7 @@ export function AiEditorView() {
                           accept={getAcceptString}
                           onChange={(e) => {
                             if (e.target.files && e.target.files.length > 0) {
-                              handleFilesSelected(e.target.files);
+                              handleFilesSelectedWrapper(e.target.files);
                             }
                           }}
                           className="hidden"

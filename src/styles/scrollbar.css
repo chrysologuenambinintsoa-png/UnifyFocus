@@ -1,0 +1,86 @@
+/* Custom Scrollbar Styles */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3b82f6 0%, #6366f1 100%);
+  border-radius: 10px;
+  border: 2px solid rgba(15, 23, 42, 0.5);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2563eb 0%, #4f46e5 100%);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #1d4ed8 0%, #4338ca 100%);
+}
+
+/* Firefox */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #3b82f6 rgba(15, 23, 42, 0.5);
+}
+
+/* History Sidebar Specific - Radix UI ScrollArea */
+.history-sidebar-scroll [data-slot="scroll-area-scrollbar"] {
+  width: 8px !important;
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+.history-sidebar-scroll [data-slot="scroll-area-thumb"] {
+  background: linear-gradient(180deg, #60a5fa 0%, #818cf8 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.3);
+}
+
+.history-sidebar-scroll [data-slot="scroll-area-scrollbar"]:hover [data-slot="scroll-area-thumb"] {
+  background: linear-gradient(180deg, #3b82f6 0%, #6366f1 100%);
+}
+
+.history-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #60a5fa rgba(15, 23, 42, 0.3);
+}
+
+/* Smooth scrolling */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for messages area */
+.messages-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.messages-scroll::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 10px;
+  margin: 8px 0;
+}
+
+.messages-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #475569 0%, #64748b 100%);
+  border-radius: 10px;
+  border: 2px solid rgba(15, 23, 42, 0.3);
+}
+
+.messages-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #334155 0%, #475569 100%);
+}
+
+.messages-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 rgba(15, 23, 42, 0.3);
+}

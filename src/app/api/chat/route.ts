@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
     try {
       // Generate response with web search support when the user asks for recent or external information
-      const { response, searchResults, usedSearch } = await chatWithAIWithSearch(messages, model || "gpt-4o", true);
+      const { response, searchResults, usedSearch } = await chatWithAIWithSearch(messages, model, true);
       const responseAttachments = extractImagesFromResponse(response);
 
       // Deduct credit and save assistant message

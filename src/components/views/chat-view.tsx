@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
@@ -30,6 +30,9 @@ import {
   ChevronRight,
   Paperclip,
   History,
+  Settings2,
+  Palette,
+  Search,
 } from "lucide-react";
 import { useAppStore, Conversation, AVAILABLE_MODELS } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
@@ -51,6 +54,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // reusable chat components
 import MessageList from "@/components/chat/message-list";
@@ -70,20 +79,45 @@ interface QuickAction {
   label: string;
   icon: React.ReactNode;
   prompt: string;
+  color: string;
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { id: "explain", label: "Expliquer", icon: <Lightbulb className="w-3.5 h-3.5" />, prompt: "Explique ce code en détail :" },
-  { id: "fix", label: "Corriger", icon: <Bug className="w-3.5 h-3.5" />, prompt: "Trouve et corrige les bugs dans :" },
-  { id: "optimize", label: "Optimiser", icon: <Zap className="w-3.5 h-3.5" />, prompt: "Optimise ce code pour de meilleures performances :" },
-  { id: "refactor", label: "Refactoriser", icon: <RotateCcw className="w-3.5 h-3.5" />, prompt: "Refactorise ce code pour le rendre plus lisible :" },
+  { 
+    id: "explain", 
+    label: "Expliquer", 
+    icon: <Lightbulb className="w-4 h-4" />, 
+    prompt: "Explique ce code en détail :",
+    color: "from-amber-500 to-orange-600"
+  },
+  { 
+    id: "fix", 
+    label: "Corriger", 
+    icon: <Bug className="w-4 h-4" />, 
+    prompt: "Trouve et corrige les bugs dans :",
+    color: "from-red-500 to-pink-600"
+  },
+  { 
+    id: "optimize", 
+    label: "Optimiser", 
+    icon: <Zap className="w-4 h-4" />, 
+    prompt: "Optimise ce code pour de meilleures performances :",
+    color: "from-yellow-500 to-amber-600"
+  },
+  { 
+    id: "refactor", 
+    label: "Refactoriser", 
+    icon: <RotateCcw className="w-4 h-4" />, 
+    prompt: "Refactorise ce code pour le rendre plus lisible :",
+    color: "from-purple-500 to-indigo-600"
+  },
 ];
 
 const SUGGESTIONS = [
-  { icon: <Code className="w-4 h-4" />, text: "Générer une fonction de tri", category: "Code" },
-  { icon: <Wand2 className="w-4 h-4" />, text: "Expliquer une erreur", category: "Debug" },
-  { icon: <FileCode className="w-4 h-4" />, text: "Créer une API REST", category: "Architecture" },
-  { icon: <Terminal className="w-4 h-4" />, text: "Commande Git utile", category: "DevOps" },
+  { icon: <Code className="w-5 h-5" />, text: "Générer une fonction de tri", category: "Code", color: "blue" },
+  { icon: <Wand2 className="w-5 h-5" />, text: "Expliquer une erreur", category: "Debug", color: "purple" },
+  { icon: <FileCode className="w-5 h-5" />, text: "Créer une API REST", category: "Architecture", color: "indigo" },
+  { icon: <Terminal className="w-5 h-5" />, text: "Commande Git utile", category: "DevOps", color: "emerald" },
 ];
 
 export function ChatView() {
@@ -109,7 +143,8 @@ export function ChatView() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeQuickAction, setActiveQuickAction] = useState<string | null>(null);
   const [showConversationPanel, setShowConversationPanel] = useState(true);
-  const [showHistorySidebar, setShowHistorySidebar] = useState(true);
+  const [showHistorySidebar, setShowHistorySidebar] = useState(false);
+  const [historySearchQuery, setHistorySearchQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const xhrRefsMap = useRef<Map<number, XMLHttpRequest>>(new Map());
@@ -529,73 +564,98 @@ export function ChatView() {
   };
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden bg-gradient-to-br from-[#0B1220] via-[#0F172A] to-[#09101f] text-white">
+    <div className="flex h-full overflow-hidden bg-slate-950">
       {/* Main Chat Area */}
-      <div className="flex h-full min-h-0 flex-1 flex-col backdrop-blur-xl">
-        <div className="px-6 py-5 border-b border-white/5 bg-gradient-to-r from-[#0F172A]/90 via-[#1a1f2e]/80 to-[#0F172A]/90 backdrop-blur-xl shadow-lg shadow-sky-500/5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex-1">
-            {/* Title Section */}
-            <div className="flex items-center gap-3 mb-2">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-sky-500 to-blue-500 rounded-lg blur opacity-50 group-hover:opacity-75 transition duration-300"></div>
-                <div className="relative w-2.5 h-2.5 rounded-full bg-gradient-to-r from-sky-400 to-blue-400 animate-pulse shadow-lg shadow-sky-400/50"></div>
+      <div className="flex flex-1 flex-col h-full bg-slate-950">
+        {/* Header */}
+        <div className="flex-shrink-0 px-6 sm:px-8 py-5 border-b border-slate-800 bg-slate-900/50 backdrop-blur-xl shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 flex-1">
+              {/* Title */}
+              <div>
+                <h1 className="text-lg font-bold text-slate-100">
+                  {currentConversation?.title ?? "Nouvelle Discussion"}
+                </h1>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">
+                  Assistant IA UnifyFocus
+                </p>
               </div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-sky-200 via-blue-200 to-cyan-200 bg-clip-text text-transparent group-hover:from-sky-100 group-hover:to-cyan-100 transition-all">
-                {currentConversation?.title ?? "Discussion UnifyFocus"}
-              </h1>
-            </div>
-            
-            {/* Stats & Info Section */}
-            <div className="flex flex-wrap items-center gap-3 ml-5">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.02] border border-white/10 hover:border-white/20 transition-all">
-                <MessageSquare className="w-3.5 h-3.5 text-sky-400" />
-                <span className="text-xs font-medium text-slate-300">{messages.length} message{messages.length > 1 ? "s" : ""}</span>
-              </div>
-              
-              <Badge className="rounded-lg bg-gradient-to-r from-sky-500/30 to-blue-600/30 text-sky-100 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] border border-sky-500/40 shadow-lg shadow-sky-500/10 hover:shadow-sky-500/20 transition-all">
-                ✨ {getModelName(selectedModel)}
-              </Badge>
 
-              {currentConversation && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.02] border border-white/10">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                  <span className="text-xs text-emerald-300 font-medium">Actif</span>
+              {/* Stats */}
+              <div className="hidden md:flex items-center gap-3 ml-6">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                  <span className="text-xs font-semibold text-slate-300">{messages.length} message{messages.length > 1 ? "s" : ""}</span>
                 </div>
-              )}
-            </div>
-          </div>
+                
+                <Badge className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border-0 shadow-md">
+                  ✨ {getModelName(selectedModel)}
+                </Badge>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2 sm:ml-4">
-            <Button 
-              onClick={handleNewChat} 
-              className="group text-xs font-semibold border border-white/20 bg-gradient-to-r from-sky-500/20 to-blue-500/10 hover:from-sky-500/30 hover:to-blue-600/20 text-sky-200 hover:text-sky-100 transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-sky-500/20 hover:border-sky-500/40 rounded-lg px-3.5 py-2"
-            >
-              <Plus className="w-4 h-4 mr-1.5 group-hover:rotate-90 transition-transform duration-300" />
-              Nouveau Chat
-            </Button>
-            <Button 
-              onClick={() => setShowHistorySidebar(!showHistorySidebar)} 
-              className="group text-xs font-semibold border border-white/20 bg-gradient-to-r from-white/5 to-white/[0.02] hover:from-white/10 hover:to-white/5 text-slate-300 hover:text-white transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-white/10 hover:border-white/30 rounded-lg px-3.5 py-2"
-            >
-              <History className="w-4 h-4 group-hover:-rotate-90 transition-transform duration-300" />
-              Historique
-            </Button>
+                {currentConversation && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-900/20 border border-emerald-700/30">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <span className="text-xs text-emerald-400 font-semibold">Actif</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      onClick={handleNewChat} 
+                      className="group text-xs font-bold border-0 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white transition-all duration-200 shadow-lg hover:shadow-xl rounded-xl px-4 py-2.5"
+                    >
+                      <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+                      <span className="hidden sm:inline">Nouveau Chat</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Démarrer une nouvelle discussion</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      onClick={() => setShowHistorySidebar(!showHistorySidebar)} 
+                      className="group text-xs font-bold border-2 border-slate-700 bg-slate-800/50 hover:bg-slate-800 text-slate-300 hover:text-white transition-all duration-200 shadow-md hover:shadow-lg rounded-xl px-4 py-2.5"
+                    >
+                      <History className="w-4 h-4 mr-2 group-hover:-rotate-90 transition-transform duration-300" />
+                      <span className="hidden sm:inline">Historique</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Afficher l'historique des discussions</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
 
-        <div className="border-b border-white/5 bg-gradient-to-b from-[#0F172A]/50 to-transparent px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-3">Actions rapides</p>
+        {/* Quick Actions */}
+        <div className="flex-shrink-0 border-b border-slate-800 bg-slate-900/30 px-6 sm:px-8 py-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-blue-400" />
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Actions rapides</p>
+          </div>
           <div className="flex flex-wrap gap-2">
             {QUICK_ACTIONS.map((action) => (
               <button
                 key={action.id}
                 type="button"
                 onClick={() => handleQuickAction(action)}
-                className={`rounded-full border px-3 py-2 text-xs font-medium transition-all duration-200 ${
+                className={`group relative overflow-hidden rounded-xl border-2 px-4 py-2.5 text-xs font-semibold transition-all duration-200 ${
                   activeQuickAction === action.id 
-                    ? "border-sky-500 bg-gradient-to-r from-sky-500/30 to-blue-500/20 text-sky-200 shadow-lg shadow-sky-500/20" 
-                    : "border-white/15 bg-white/[0.03] text-slate-300 hover:border-white/30 hover:bg-white/[0.06] hover:shadow-md hover:shadow-white/5"
+                    ? `border-blue-500 bg-gradient-to-r ${action.color} text-white shadow-lg scale-105` 
+                    : "border-slate-700 bg-slate-800/50 text-slate-300 hover:border-blue-500 hover:bg-slate-800 hover:shadow-md hover:scale-105"
                 }`}
               >
                 <span className="mr-2 inline-flex items-center justify-center">{action.icon}</span>
@@ -605,43 +665,42 @@ export function ChatView() {
           </div>
         </div>
 
+        {/* Messages Area */}
         <div className="flex-1 overflow-hidden">
-          <div ref={scrollRef} className="h-full overflow-y-auto bg-gradient-to-b from-[#09101f] to-[#0B1220] p-4 pb-28">
+          <div ref={scrollRef} className="h-full overflow-y-auto bg-slate-950 p-6 sm:p-8">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center">
-                <div className="w-full max-w-2xl space-y-8 px-4">
+                <div className="w-full max-w-4xl space-y-8 px-4">
                   {/* Welcome Section */}
-                  <div className="flex flex-col items-center gap-4 text-center">
-                    <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 shadow-lg shadow-sky-500/20">
-                      <Logo iconOnly markSize={40} />
-                    </div>
+                  <div className="flex flex-col items-center gap-6 text-center">
                     <div>
-                      <h1 className="text-3xl font-bold bg-gradient-to-r from-sky-400 to-blue-400 bg-clip-text text-transparent mb-2">
+                      <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent mb-3">
                         UnifyFocus Chat
                       </h1>
-                      <p className="text-slate-400 text-sm">
-                        Votre assistant IA intelligent pour coder, déboguer et optimiser
+                      <p className="text-slate-400 text-base font-medium max-w-md mx-auto">
+                        Votre assistant IA intelligent pour coder, déboguer et optimiser vos projets
                       </p>
                     </div>
                   </div>
 
                   {/* Suggestions Grid */}
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {SUGGESTIONS.map((suggestion, idx) => (
                       <button
                         key={idx}
                         onClick={() => sendMessage(suggestion.text)}
-                        className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-left transition-all duration-300 hover:border-sky-500/30 hover:bg-white/[0.05] hover:shadow-lg hover:shadow-sky-500/10"
+                        className="group relative overflow-hidden rounded-2xl border-2 border-slate-800 bg-slate-900/50 p-5 text-left transition-all duration-300 hover:border-blue-500 hover:shadow-xl hover:scale-[1.02]"
                       >
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 text-sky-400 group-hover:bg-sky-500/10 transition-colors">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-indigo-600/0 group-hover:from-blue-500/5 group-hover:to-indigo-600/5 transition-all"></div>
+                        <div className="relative flex items-start gap-4">
+                          <div className={`flex items-center justify-center w-12 h-12 rounded-xl bg-${suggestion.color}-900/30 text-${suggestion.color}-400 group-hover:scale-110 transition-all border border-${suggestion.color}-700/30`}>
                             {suggestion.icon}
                           </div>
-                          <div>
-                            <p className="text-xs font-medium text-slate-300 group-hover:text-white transition-colors">
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">
                               {suggestion.text}
                             </p>
-                            <p className="text-[10px] text-slate-500 mt-1">{suggestion.category}</p>
+                            <p className="text-[11px] text-slate-500 mt-1 font-medium">{suggestion.category}</p>
                           </div>
                         </div>
                       </button>
@@ -649,32 +708,33 @@ export function ChatView() {
                   </div>
 
                   {/* Quick Tips */}
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-sm">
-                    <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-4">
-                      💡 Conseils
+                  <div className="rounded-2xl border-2 border-slate-800 bg-slate-900/30 p-6">
+                    <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-amber-400" />
+                      Conseils
                     </h3>
                     <div className="space-y-3">
                       <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-sky-500/20 flex items-center justify-center mt-0.5">
-                          <span className="text-[10px] text-sky-400">✓</span>
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-900/30 flex items-center justify-center mt-0.5 border-2 border-blue-700/30">
+                          <span className="text-[11px] text-blue-400 font-bold">✓</span>
                         </div>
-                        <p className="text-sm text-slate-300">
+                        <p className="text-sm text-slate-300 font-medium">
                           Utilisez les boutons rapides pour des actions courantes
                         </p>
                       </div>
                       <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-sky-500/20 flex items-center justify-center mt-0.5">
-                          <span className="text-[10px] text-sky-400">✓</span>
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-900/30 flex items-center justify-center mt-0.5 border-2 border-blue-700/30">
+                          <span className="text-[11px] text-blue-400 font-bold">✓</span>
                         </div>
-                        <p className="text-sm text-slate-300">
+                        <p className="text-sm text-slate-300 font-medium">
                           Joignez des fichiers ou des images pour une analyse plus complète
                         </p>
                       </div>
                       <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-sky-500/20 flex items-center justify-center mt-0.5">
-                          <span className="text-[10px] text-sky-400">✓</span>
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-900/30 flex items-center justify-center mt-0.5 border-2 border-blue-700/30">
+                          <span className="text-[11px] text-blue-400 font-bold">✓</span>
                         </div>
-                        <p className="text-sm text-slate-300">
+                        <p className="text-sm text-slate-300 font-medium">
                           Évaluez les réponses avec les pouces pour améliorer la qualité
                         </p>
                       </div>
@@ -687,21 +747,22 @@ export function ChatView() {
             )}
 
             {isLoading && (
-              <div className="flex justify-center py-2">
-                <div className="flex items-center gap-2 rounded-2xl bg-white/5 border border-white/10 p-3">
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+              <div className="flex justify-center py-4">
+                <div className="flex items-center gap-3 rounded-2xl bg-slate-800/80 border-2 border-slate-700 p-4 shadow-lg backdrop-blur-sm">
+                  <div className="flex gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
-                  <span className="text-xs text-slate-400">L'assistant UnifyFocus réfléchit...</span>
+                  <span className="text-sm text-slate-300 font-medium">L'assistant UnifyFocus réfléchit...</span>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex-shrink-0 border-t border-white/10 bg-[#0F172A]">
+        {/* Chat Input - Fixed at bottom */}
+        <div className="flex-shrink-0 border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl">
           <ChatInput
             ref={inputRef}
             input={input}
@@ -716,78 +777,154 @@ export function ChatView() {
         </div>
       </div>
 
-      {/* History Sidebar */}
-      <motion.div
-        initial={{ x: 300 }}
-        animate={{ x: showHistorySidebar ? 0 : 300 }}
-        transition={{ duration: 0.3 }}
-        className="absolute right-0 top-0 bottom-0 w-72 bg-surface-1 border-l border-border shadow-lg z-30 flex flex-col"
-      >
-        {/* Header */}
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
-          <button
-            onClick={() => setShowHistorySidebar(false)}
-            className="w-6 h-6 flex items-center justify-center hover:bg-muted rounded transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-          <h2 className="text-sm font-semibold text-foreground">Historique</h2>
-        </div>
+      {/* History Sidebar Modal */}
+      <AnimatePresence>
+        {showHistorySidebar && (
+          <>
+            {/* Backdrop Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
+              onClick={() => setShowHistorySidebar(false)}
+            />
+            
+            {/* Sidebar Panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="fixed right-0 top-0 bottom-0 w-80 bg-slate-900 border-l border-slate-700 shadow-2xl z-40 flex flex-col"
+            >
+            {/* Header */}
+            <div className="px-6 py-5 border-b-2 border-slate-500 flex items-center justify-between shrink-0 bg-slate-800 shadow-xl">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/50 border-2 border-blue-400">
+                  <History className="w-4 h-4 text-blue-200" />
+                </div>
+                <h2 className="text-lg font-bold text-white tracking-wide">Historique</h2>
+              </div>
+              <button
+                onClick={() => setShowHistorySidebar(false)}
+                aria-label="Fermer l'historique"
+                className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-700 border-2 border-slate-500 text-slate-100 hover:bg-slate-600 hover:text-white hover:border-slate-400 transition-all duration-200"
+                title="Fermer l'historique"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-        {/* Conversations List */}
-        <ScrollArea className="flex-1">
-          {conversations.length === 0 ? (
-            <div className="p-4 text-center text-xs text-muted-foreground">
-              Aucune discussion
+            {/* Search Bar */}
+            <div className="px-4 py-3 border-b border-slate-700/50 bg-slate-800/30">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  value={historySearchQuery}
+                  onChange={(e) => setHistorySearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:bg-slate-800 transition-all"
+                />
+              </div>
             </div>
-          ) : (
-            <div className="p-2 space-y-1">
-              {conversations.map((conv) => (
-                <motion.div
-                  key={conv.id}
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="group"
-                >
-                  <div className={`relative w-full p-3 rounded-md text-left transition-all cursor-pointer ${
-                      currentConversation?.id === conv.id
-                        ? "bg-accent/20 text-foreground border border-accent"
-                        : "bg-muted/20 text-muted-foreground hover:bg-muted/40"
-                    }`}
-                  >
-                    <button
-                      onClick={() => {
-                        handleSelectConversation(conv);
-                        setShowHistorySidebar(false);
-                      }}
-                      className="w-full text-left"
-                    >
-                      <div className="font-semibold text-xs text-foreground truncate mb-1">
-                        {conv.title}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mb-2">
-                        {formatDate(conv.createdAt)}
-                      </div>
-                    </button>
-                    
-                    {/* Delete button on hover */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(conv.id, e);
-                      }}
-                      className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded bg-destructive/0 text-destructive opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive/20"
-                      title="Supprimer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+
+            {/* Conversations List */}
+            <ScrollArea className="flex-1 min-h-0 history-sidebar-scroll scroll-smooth">
+              {conversations.length === 0 ? (
+                <div className="p-8 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-slate-800/50 border border-slate-700/50">
+                      <MessageSquare className="w-6 h-6 text-slate-600" />
+                    </div>
+                    <div className="text-xs text-slate-500 font-medium">Aucune discussion</div>
+                    <div className="text-[11px] text-slate-600">Commencez une nouvelle conversation</div>
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </motion.div>
+                </div>
+              ) : (
+                <div className="p-3 space-y-1.5">
+                  {conversations
+                    .filter((conv) => {
+                      if (!historySearchQuery.trim()) return true;
+                      const query = historySearchQuery.toLowerCase();
+                      return conv.title.toLowerCase().includes(query);
+                    })
+                    .map((conv) => (
+                    <motion.div
+                      key={conv.id}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="group"
+                    >
+                      <div className={`relative w-full p-4 rounded-lg text-left transition-all cursor-pointer border ${
+                          currentConversation?.id === conv.id
+                            ? "bg-blue-500/10 text-slate-200 border-blue-500/30 shadow-sm"
+                            : "bg-slate-800/30 text-slate-400 hover:bg-slate-800/60 border-slate-700/50 hover:border-slate-600"
+                        }`}
+                      >
+                        <button
+                          onClick={() => {
+                            handleSelectConversation(conv);
+                            setShowHistorySidebar(false);
+                          }}
+                          className="w-full text-left"
+                        >
+                          <div className="font-semibold text-sm text-slate-200 truncate mb-1.5">
+                            {conv.title}
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                            <span>{formatDate(conv.createdAt)}</span>
+                          </div>
+                        </button>
+                        
+                        {/* Delete button on hover */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(conv.id, e);
+                          }}
+                          className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500/10 border border-transparent hover:border-red-500/30 text-slate-500 hover:text-red-400"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+              {historySearchQuery && conversations.filter((conv) => {
+                if (!historySearchQuery.trim()) return true;
+                const query = historySearchQuery.toLowerCase();
+                return conv.title.toLowerCase().includes(query);
+              }).length === 0 && (
+                <div className="p-8 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <Search className="w-12 h-12 text-slate-600" />
+                    <div className="text-xs text-slate-500 font-medium">Aucun résultat</div>
+                    <div className="text-[11px] text-slate-600">Essayez une autre recherche</div>
+                  </div>
+                </div>
+              )}
+            </ScrollArea>
+
+            {/* Footer Actions */}
+            {conversations.length > 0 && (
+              <div className="px-4 py-3 border-t border-slate-700/50 bg-slate-900/30">
+                <button
+                  onClick={handleClearHistory}
+                  className="w-full text-xs text-slate-400 hover:text-red-400 transition-colors font-medium py-2.5 px-3 rounded-lg hover:bg-red-500/10 border border-transparent hover:border-red-500/20"
+                >
+                  Effacer tout l'historique
+                </button>
+              </div>
+            )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

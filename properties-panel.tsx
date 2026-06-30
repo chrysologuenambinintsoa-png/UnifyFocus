@@ -97,7 +97,7 @@ const generationOptions: Record<
 };
 
 export function PropertiesPanel() {
-  const { generationType } = useAppStore();
+  const { editorTab: generationType } = useAppStore();
   const options = generationOptions[generationType];
 
   return (

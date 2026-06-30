@@ -66,7 +66,7 @@ type OptionGroup = {
   options: OptionDefinition[];
 };
 
-const optionGroups: Record<"text" | "image" | "video" | "code", OptionGroup[]> = {
+const optionGroups: Record<"text" | "image" | "video" | "code" | "music", OptionGroup[]> = {
   text: [
     {
       id: "style",

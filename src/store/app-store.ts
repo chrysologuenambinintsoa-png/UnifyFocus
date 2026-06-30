@@ -104,32 +104,18 @@ export type AIModel = {
 
 export const AVAILABLE_MODELS: AIModel[] = [
   {
-    id: "gpt-4o-mini",
-    name: "GPT-4o Mini",
-    provider: "Groq",
-    description: "Rapide et efficace pour les tâches courantes",
+    id: "gpt-4",
+    name: "GPT-4",
+    provider: "OpenRouter",
+    description: "Modèle haute performance d'OpenAI",
     maxTokens: 8192,
   },
   {
-    id: "gpt-4o",
-    name: "GPT-4o",
-    provider: "Groq",
-    description: "Le modèle le plus avancé d'OpenAI",
+    id: "gpt-3.5-turbo",
+    name: "GPT-3.5 Turbo",
+    provider: "OpenRouter",
+    description: "Modèle rapide et efficace",
     maxTokens: 4096,
-  },
-  {
-    id: "mistral-large",
-    name: "Mistral Large",
-    provider: "Mistral AI",
-    description: "Modèle européen haute performance",
-    maxTokens: 8192,
-  },
-  {
-    id: "llama-3.1-70b",
-    name: "Llama 3.1 70B",
-    provider: "Groq",
-    description: "Modèle open-source de Meta",
-    maxTokens: 8192,
   },
 ];
 
@@ -291,7 +277,7 @@ export const useAppStore = create<AppState>((set) => ({
   // Conversations
   conversations: [],
   currentConversation: null,
-  selectedModel: "gpt-4o",
+  selectedModel: "gpt-4",
   setConversations: (conversations) => set({ conversations }),
   addConversation: (conversation) =>
     set((s) => ({ conversations: [conversation, ...s.conversations] })),

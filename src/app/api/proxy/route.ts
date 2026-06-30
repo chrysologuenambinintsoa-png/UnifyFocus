@@ -4,7 +4,10 @@ function isAllowedHost(url: URL) {
   const hostname = url.hostname.toLowerCase();
   return (
     hostname === "s3.amazonaws.com" ||
-    hostname.endsWith(".amazonaws.com")
+    hostname.endsWith(".amazonaws.com") ||
+    hostname === "results.deapi.ai" ||
+    hostname === "deapi.ai" ||
+    hostname.endsWith(".deapi.ai")
   );
 }
 

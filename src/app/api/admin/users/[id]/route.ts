@@ -30,6 +30,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     data: {
       role: role === "admin" ? "admin" : role === "user" ? "user" : undefined,
       isBlocked: isBlocked === undefined ? undefined : isBlocked,
+      plan: typeof body.plan === "string" ? body.plan : undefined,
+      credits: typeof body.credits === "number" ? body.credits : undefined,
     },
   });
 
