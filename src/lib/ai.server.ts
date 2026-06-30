@@ -535,38 +535,16 @@ async function requestImageFromProvider(
     const steps = clampSteps(options.steps);
     const seed = Number.isFinite(options.seed ?? NaN) ? options.seed : 0;
 
+    // For image-to-image, include source image reference in the prompt
+    // since DEAPI doesn't have a separate edit endpoint
+    let enhancedPrompt = prompt;
     if (options.sourceImage) {
-      const formData = new FormData();
-      const imageBlob = dataUrlToBlob(options.sourceImage);
-      formData.append("image", imageBlob, "source.png");
-      formData.append("model", DEAPI_IMAGE_EDIT_MODEL);
-      formData.append("prompt", prompt);
-      formData.append("size", size);
-      formData.append("width", String(width));
-      formData.append("height", String(height));
-      if (options.quality) formData.append("quality", options.quality);
-
-      const response = await fetch(`${DEAPI_API_BASE}/api/v2/images/edit`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${DEAPI_API_KEY}`,
-          Accept: "application/json",
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const text = await response.text().catch(() => "");
-        throw new Error(`deAPI.ai image edit request failed (${response.status}): ${text}`);
-      }
-
-      const data = await response.json();
-      return parseImageResponse(data);
+      enhancedPrompt = `[Image source fournie] Transforme cette image selon la description suivante : ${prompt}`;
     }
 
     const data = await deapiFetchAndPoll("/api/v2/images/generations", {
       model: DEAPI_IMAGE_MODEL,
-      prompt,
+      prompt: enhancedPrompt,
       size,
       width,
       height,

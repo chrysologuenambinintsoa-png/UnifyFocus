@@ -5,6 +5,7 @@ import { useAppStore } from "@/store/app-store";
 import LandingView from "@/components/views/landing-view";
 import { DashboardView } from "@/components/views/dashboard-view";
 import AIEditorView from "@/components/editor/ai-editor-view";
+import { AiEditorDalle3View } from "@/components/editor/ai-editor-dalle3-view";
 import ProfileView from "@/components/views/profile-view";
 import PricingView from "@/components/views/pricing-view";
 import SettingsView from "@/components/views/settings-view";
@@ -95,6 +96,19 @@ export default function Home() {
             className="flex-1"
           >
             <AIEditorView />
+          </motion.div>
+        )}
+
+        {currentView === "editor-dalle3" && (
+          <motion.div
+            key="editor-dalle3"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="flex-1"
+          >
+            <AiEditorDalle3View />
           </motion.div>
         )}
 

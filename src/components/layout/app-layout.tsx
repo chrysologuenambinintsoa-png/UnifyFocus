@@ -51,7 +51,7 @@ import { PropertiesPanel } from "./properties-panel";
 import { StatusBar } from "./status-bar";
 import { Toaster } from "@/components/ui/toaster";
 
-interface AppLayoutProps {
+interface AppLayoutProps<T = {}> {
   children: React.ReactNode;
 }
 
@@ -72,8 +72,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobilePropertiesOpen, setMobilePropertiesOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [showPropertiesPanel, setShowPropertiesPanel] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);

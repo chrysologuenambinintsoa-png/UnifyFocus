@@ -56,6 +56,8 @@ import {
   Code2,
   FileTextIcon,
   Music,
+  LayoutDashboard,
+  Sparkles as SparklesIcon,
 } from "lucide-react";
 
 import { useAppStore, Conversation, AVAILABLE_MODELS } from "@/store/app-store";
@@ -90,35 +92,35 @@ import {
 // ---------------------------------------------------------------------------
 
 const TAB_CONFIG = [
-  { key: "text" as const, label: "Musique", icon: Music, credits: 1, color: "blue" },
-  { key: "image" as const, label: "Image", icon: ImageIcon, credits: 3, color: "purple" },
-  { key: "video" as const, label: "Vidéo", icon: Video, credits: 5, color: "orange" },
-  { key: "code" as const, label: "Code", icon: Code, credits: 2, color: "green" },
+  { key: "text" as const, label: "Musique", icon: Music, credits: 1, color: "blue", description: "Générez de la musique à partir de descriptions textuelles" },
+  { key: "image" as const, label: "Image", icon: ImageIcon, credits: 3, color: "purple", description: "Créez et transformez des images avec l'IA" },
+  { key: "video" as const, label: "Vidéo", icon: Video, credits: 5, color: "orange", description: "Générez et éditez des vidéos automatiquement" },
+  { key: "code" as const, label: "Code", icon: Code, credits: 2, color: "green", description: "Générez, expliquez et déboguez du code" },
 ] as const;
 
 const TEXT_SUBTABS = [
-  { key: "text-generation", label: "Générer une Musique", icon: Music, credits: 1, description: "Composez une musique unique - choisissez genre, ambiance et durée" },
+  { key: "text-generation", label: "Générer", icon: Music, credits: 1, description: "Composez une musique unique - choisissez genre, ambiance et durée" },
   { key: "text-to-music", label: "Texte → Musique", icon: Music, credits: 2, description: "Transformez vos paroles ou descriptions en compositions musicales" },
-  { key: "music-to-music", label: "Musique → Musique", icon: Sparkles, credits: 2, description: "Réinventez un morceau en changeant son style ou son ambiance" },
+  { key: "music-to-music", label: "Transformer", icon: Sparkles, credits: 2, description: "Réinventez un morceau en changeant son style ou son ambiance" },
 ];
 
 const IMAGE_SUBTABS = [
-  { key: "text-to-image", label: "Texte → Image", icon: Wand2, credits: 3, description: "Créez des images depuis du texte" },
-  { key: "image-to-image", label: "Image → Image", icon: Camera, credits: 3, description: "Transformez vos images" },
-  { key: "image-to-text", label: "Image → Texte", icon: Type, credits: 2, description: "Extrayez du texte d'images" },
+  { key: "text-to-image", label: "Générer", icon: Wand2, credits: 3, description: "Créez des images depuis du texte" },
+  { key: "image-to-image", label: "Transformer", icon: Camera, credits: 3, description: "Transformez vos images" },
+  { key: "image-to-text", label: "Extraire", icon: Type, credits: 2, description: "Extrayez du texte d'images" },
 ];
 
 const VIDEO_SUBTABS = [
-  { key: "text-to-video", label: "Texte → Vidéo", icon: Film, credits: 5, description: "Générez des vidéos depuis du texte" },
-  { key: "video-to-video", label: "Vidéo → Vidéo", icon: Video, credits: 5, description: "Transformez vos vidéos" },
-  { key: "video-to-text", label: "Vidéo → Texte", icon: FileText, credits: 4, description: "Transcription de vidéos" },
+  { key: "text-to-video", label: "Générer", icon: Film, credits: 5, description: "Générez des vidéos depuis du texte" },
+  { key: "video-to-video", label: "Transformer", icon: Video, credits: 5, description: "Transformez vos vidéos" },
+  { key: "video-to-text", label: "Transcrire", icon: FileText, credits: 4, description: "Transcription de vidéos" },
 ];
 
 const CODE_SUBTABS = [
-  { key: "code-generation", label: "Génération", icon: Code, credits: 2, description: "Générez du code dans n'importe quel langage" },
-  { key: "code-refactor", label: "Refactoring", icon: Braces, credits: 2, description: "Optimisez et nettoyez votre code" },
-  { key: "code-explain", label: "Explication", icon: FileCode, credits: 1, description: "Comprenez un code complexe" },
-  { key: "code-debug", label: "Debug", icon: Terminal, credits: 2, description: "Trouvez et corrigez les bugs" },
+  { key: "code-generation", label: "Générer", icon: Code, credits: 2, description: "Générez du code dans n'importe quel langage" },
+  { key: "code-refactor", label: "Refactoriser", icon: Braces, credits: 2, description: "Optimisez et nettoyez votre code" },
+  { key: "code-explain", label: "Expliquer", icon: FileCode, credits: 1, description: "Comprenez un code complexe" },
+  { key: "code-debug", label: "Déboguer", icon: Terminal, credits: 2, description: "Trouvez et corrigez les bugs" },
 ];
 
 const ALLOWED_FILE_TYPES: Record<"text" | "image" | "video" | "code", string[]> = {
@@ -442,50 +444,106 @@ async function createWatermarkedVideoBlob(src: string): Promise<Blob> {
   }
 }
 
-// Modern UnifyFocus color palette with enhanced gradients
+// Modern Media.io-inspired color palette
 const TAB_COLORS = {
   blue: {
-    bg: "bg-blue-500/10",
-    bgActive: "bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600",
-    text: "text-blue-400",
+    bg: "bg-blue-50",
+    bgActive: "bg-blue-600",
+    text: "text-blue-600",
     textActive: "text-white",
-    border: "border-blue-500/20",
-    borderActive: "border-blue-500/50",
-    glow: "shadow-blue-500/30",
-    gradient: "from-blue-500/20 via-cyan-500/10 to-transparent",
+    border: "border-blue-200",
+    borderActive: "border-blue-600",
+    light: "bg-blue-50",
+    gradient: "from-blue-500 to-blue-600",
   },
   purple: {
-    bg: "bg-purple-500/10",
-    bgActive: "bg-gradient-to-r from-purple-600 via-violet-500 to-purple-600",
-    text: "text-purple-400",
+    bg: "bg-purple-50",
+    bgActive: "bg-purple-600",
+    text: "text-purple-600",
     textActive: "text-white",
-    border: "border-purple-500/20",
-    borderActive: "border-purple-500/50",
-    glow: "shadow-purple-500/30",
-    gradient: "from-purple-500/20 via-violet-500/10 to-transparent",
+    border: "border-purple-200",
+    borderActive: "border-purple-600",
+    light: "bg-purple-50",
+    gradient: "from-purple-500 to-purple-600",
   },
   orange: {
-    bg: "bg-orange-500/10",
-    bgActive: "bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600",
-    text: "text-orange-400",
+    bg: "bg-orange-50",
+    bgActive: "bg-orange-600",
+    text: "text-orange-600",
     textActive: "text-white",
-    border: "border-orange-500/20",
-    borderActive: "border-orange-500/50",
-    glow: "shadow-orange-500/30",
-    gradient: "from-orange-500/20 via-amber-500/10 to-transparent",
+    border: "border-orange-200",
+    borderActive: "border-orange-600",
+    light: "bg-orange-50",
+    gradient: "from-orange-500 to-orange-600",
   },
   green: {
-    bg: "bg-emerald-500/10",
-    bgActive: "bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600",
-    text: "text-emerald-400",
+    bg: "bg-emerald-50",
+    bgActive: "bg-emerald-600",
+    text: "text-emerald-600",
     textActive: "text-white",
-    border: "border-emerald-500/20",
-    borderActive: "border-emerald-500/50",
-    glow: "shadow-emerald-500/30",
-    gradient: "from-emerald-500/20 via-teal-500/10 to-transparent",
+    border: "border-emerald-200",
+    borderActive: "border-emerald-600",
+    light: "bg-emerald-50",
+    gradient: "from-emerald-500 to-emerald-600",
   },
 };
 
+// ---------------------------------------------------------------------------
+// UI Components - Glassmorphism Style
+// ---------------------------------------------------------------------------
+
+function AnimatedBackground() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-black" />
+      <motion.div
+        animate={{
+          x: [0, 100, 0],
+          y: [0, -50, 0],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+        className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
+      />
+      <motion.div
+        animate={{
+          x: [0, -80, 0],
+          y: [0, 60, 0],
+          scale: [1, 1.3, 1],
+        }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+        className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"
+      />
+    </div>
+  );
+}
+
+function GlassCard({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <motion.div
+      className={`
+        relative overflow-hidden rounded-2xl bg-slate-800/30 backdrop-blur-xl border border-white/10
+        ${className}
+      `}
+    >
+      {children}
+    </motion.div>
+  );
+}
 // ---------------------------------------------------------------------------
 // Custom Hooks
 // ---------------------------------------------------------------------------
@@ -589,644 +647,123 @@ function useFileAttachments(editorTab: string) {
   return { attachedFiles, handleFilesSelected, handleRemoveFile, clearFiles };
 }
 
-// ---------------------------------------------------------------------------
-// UI Components
-// ---------------------------------------------------------------------------
-
-function AnimatedBackground() {
+function SubToolSelector({ subtabs, activeSubtool, onSubtoolChange }: {
+  subtabs: any[];
+  activeSubtool: string;
+  onSubtoolChange: (key: string) => void;
+}) {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Mesh gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-cyan-500/5" />
-      
-      {/* Animated orbs */}
-      <motion.div
-        animate={{
-          x: [0, 100, 0],
-          y: [0, -50, 0],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        className="absolute -top-40 -right-40 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl"
-      />
-      <motion.div
-        animate={{
-          x: [0, -80, 0],
-          y: [0, 60, 0],
-          scale: [1, 1.3, 1],
-        }}
-        transition={{
-          duration: 25,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl"
-      />
-      <motion.div
-        animate={{
-          x: [0, 50, 0],
-          y: [0, -30, 0],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        className="absolute top-1/2 left-1/3 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl"
-      />
+    <div className="flex items-center gap-2 p-1.5 rounded-xl bg-slate-900/20 border border-slate-800/50 backdrop-blur-sm">
+      {subtabs.map((subTab) => {
+        const SubIcon = subTab.icon;
+        const isActive = activeSubtool === subTab.key;
+
+        return (
+          <motion.button
+            key={subTab.key}
+            onClick={() => onSubtoolChange(subTab.key)}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className={`
+              relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+              transition-colors duration-300
+              ${isActive
+                ? 'text-white'
+                : 'text-slate-400 hover:text-white'
+              }
+            `}
+          >
+            {isActive && (
+              <motion.div
+                layoutId="activeSubtoolIndicator"
+                className="absolute inset-0 rounded-lg bg-slate-700/50 border border-slate-600 shadow-md"
+              />
+            )}
+            <SubIcon className="w-4 h-4 relative z-10" />
+            <span className="relative z-10">{subTab.label}</span>
+          </motion.button>
+        );
+      })}
     </div>
   );
 }
 
-function GlassCard({
-  children,
-  className = "",
-  variant = "default",
-  hover = false,
-  style,
-}: {
+function ResultCard({ children, header, meta, onRegenerate, onNew }: {
   children: React.ReactNode;
-  className?: string;
-  variant?: "default" | "input" | "output" | "elevated" | "accent";
-  hover?: boolean;
-  style?: React.CSSProperties;
-}) {
-  const variants = {
-    default: "bg-card/40 backdrop-blur-xl border border-white/10",
-    input: "bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-transparent backdrop-blur-xl border border-white/15",
-    output: "bg-card/60 backdrop-blur-xl border border-white/10",
-    elevated: "bg-card/50 backdrop-blur-2xl border border-white/20 shadow-2xl",
-    accent: "bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-transparent backdrop-blur-xl border border-violet-500/20",
-  };
-
-  return (
-    <motion.div
-      style={style}
-      className={`
-        relative overflow-hidden rounded-2xl
-        ${variants[variant]}
-        ${hover ? "transition-all duration-300 hover:shadow-xl hover:shadow-violet-500/10 hover:-translate-y-1" : ""}
-        ${className}
-      `}
-      whileHover={hover ? { scale: 1.01 } : undefined}
-      whileTap={hover ? { scale: 0.99 } : undefined}
-    >
-      {/* Subtle shine effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-      {children}
-    </motion.div>
-  );
-}
-
-function ModernTabChip({
-  active,
-  onClick,
-  children,
-  color = "blue",
-  icon: Icon,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  color?: keyof typeof TAB_COLORS;
-  icon: LucideIcon;
-}) {
-  const colors = TAB_COLORS[color];
-  
-  return (
-    <motion.button
-      onClick={onClick}
-      whileHover={{ scale: 1.05, y: -2 }}
-      whileTap={{ scale: 0.95 }}
-      className={`
-        relative px-5 py-3 rounded-xl font-medium transition-all duration-300
-        flex items-center gap-2.5 text-sm
-        ${
-          active
-            ? `${colors.bgActive} ${colors.textActive} shadow-lg ${colors.glow} shadow-xl`
-            : `bg-white/5 ${colors.text} hover:bg-white/10 border border-white/10`
-        }
-      `}
-    >
-      {active && (
-        <motion.div
-          layoutId="activeTabGlow"
-          className={`absolute inset-0 rounded-xl ${colors.bgActive} opacity-20 blur-md`}
-        />
-      )}
-      <Icon className={`w-4 h-4 relative z-10 ${active ? "" : "opacity-70"}`} />
-      <span className="relative z-10">{children}</span>
-    </motion.button>
-  );
-}
-
-function SubTabButton({
-  active,
-  onClick,
-  icon: Icon,
-  label,
-  credits,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: LucideIcon;
-  label: string;
-  credits: number;
+  header: React.ReactNode;
+  meta: ResultMeta;
+  onRegenerate: () => void;
+  onNew: () => void;
 }) {
   return (
-    <motion.button
-      onClick={onClick}
-      whileHover={{ scale: 1.05, y: -1 }}
-      whileTap={{ scale: 0.95 }}
-      className={`
-        flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
-        transition-all duration-300
-        ${
-          active
-            ? "bg-white/15 text-white shadow-lg backdrop-blur-md border border-white/20"
-            : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground border border-transparent"
-        }
-      `}
-    >
-      <Icon className="w-4 h-4" />
-      <span>{label}</span>
-      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? "bg-white/20" : "bg-white/10"}`}>
-        {credits}cr
-      </span>
-    </motion.button>
+    <div className="space-y-4">
+      {header}
+      <GlassCard>
+        <div className="p-6">
+          {children}
+        </div>
+      </GlassCard>
+      <div className="flex items-center gap-3">
+        <Button
+          onClick={onRegenerate}
+          variant="secondary"
+          className="flex-1 gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Régénérer
+        </Button>
+        <Button
+          onClick={onNew}
+          variant="secondary"
+          className="flex-1 gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Nouveau
+        </Button>
+      </div>
+    </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Options Components
+// Tab Selector (replaces SidebarNav functionality)
 // ---------------------------------------------------------------------------
 
-function TextOptions({
-  style,
-  setStyle,
-  length,
-  setLength,
-  tone,
-  setTone,
+function TabSelector({
+  tabs,
+  activeTab,
+  onSelect,
 }: {
-  style: string;
-  setStyle: (v: string) => void;
-  length: string;
-  setLength: (v: string) => void;
-  tone: string;
-  setTone: (v: string) => void;
+  tabs: typeof TAB_CONFIG;
+  activeTab: string;
+  onSelect: (key: string) => void;
 }) {
-  const options = [
-    {
-      label: "Style",
-      value: style,
-      onChange: setStyle,
-      choices: [
-        { label: "Professionnel", value: "professionnel" },
-        { label: "Créatif", value: "creatif" },
-        { label: "Académique", value: "academique" },
-        { label: "Casual", value: "casual" },
-        { label: "Marketing", value: "marketing" },
-      ],
-    },
-    {
-      label: "Longueur",
-      value: length,
-      onChange: setLength,
-      choices: [
-        { label: "Court", value: "court" },
-        { label: "Moyen", value: "moyen" },
-        { label: "Long", value: "long" },
-      ],
-    },
-    {
-      label: "Ton",
-      value: tone,
-      onChange: setTone,
-      choices: [
-        { label: "Informatif", value: "informatif" },
-        { label: "Persuasif", value: "persuasif" },
-        { label: "Narratif", value: "narratif" },
-        { label: "Technique", value: "technique" },
-      ],
-    },
-  ];
-
   return (
-    <GlassCard variant="accent" className="p-4">
-      <div className="space-y-4">
-        {options.map((opt) => (
-          <div key={opt.label} className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {opt.label}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {opt.choices.map((choice) => {
-                const isActive = opt.value === choice.value;
-                return (
-                  <motion.button
-                    key={choice.value}
-                    onClick={() => opt.onChange(choice.value)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`
-                      px-3 py-1.5 rounded-lg text-sm transition-all duration-200
-                      ${
-                        isActive
-                          ? "bg-blue-500 text-white shadow-md shadow-blue-500/25"
-                          : "bg-white/5 text-muted-foreground hover:bg-white/10 border border-white/10"
-                      }
-                    `}
-                  >
-                    {choice.label}
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    </GlassCard>
-  );
-}
+    <div className="flex items-center justify-center gap-2 flex-wrap">
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = activeTab === tab.key;
+        const colors = TAB_COLORS[tab.color as keyof typeof TAB_COLORS];
 
-function ImageOptions({
-  style,
-  setStyle,
-  format,
-  setFormat,
-  quality,
-  setQuality,
-}: {
-  style: string;
-  setStyle: (v: string) => void;
-  format: string;
-  setFormat: (v: string) => void;
-  quality: string;
-  setQuality: (v: string) => void;
-}) {
-  const options = [
-    {
-      label: "Style",
-      value: style,
-      onChange: setStyle,
-      choices: [
-        { label: "Photoréaliste", value: "photorealiste" },
-        { label: "Illustration", value: "illustration" },
-        { label: "Art Numérique", value: "art-numerique" },
-        { label: "Aquarelle", value: "aquarelle" },
-        { label: "3D", value: "3d" },
-      ],
-    },
-    {
-      label: "Format",
-      value: format,
-      onChange: setFormat,
-      choices: [
-        { label: "Carré (1:1)", value: "1:1" },
-        { label: "Paysage (16:9)", value: "16:9" },
-        { label: "Portrait (9:16)", value: "9:16" },
-      ],
-    },
-    {
-      label: "Qualité",
-      value: quality,
-      onChange: setQuality,
-      choices: [
-        { label: "Standard", value: "standard" },
-        { label: "HD", value: "hd" },
-        { label: "Ultra HD", value: "ultra-hd" },
-      ],
-    },
-  ];
-
-  return (
-    <GlassCard variant="accent" className="p-4">
-      <div className="space-y-4">
-        {options.map((opt) => (
-          <div key={opt.label} className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {opt.label}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {opt.choices.map((choice) => {
-                const isActive = opt.value === choice.value;
-                return (
-                  <motion.button
-                    key={choice.value}
-                    onClick={() => opt.onChange(choice.value)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`
-                      px-3 py-1.5 rounded-lg text-sm transition-all duration-200
-                      ${
-                        isActive
-                          ? "bg-purple-500 text-white shadow-md shadow-purple-500/25"
-                          : "bg-white/5 text-muted-foreground hover:bg-white/10 border border-white/10"
-                      }
-                    `}
-                  >
-                    {choice.label}
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    </GlassCard>
-  );
-}
-
-function VideoOptions({
-  duration,
-  setDuration,
-  style,
-  setStyle,
-  format,
-  setFormat,
-}: {
-  duration: string;
-  setDuration: (v: string) => void;
-  style: string;
-  setStyle: (v: string) => void;
-  format: string;
-  setFormat: (v: string) => void;
-}) {
-  const options = [
-    {
-      label: "Durée",
-      value: duration,
-      onChange: setDuration,
-      choices: [
-        { label: "5 secondes", value: "5" },
-        { label: "10 secondes", value: "10" },
-        { label: "15 secondes", value: "15" },
-      ],
-    },
-    {
-      label: "Style",
-      value: style,
-      onChange: setStyle,
-      choices: [
-        { label: "Cinématique", value: "cinematique" },
-        { label: "Animation", value: "animation" },
-        { label: "Documentaire", value: "documentaire" },
-        { label: "Expérimental", value: "experimental" },
-      ],
-    },
-    {
-      label: "Format",
-      value: format,
-      onChange: setFormat,
-      choices: [
-        { label: "16:9", value: "16:9" },
-        { label: "9:16", value: "9:16" },
-        { label: "1:1", value: "1:1" },
-      ],
-    },
-  ];
-
-  return (
-    <GlassCard variant="accent" className="p-4">
-      <div className="space-y-4">
-        {options.map((opt) => (
-          <div key={opt.label} className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {opt.label}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {opt.choices.map((choice) => {
-                const isActive = opt.value === choice.value;
-                return (
-                  <motion.button
-                    key={choice.value}
-                    onClick={() => opt.onChange(choice.value)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`
-                      px-3 py-1.5 rounded-lg text-sm transition-all duration-200
-                      ${
-                        isActive
-                          ? "bg-orange-500 text-white shadow-md shadow-orange-500/25"
-                          : "bg-white/5 text-muted-foreground hover:bg-white/10 border border-white/10"
-                      }
-                    `}
-                  >
-                    {choice.label}
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    </GlassCard>
-  );
-}
-
-function CodeOptions({
-  language,
-  setLanguage,
-  framework,
-  setFramework,
-  complexity,
-  setComplexity,
-}: {
-  language: string;
-  setLanguage: (v: string) => void;
-  framework: string;
-  setFramework: (v: string) => void;
-  complexity: string;
-  setComplexity: (v: string) => void;
-}) {
-  const options = [
-    {
-      label: "Langage",
-      value: language,
-      onChange: setLanguage,
-      choices: [
-        { label: "JavaScript", value: "javascript" },
-        { label: "TypeScript", value: "typescript" },
-        { label: "Python", value: "python" },
-        { label: "Java", value: "java" },
-        { label: "C#", value: "csharp" },
-        { label: "Go", value: "go" },
-        { label: "Rust", value: "rust" },
-        { label: "PHP", value: "php" },
-      ],
-    },
-    {
-      label: "Framework",
-      value: framework,
-      onChange: setFramework,
-      choices: [
-        { label: "Aucun", value: "aucun" },
-        { label: "React", value: "react" },
-        { label: "Vue", value: "vue" },
-        { label: "Angular", value: "angular" },
-        { label: "Next.js", value: "nextjs" },
-        { label: "Node.js", value: "nodejs" },
-        { label: "Django", value: "django" },
-        { label: "Spring", value: "spring" },
-      ],
-    },
-    {
-      label: "Complexité",
-      value: complexity,
-      onChange: setComplexity,
-      choices: [
-        { label: "Simple", value: "simple" },
-        { label: "Intermédiaire", value: "intermediaire" },
-        { label: "Avancé", value: "avance" },
-        { label: "Expert", value: "expert" },
-      ],
-    },
-  ];
-
-  return (
-    <GlassCard variant="accent" className="p-4">
-      <div className="space-y-4">
-        {options.map((opt) => (
-          <div key={opt.label} className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {opt.label}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {opt.choices.map((choice) => {
-                const isActive = opt.value === choice.value;
-                return (
-                  <motion.button
-                    key={choice.value}
-                    onClick={() => opt.onChange(choice.value)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`
-                      px-3 py-1.5 rounded-lg text-sm transition-all duration-200
-                      ${
-                        isActive
-                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
-                          : "bg-white/5 text-muted-foreground hover:bg-white/10 border border-white/10"
-                      }
-                    `}
-                  >
-                    {choice.label}
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    </GlassCard>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Music Options Component (Style/Genre Selector)
-// ---------------------------------------------------------------------------
-
-function MusicOptions({
-  genre,
-  setGenre,
-  ambiance,
-  setAmbiance,
-  duree,
-  setDuree,
-}: {
-  genre: string;
-  setGenre: (v: string) => void;
-  ambiance: string;
-  setAmbiance: (v: string) => void;
-  duree: string;
-  setDuree: (v: string) => void;
-}) {
-  const options = [
-    {
-      label: "Genre Musical",
-      value: genre,
-      onChange: setGenre,
-      choices: [
-        { label: "Électro", value: "electro" },
-        { label: "Ambient", value: "ambient" },
-        { label: "Orchestral", value: "orchestral" },
-        { label: "Pop", value: "pop" },
-        { label: "Jazz", value: "jazz" },
-        { label: "Rock", value: "rock" },
-        { label: "Classique", value: "classique" },
-        { label: "Hip-Hop", value: "hiphop" },
-        { label: "Lo-Fi", value: "lofi" },
-        { label: "Cinématique", value: "cinematique" },
-      ],
-    },
-    {
-      label: "Ambiance",
-      value: ambiance,
-      onChange: setAmbiance,
-      choices: [
-        { label: "Calme", value: "calme" },
-        { label: "Énergique", value: "energique" },
-        { label: "Mélancolique", value: "melancolique" },
-        { label: "Épique", value: "epique" },
-        { label: "Romantique", value: "romantique" },
-        { label: "Mystérieux", value: "mysterieux" },
-        { label: "Joyeux", value: "joyeux" },
-        { label: "Dramatique", value: "dramatique" },
-      ],
-    },
-    {
-      label: "Durée",
-      value: duree,
-      onChange: setDuree,
-      choices: [
-        { label: "30 secondes", value: "30" },
-        { label: "1 minute", value: "60" },
-        { label: "2 minutes", value: "120" },
-        { label: "3 minutes", value: "180" },
-      ],
-    },
-  ];
-
-  return (
-    <GlassCard variant="accent" className="p-4">
-      <div className="space-y-4">
-        {options.map((opt) => (
-          <div key={opt.label} className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {opt.label}
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {opt.choices.map((choice) => {
-                const isActive = opt.value === choice.value;
-                return (
-                  <motion.button
-                    key={choice.value}
-                    onClick={() => opt.onChange(choice.value)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`
-                      px-3 py-1.5 rounded-lg text-sm transition-all duration-200
-                      ${
-                        isActive
-                          ? "bg-blue-500 text-white shadow-md shadow-blue-500/25"
-                          : "bg-white/5 text-muted-foreground hover:bg-white/10 border border-white/10"
-                      }
-                    `}
-                  >
-                    {choice.label}
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    </GlassCard>
+        return (
+          <motion.button
+            key={tab.key}
+            onClick={() => onSelect(tab.key)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`
+              relative px-5 py-2.5 rounded-xl font-medium transition-all duration-300
+              flex items-center gap-2 text-sm border
+              ${isActive ? `${colors.bgActive} ${colors.textActive} shadow-lg shadow-${tab.color}-500/30 border-transparent` : `bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800`}
+            `}
+          >
+            {isActive && <motion.div layoutId="activeTabGlow" className={`absolute inset-0 rounded-xl bg-gradient-to-r ${colors.gradient} opacity-30 blur-md`} />}
+            <Icon className={`w-4 h-4 relative z-10 ${isActive ? "" : "opacity-70"}`} />
+            <span className="relative z-10">{tab.label}</span>
+          </motion.button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -1234,350 +771,80 @@ function MusicOptions({
 // Empty State
 // ---------------------------------------------------------------------------
 
-function EmptyState({ tab }: { tab: string }) {
-  const { t } = useTranslation();
+function EmptyState({ tab, description }: { tab: string; description?: string }) {
   const tabConfig = TAB_CONFIG.find((t) => t.key === tab);
   const Icon = tabConfig?.icon || Sparkles;
   const color = tabConfig?.color || "blue";
   const colors = TAB_COLORS[color as keyof typeof TAB_COLORS];
 
   return (
-    <motion.div
-      key="empty"
-      initial={{ opacity: 0, scale: 0.9, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9, y: -20 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="flex flex-col items-center justify-center py-20 px-4"
-    >
-      <motion.div
-        animate={{
-          y: [0, -15, 0],
-          rotate: [0, 8, -8, 0],
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className={`
-          relative w-32 h-32 rounded-3xl flex items-center justify-center mb-8
-          ${colors.bg}
-        `}
-      >
-        <div className={`absolute inset-0 rounded-3xl ${colors.bgActive} opacity-20 blur-xl`} />
-        <Icon className={`w-14 h-14 ${colors.text}`} />
-      </motion.div>
-      
-      <motion.h3
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="text-2xl font-bold text-foreground mb-3"
-      >
-        Prêt à créer
-      </motion.h3>
-      
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="text-muted-foreground text-center max-w-md"
-      >
-        Décrivez ce que vous souhaitez générer et laissez l'IA faire le reste.
-      </motion.p>
+    <GlassCard>
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className={`w-20 h-20 rounded-2xl ${colors.bgActive} bg-opacity-10 flex items-center justify-center mb-6`}>
+          <Icon className={`w-10 h-10 ${colors.text}`} />
+        </div>
+        
+        <h3 className="text-xl font-semibold text-slate-100 mb-2">
+          Prêt à créer
+        </h3>
+        
+        <p className="text-slate-400 text-center max-w-md mb-8">
+          {description || "Décrivez ce que vous souhaitez générer et laissez l'IA faire le reste."}
+        </p>
 
-      {/* Feature hints */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="flex gap-4 mt-8"
-      >
-        {[
-          { icon: Zap, label: "Rapide" },
-          { icon: Cpu, label: "IA Puissante" },
-          { icon: Palette, label: "Qualité" },
-        ].map((item, i) => (
-          <motion.div
-            key={item.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 + i * 0.1 }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10"
-          >
-            <item.icon className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">{item.label}</span>
-          </motion.div>
-        ))}
-      </motion.div>
-    </motion.div>
+        <div className="flex gap-6">
+          {[
+            { icon: Zap, label: "Rapide", desc: "Génération en secondes" },
+            { icon: Cpu, label: "IA Puissante", desc: "Modèles dernière génération" },
+            { icon: Palette, label: "Qualité", desc: "Résultats professionnels" },
+          ].map((item, i) => (
+            <div key={item.label} className="text-center">
+              <div className="w-12 h-12 rounded-xl bg-slate-800/50 border border-slate-700 flex items-center justify-center mb-2 mx-auto">
+                <item.icon className="w-6 h-6 text-slate-400" />
+              </div>
+              <p className="text-sm font-medium text-gray-900">{item.label}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </GlassCard>
   );
 }
 
 // ---------------------------------------------------------------------------
 // Professional Generation Animation
 // ---------------------------------------------------------------------------
-
-function ProfessionalGeneratingAnimation({ tab, subtype, streamingContent }: { tab: string; subtype?: string; streamingContent?: string }) {
+function GeneratingAnimation({ tab, subtype }: { tab: string; subtype?: string }) {
   const tabConfig = TAB_CONFIG.find((t) => t.key === tab);
   const color = tabConfig?.color || "blue";
   const colors = TAB_COLORS[color as keyof typeof TAB_COLORS];
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const actionLabelMap: Record<string, string> = {
-    text: "texte",
-    image: "image",
-    video: "vidéo",
-    code: "code",
-  };
 
   const isMusicMode = tab === "text" && subtype && ["text-generation", "text-to-music", "music-to-music"].includes(subtype);
-  const actionLabel = isMusicMode ? "musique" : actionLabelMap[tab] || "contenu";
-  const actionVerb = subtype === "music-to-music" ? "Transformation" : "Génération";
-  
-  const statusMessages = [
-    "Analyse de votre demande...",
-    `${actionVerb} de la ${actionLabel} en cours...`,
-    "Optimisation des résultats...",
-    "Finalisation...",
-  ];
-  
-  const [currentStatus, setCurrentStatus] = useState(0);
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentStatus((prev) => (prev + 1) % statusMessages.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (streamingContent && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [streamingContent]);
-
-  const showStreamingContent = (tab === "text" || tab === "code") && streamingContent;
-
-  const highlightCode = (code: string) => {
-    const keywords = ['const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'class', 'import', 'export', 'from', 'async', 'await', 'try', 'catch', 'throw', 'new', 'this', 'typeof', 'instanceof'];
-    const strings = /(["'`])(?:(?!\1)[^\\]|\\.)*\1/g;
-    const comments = /(\/\/.*$|\/\*[\s\S]*?\*\/)/gm;
-    
-    let highlighted = code
-      .replace(/&/g, '&')
-      .replace(/</g, '<')
-      .replace(/>/g, '>');
-    
-    highlighted = highlighted.replace(strings, '<span class="text-emerald-400">$&</span>');
-    highlighted = highlighted.replace(comments, '<span class="text-gray-500 italic">$&</span>');
-    keywords.forEach(keyword => {
-      const regex = new RegExp(`\\b(${keyword})\\b`, 'g');
-      highlighted = highlighted.replace(regex, '<span class="text-purple-400 font-medium">$1</span>');
-    });
-    highlighted = highlighted.replace(/\b(\d+\.?\d*)\b/g, '<span class="text-orange-400">$1</span>');
-    
-    return highlighted;
-  };
+  const actionLabel = isMusicMode ? "musique" : tab === "text" ? "texte" : tab === "image" ? "image" : tab === "video" ? "vidéo" : "code";
 
   return (
-    <motion.div
-      key="generating-professional"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full"
-    >
-      {/* Header with streaming indicator */}
-      <div className="flex items-center gap-4 mb-6">
-        <motion.div
-          animate={{
-            scale: [1, 1.15, 1],
-            rotate: [0, 180, 360],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className={`relative w-14 h-14 rounded-2xl ${colors.bg} flex items-center justify-center`}
-        >
-          <div className={`absolute inset-0 rounded-2xl ${colors.bgActive} opacity-30 blur-lg`} />
-          <Loader2 className={`w-6 h-6 ${colors.text} animate-spin`} />
-        </motion.div>
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-3">
-            <motion.p
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-base font-semibold text-foreground"
-            >
-              Génération en cours
-            </motion.p>
-            {showStreamingContent && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-xs text-emerald-400 font-medium">Streaming</span>
-              </motion.div>
-            )}
-          </div>
-          <motion.p
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-sm text-muted-foreground"
+    <GlassCard>
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="relative w-16 h-16 mb-6">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0"
           >
-            {statusMessages[currentStatus]}
-          </motion.p>
+            <div className={`w-full h-full border-4 border-slate-700 border-t-blue-500 rounded-full`} />
+          </motion.div>
         </div>
-      </div>
-
-      {/* Main card with streaming content display */}
-      <GlassCard variant="output" className="p-0 overflow-hidden">
-        {/* Gradient accent line */}
-        <div className={`absolute top-0 left-0 right-0 h-1 rounded-t-2xl ${colors.bgActive} opacity-80`} />
         
-        <div className="p-5 pt-6">
-          {showStreamingContent ? (
-            <div className="relative overflow-hidden rounded-xl bg-slate-950/50 border border-white/5">
-              <div 
-                ref={scrollRef}
-                className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-white/10"
-              >
-                {tab === "code" ? (
-                  <pre className="p-4 font-mono text-sm leading-relaxed overflow-x-auto">
-                    <code
-                      dangerouslySetInnerHTML={{ __html: highlightCode(streamingContent) }}
-                    />
-                    <span className="inline-block w-2 h-4 bg-emerald-500 animate-pulse ml-1 align-middle" />
-                  </pre>
-                ) : (
-                  <div className="p-4">
-                    <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                      {streamingContent}
-                      <span className="inline-block w-2 h-4 bg-violet-500 animate-pulse ml-1 align-middle" />
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="relative overflow-hidden rounded-xl">
-              <div className="relative bg-gradient-to-br from-slate-900/50 to-slate-800/50 rounded-xl overflow-hidden min-h-[250px]">
-                {/* Shimmer effect */}
-                <motion.div
-                  animate={{
-                    x: ["-100%", "200%"],
-                  }}
-                  transition={{
-                    duration: 2.5,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-                />
-                
-                {/* Pulsing glow */}
-                <motion.div
-                  animate={{
-                    scale: [1, 1.3, 1],
-                    opacity: [0.2, 0.5, 0.2],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                  className={`absolute inset-0 bg-gradient-to-r ${colors.gradient}`}
-                />
-
-                {/* Central animated orb */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative">
-                    {/* Outer rings */}
-                    <motion.div
-                      animate={{
-                        scale: [0.6, 1.8],
-                        opacity: [0.6, 0],
-                      }}
-                      transition={{
-                        duration: 2.5,
-                        repeat: Infinity,
-                        ease: "easeOut",
-                      }}
-                      className={`absolute inset-0 rounded-full border-2 ${colors.text.replace('text-', 'border-')}/20`}
-                    />
-                    <motion.div
-                      animate={{
-                        scale: [0.6, 1.8],
-                        opacity: [0.6, 0],
-                      }}
-                      transition={{
-                        duration: 2.5,
-                        repeat: Infinity,
-                        ease: "easeOut",
-                        delay: 0.8,
-                      }}
-                      className={`absolute inset-0 rounded-full border-2 ${colors.text.replace('text-', 'border-')}/15`}
-                    />
-                    
-                    {/* Main orb */}
-                    <motion.div
-                      animate={{
-                        scale: [1, 1.15, 1],
-                        rotate: [0, 180, 360],
-                      }}
-                      transition={{
-                        duration: 6,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                      className="relative w-28 h-28 rounded-full flex items-center justify-center"
-                    >
-                      <div className="w-20 h-20">
-                        <img src="/logo.svg" alt="UnifyFocus" className="w-full h-full" />
-                      </div>
-                    </motion.div>
-                  </div>
-                </div>
-
-                {/* Status text */}
-                <div className="absolute bottom-6 left-6 right-6">
-                  <motion.p
-                    key={currentStatus}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="text-sm text-muted-foreground text-center mb-4"
-                  >
-                    {statusMessages[currentStatus]}
-                  </motion.p>
-                  
-                  {/* Progress bar */}
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ x: "-100%" }}
-                      animate={{ x: "100%" }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                      className={`h-full w-1/2 rounded-full ${colors.bgActive}`}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </GlassCard>
-    </motion.div>
+        <h3 className="text-lg font-semibold text-slate-100 mb-2">
+          Génération en cours
+        </h3>
+        
+        <p className="text-sm text-slate-400">
+          Création de votre {actionLabel}...
+        </p>
+      </div>
+    </GlassCard>
   );
 }
 
@@ -1598,34 +865,6 @@ function TextResult({
 }) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [displayedText, setDisplayedText] = useState("");
-  const [isStreaming, setIsStreaming] = useState(true);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let currentIndex = 0;
-    const words = result.split(" ");
-    setDisplayedText("");
-    setIsStreaming(true);
-
-    const streamInterval = setInterval(() => {
-      if (currentIndex < words.length) {
-        setDisplayedText((prev) => 
-          prev ? prev + " " + words[currentIndex] : words[currentIndex]
-        );
-        currentIndex++;
-        
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      } else {
-        clearInterval(streamInterval);
-        setIsStreaming(false);
-      }
-    }, 30);
-
-    return () => clearInterval(streamInterval);
-  }, [result]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -1642,117 +881,43 @@ function TextResult({
     }
   }, [result, toast]);
 
-  return (
-    <motion.div
-      key="result-text"
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-      className="w-full"
-    >
-      {/* Professional result header */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className={`relative w-12 h-12 rounded-xl ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center shadow-lg`}
-          >
-            <div className={`absolute inset-0 rounded-xl ${TAB_COLORS[meta.color].bgActive} opacity-40 blur-md`} />
-            <meta.icon className="w-5 h-5 text-white relative z-10" />
-          </motion.div>
-          <div>
-            <motion.p
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-base font-semibold text-foreground"
-            >
-              {meta.title}
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-xs text-muted-foreground flex items-center gap-1"
-            >
-              <Bot className="w-3 h-3" />
-              Généré par UnifyFocus AI
-            </motion.p>
-          </div>
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-lg ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center`}>
+          <meta.icon className="w-5 h-5 text-white" />
         </div>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopy}
-            className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors"
-          >
-            {copied ? (
-              <Check className="w-4 h-4 text-emerald-500" />
-            ) : (
-              <Copy className="w-4 h-4 text-muted-foreground" />
-            )}
-          </Button>
-        </motion.div>
+        <div>
+          <h3 className="font-semibold text-slate-100">{meta.title}</h3>
+          <p className="text-xs text-slate-400 flex items-center gap-1">
+            <Bot className="w-3 h-3" />
+            Généré par UnifyFocus AI
+          </p>
+        </div>
       </div>
-
-      {/* Professional result card */}
-      <GlassCard variant="output" className="overflow-hidden" style={{ maxHeight: '700px', display: 'flex', flexDirection: 'column' }}>
-        <div className={`absolute top-0 left-0 right-0 h-1 ${TAB_COLORS[meta.color].bgActive} opacity-80`} />
-        
-        <div 
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto p-5 scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-white/10"
-        >
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            <p className="text-foreground leading-relaxed whitespace-pre-wrap break-words text-base">
-              {displayedText}
-              {isStreaming && (
-                <span className="inline-block w-2 h-5 bg-violet-500 animate-pulse ml-1 align-middle rounded-full" />
-              )}
-            </p>
-          </div>
-        </div>
-      </GlassCard>
-
-      {/* Action buttons */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="flex items-center gap-3 mt-5"
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleCopy}
+        className="h-9 w-9 p-0"
       >
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onRegenerate}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium
-            bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20
-            transition-all duration-300 backdrop-blur-md"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Régénérer
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onNew}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium
-            bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20
-            transition-all duration-300 backdrop-blur-md"
-        >
-          <Plus className="w-4 h-4" />
-          Nouveau
-        </motion.button>
-      </motion.div>
-    </motion.div>
+        {copied ? (
+          <Check className="w-4 h-4 text-emerald-600" />
+        ) : (
+          <Copy className="w-4 h-4 text-slate-400" />
+        )}
+      </Button>
+    </div>
+  );
+
+  return (
+    <ResultCard header={header} meta={meta} onRegenerate={onRegenerate} onNew={onNew}>
+      <div className="prose prose-sm dark:prose-invert max-w-none">
+        <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
+          {result}
+        </p>
+      </div>
+    </ResultCard>
   );
 }
 
@@ -1790,47 +955,42 @@ function MediaViewer({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-lg"
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" />
-      
       <motion.button
         onClick={onClose}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        className="absolute top-6 right-6 z-50 w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-all duration-300 shadow-lg shadow-red-500/40 hover:shadow-red-500/60"
-        style={{ boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)' }}
+        className="absolute top-6 right-6 z-50 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"
       >
-        <X className="w-7 h-7 text-white" strokeWidth={3} />
+        <X className="w-6 h-6" />
       </motion.button>
 
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative z-40 max-w-[90vw] max-h-[90vh] flex items-center justify-center"
+        className="relative z-40 max-w-[90vw] max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {type === "image" ? (
           <img
             src={src}
             alt={title}
-            className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
+            className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
           />
         ) : (
           <video
             src={src}
             controls
             autoPlay
-            className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
+            className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
           />
         )}
       </motion.div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40">
-        <div className="px-5 py-2.5 rounded-xl bg-white/10 backdrop-blur-md text-white text-sm border border-white/10">
+        <div className="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md text-white text-sm border border-white/10">
           {title}
         </div>
       </div>
@@ -1854,6 +1014,7 @@ function ImageResult({
   const showWatermark = userPlan === "free";
   const [isRevealed, setIsRevealed] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const imageSrcIsValid = useMemo(() => {
     if (!result) return false;
@@ -1871,8 +1032,6 @@ function ImageResult({
     const timer = setTimeout(() => setIsRevealed(true), 300);
     return () => clearTimeout(timer);
   }, []);
-
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = useCallback(async () => {
     if (!imageSrcIsValid) {
@@ -1912,140 +1071,66 @@ function ImageResult({
     } finally {
       setIsDownloading(false);
     }
-  }, [result, toast, imageSrcIsValid, showWatermark, setIsDownloading]);
+  }, [result, toast, imageSrcIsValid, showWatermark]);
 
-  return (
-    <motion.div
-      key="result-image"
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-      className="w-full max-w-4xl mx-auto"
-    >
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-5">
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          className={`relative w-12 h-12 rounded-xl ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center shadow-lg`}
-        >
-          <div className={`absolute inset-0 rounded-xl ${TAB_COLORS[meta.color].bgActive} opacity-40 blur-md`} />
-          <meta.icon className="w-5 h-5 text-white relative z-10" />
-        </motion.div>
-        <div className="flex-1">
-          <motion.p
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-base font-semibold text-foreground"
-          >
-            {meta.title}
-          </motion.p>
-          <motion.p
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="text-xs text-muted-foreground flex items-center gap-1"
-          >
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-lg ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center`}>
+          <meta.icon className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-100">{meta.title}</h3>
+          <p className="text-xs text-slate-400 flex items-center gap-1">
             <Bot className="w-3 h-3" />
             Généré par UnifyFocus AI
-          </motion.p>
+          </p>
         </div>
-        {imageSrcIsValid && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDownload}
-              disabled={isDownloading}
-              className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors"
-            >
-              {isDownloading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4 text-muted-foreground" />
-              )}
-            </Button>
-          </motion.div>
-        )}
       </div>
-
-      {/* Result card */}
-      <GlassCard variant="output" className="overflow-hidden max-w-xl mx-auto">
-        <div className={`absolute top-0 left-0 right-0 h-1 ${TAB_COLORS[meta.color].bgActive} opacity-80`} />
-        
-        <div className="p-5">
-          {imageSrcIsValid ? (
-            <motion.div 
-              className="relative overflow-hidden rounded-xl cursor-pointer group"
-              onClick={() => setIsViewerOpen(true)}
-              whileHover={{ scale: 1.01 }}
-            >
-              <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30 rounded-xl backdrop-blur-sm">
-                <div className="px-5 py-2.5 rounded-xl bg-white/20 backdrop-blur-md text-white text-sm flex items-center gap-2 border border-white/30">
-                  <Maximize2 className="w-4 h-4" />
-                  <span>Agrandir</span>
-                </div>
-              </div>
-              <motion.img
-                initial={{ scale: 1.05, opacity: 0.8 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                src={result}
-                alt="Image générée par IA"
-                className="w-full max-h-[480px] rounded-xl object-contain group-hover:scale-105 transition-transform duration-500"
-              />
-            </motion.div>
+      {imageSrcIsValid && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="h-9 w-9 p-0"
+        >
+          {isDownloading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <div className="flex flex-col items-center justify-center p-10">
-              <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
-                <ImageIcon className="w-8 h-8 text-destructive" />
-              </div>
-              <p className="text-sm text-destructive text-center">
-                Erreur : l'image n'a pas pu être générée.
-              </p>
-              <p className="text-xs text-muted-foreground mt-2 break-all text-center">{result}</p>
-            </div>
+            <Download className="w-4 h-4 text-slate-400" />
           )}
-        </div>
-      </GlassCard>
+        </Button>
+      )}
+    </div>
+  );
 
-      {/* Action buttons */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="flex items-center gap-3 mt-5"
-      >
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onRegenerate}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium
-            bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20
-            transition-all duration-300 backdrop-blur-md"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Régénérer
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onNew}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium
-            bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20
-            transition-all duration-300 backdrop-blur-md"
-        >
-          <Plus className="w-4 h-4" />
-          Nouveau
-        </motion.button>
-      </motion.div>
+  return (
+    <ResultCard header={header} meta={meta} onRegenerate={onRegenerate} onNew={onNew}>
+      {imageSrcIsValid ? (
+        <div className="relative overflow-hidden rounded-xl cursor-pointer group bg-slate-900/50" onClick={() => setIsViewerOpen(true)}>
+          <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-xl backdrop-blur-sm">
+            <div className="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md text-white text-sm flex items-center gap-2 border border-white/20">
+              <Maximize2 className="w-4 h-4" />
+              <span>Agrandir</span>
+            </div>
+          </div>
+          <img
+            src={result}
+            alt="Image générée par IA"
+            className="w-full max-h-[480px] rounded-xl object-contain group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center p-10">
+          <div className="w-16 h-16 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
+            <ImageIcon className="w-8 h-8 text-red-500" />
+          </div>
+          <p className="text-sm text-red-600 text-center">
+            Erreur : l'image n'a pas pu être générée.
+          </p>
+        </div>
+      )}
 
       <AnimatePresence>
         {isViewerOpen && imageSrcIsValid && (
@@ -2058,7 +1143,7 @@ function ImageResult({
           />
         )}
       </AnimatePresence>
-    </motion.div>
+    </ResultCard>
   );
 }
 
@@ -2139,139 +1224,66 @@ function VideoResult({
     } finally {
       setIsRecording(false);
     }
-  }, [result, videoSrcIsValid, showWatermark, toast, setIsRecording]);
+  }, [result, videoSrcIsValid, showWatermark, toast]);
 
-  return (
-    <motion.div
-      key="result-video"
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-      className="w-full"
-    >
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-5">
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          className={`relative w-12 h-12 rounded-xl ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center shadow-lg`}
-        >
-          <div className={`absolute inset-0 rounded-xl ${TAB_COLORS[meta.color].bgActive} opacity-40 blur-md`} />
-          <meta.icon className="w-5 h-5 text-white relative z-10" />
-        </motion.div>
-        <div className="flex-1">
-          <motion.p
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-base font-semibold text-foreground"
-          >
-            {meta.title}
-          </motion.p>
-          <motion.p
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="text-xs text-muted-foreground flex items-center gap-1"
-          >
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-lg ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center`}>
+          <meta.icon className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-100">{meta.title}</h3>
+          <p className="text-xs text-slate-400 flex items-center gap-1">
             <Bot className="w-3 h-3" />
             Généré par UnifyFocus AI
-          </motion.p>
+          </p>
         </div>
-        {videoSrcIsValid && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDownload}
-              disabled={isRecording}
-              className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors"
-            >
-              {isRecording ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4 text-muted-foreground" />
-              )}
-            </Button>
-          </motion.div>
-        )}
       </div>
-
-      {/* Result card */}
-      <GlassCard variant="output" className="overflow-hidden max-w-xl mx-auto">
-        <div className={`absolute top-0 left-0 right-0 h-1 ${TAB_COLORS[meta.color].bgActive} opacity-80`} />
-        
-        <div className="p-5">
-          {videoSrcIsValid ? (
-            <motion.div 
-              className="relative overflow-hidden rounded-xl bg-black cursor-pointer group"
-              onClick={() => setIsViewerOpen(true)}
-              whileHover={{ scale: 1.01 }}
-            >
-              <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30 rounded-xl backdrop-blur-sm">
-                <div className="px-5 py-2.5 rounded-xl bg-white/20 backdrop-blur-md text-white text-sm flex items-center gap-2 border border-white/30">
-                  <Maximize2 className="w-4 h-4" />
-                  <span>Agrandir</span>
-                </div>
-              </div>
-              <motion.video
-                initial={{ scale: 1.05, opacity: 0.8 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                controls
-                src={result}
-                className="w-full max-h-[480px] rounded-xl object-contain group-hover:scale-105 transition-transform duration-500"
-              />
-            </motion.div>
+      {videoSrcIsValid && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDownload}
+          disabled={isRecording}
+          className="h-9 w-9 p-0"
+        >
+          {isRecording ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <div className="flex flex-col items-center justify-center p-10">
-              <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
-                <Video className="w-8 h-8 text-destructive" />
-              </div>
-              <p className="text-sm text-muted-foreground text-center">
-                {result}
-              </p>
-            </div>
+            <Download className="w-4 h-4 text-slate-400" />
           )}
-        </div>
-      </GlassCard>
+        </Button>
+      )}
+    </div>
+  );
 
-      {/* Action buttons */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="flex items-center gap-3 mt-5"
-      >
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onRegenerate}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium
-            bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20
-            transition-all duration-300 backdrop-blur-md"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Régénérer
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onNew}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium
-            bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20
-            transition-all duration-300 backdrop-blur-md"
-        >
-          <Plus className="w-4 h-4" />
-          Nouveau
-        </motion.button>
-      </motion.div>
+  return (
+    <ResultCard header={header} meta={meta} onRegenerate={onRegenerate} onNew={onNew}>
+      {videoSrcIsValid ? (
+        <div className="relative overflow-hidden rounded-xl bg-black cursor-pointer group" onClick={() => setIsViewerOpen(true)}>
+          <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-xl backdrop-blur-sm">
+            <div className="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md text-white text-sm flex items-center gap-2 border border-white/20">
+              <Maximize2 className="w-4 h-4" />
+              <span>Agrandir</span>
+            </div>
+          </div>
+          <video
+            controls
+            src={result}
+            className="w-full max-h-[480px] rounded-xl object-contain"
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center p-10">
+          <div className="w-16 h-16 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
+            <Video className="w-8 h-8 text-red-500" />
+          </div>
+          <p className="text-sm text-gray-600 text-center">
+            {result}
+          </p>
+        </div>
+      )}
 
       <AnimatePresence>
         {isViewerOpen && videoSrcIsValid && (
@@ -2284,7 +1296,7 @@ function VideoResult({
           />
         )}
       </AnimatePresence>
-    </motion.div>
+    </ResultCard>
   );
 }
 
@@ -2363,164 +1375,104 @@ function AudioResult({
     setIsMuted(audioRef.current.muted);
   }, []);
 
-  return (
-    <motion.div
-      key="result-audio"
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-      className="w-full"
-    >
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className={`relative w-12 h-12 rounded-xl ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center shadow-lg`}
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-lg ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center`}>
+          <meta.icon className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-100">{meta.title}</h3>
+          <p className="text-xs text-slate-400 flex items-center gap-1">
+            <Bot className="w-3 h-3" />
+            Généré par UnifyFocus AI
+          </p>
+        </div>
+      </div>
+      {audioSrcIsValid && (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleMute}
+            className="h-9 w-9 p-0"
           >
-            <div className={`absolute inset-0 rounded-xl ${TAB_COLORS[meta.color].bgActive} opacity-40 blur-md`} />
-            <meta.icon className="w-5 h-5 text-white relative z-10" />
-          </motion.div>
-          <div>
-            <motion.p
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-base font-semibold text-foreground"
-            >
-              {meta.title}
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-xs text-muted-foreground flex items-center gap-1"
-            >
-              <Bot className="w-3 h-3" />
-              Généré par UnifyFocus AI
-            </motion.p>
+            {isMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-slate-400" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDownload}
+            className="h-9 w-9 p-0"
+          >
+            <Download className="w-4 h-4 text-slate-400" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <ResultCard header={header} meta={meta} onRegenerate={onRegenerate} onNew={onNew}>
+      {audioSrcIsValid ? (
+        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-5">
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${TAB_COLORS[meta.color].bgActive}`}>
+                <Headphones className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-100">Lecteur audio</p>
+                <p className="text-xs text-slate-400">Lecture instantanée et contrôle de volume</p>
+              </div>
+            </div>
+            <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium text-emerald-400">
+              Prêt à lire
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+            <div className="mb-4 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={togglePlayback}
+                className={`flex h-12 w-12 items-center justify-center rounded-full ${TAB_COLORS[meta.color].bgActive} text-white shadow-lg transition-transform hover:scale-105`}
+              >
+                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+              </button>
+              <div className="flex-1">
+                <div className="mb-1 flex items-center justify-between text-xs text-slate-400">
+                  <span>Lecture</span>
+                  <span>{isPlaying ? "En cours" : "En pause"}</span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-700">
+                  <div className={`h-2 rounded-full ${TAB_COLORS[meta.color].bgActive} w-3/4`} />
+                </div>
+              </div>
+            </div>
+
+            <audio
+              ref={audioRef}
+              controls
+              src={result}
+              className="w-full"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnded={() => setIsPlaying(false)}
+            />
           </div>
         </div>
-        {audioSrcIsValid && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5 }}
-            className="flex items-center gap-2"
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleMute}
-              className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors"
-            >
-              {isMuted ? <VolumeX className="w-4 h-4 text-muted-foreground" /> : <Volume2 className="w-4 h-4 text-muted-foreground" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDownload}
-              className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors"
-            >
-              <Download className="w-4 h-4 text-muted-foreground" />
-            </Button>
-          </motion.div>
-        )}
-      </div>
-
-      <GlassCard variant="output" className="overflow-hidden max-w-3xl mx-auto border border-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.03),0_20px_60px_rgba(15,23,42,0.35)]">
-        <div className={`absolute top-0 left-0 right-0 h-1 ${TAB_COLORS[meta.color].bgActive} opacity-80`} />
-        <div className="p-5">
-          {audioSrcIsValid ? (
-            <div className="rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.12),_transparent_40%),linear-gradient(135deg,_rgba(15,23,42,0.95),_rgba(30,41,59,0.9))] p-5 shadow-inner">
-              <div className="mb-4 flex items-center justify-between rounded-xl border border-white/10 bg-black/20 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${TAB_COLORS[meta.color].bgActive}`}>
-                    <Headphones className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Lecteur audio</p>
-                    <p className="text-xs text-muted-foreground">Lecture instantanée et contrôle de volume</p>
-                  </div>
-                </div>
-                <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium text-emerald-400">
-                  Prêt à lire
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                <div className="mb-4 flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={togglePlayback}
-                    className={`flex h-12 w-12 items-center justify-center rounded-full ${TAB_COLORS[meta.color].bgActive} text-white shadow-lg transition-transform duration-200 hover:scale-105`}
-                  >
-                    {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
-                  </button>
-                  <div className="flex-1">
-                    <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Lecture</span>
-                      <span>{isPlaying ? "En cours" : "En pause"}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-white/10">
-                      <div className={`h-2 rounded-full ${TAB_COLORS[meta.color].bgActive} w-3/4`} />
-                    </div>
-                  </div>
-                </div>
-
-                <audio
-                  ref={audioRef}
-                  controls
-                  src={result}
-                  className="w-full [&::-webkit-media-controls-panel]:bg-slate-900 [&::-webkit-media-controls-panel]:rounded-xl"
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                  onEnded={() => setIsPlaying(false)}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center p-10">
-              <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
-                <Music className="w-8 h-8 text-destructive" />
-              </div>
-              <p className="text-sm text-muted-foreground text-center">
-                L'audio n'a pas pu être généré correctement.
-              </p>
-              <p className="text-xs text-muted-foreground mt-2 break-all text-center">{result}</p>
-            </div>
-          )}
+      ) : (
+        <div className="flex flex-col items-center justify-center p-10">
+          <div className="w-16 h-16 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
+            <Music className="w-8 h-8 text-red-500" />
+          </div>
+          <p className="text-sm text-gray-600 text-center">
+            L'audio n'a pas pu être généré correctement.
+          </p>
         </div>
-      </GlassCard>
-
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="flex items-center gap-3 mt-5"
-      >
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onRegenerate}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-md"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Régénérer
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onNew}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-md"
-        >
-          <Plus className="w-4 h-4" />
-          Nouveau
-        </motion.button>
-      </motion.div>
-    </motion.div>
+      )}
+    </ResultCard>
   );
 }
 
@@ -2554,9 +1506,7 @@ function CodeResult({
     }
   }, [result, toast]);
 
-  // Improved syntax highlighting with proper HTML escaping
   const highlightCode = (code: string) => {
-    // First, escape HTML entities to prevent XSS and rendering issues
     const escapeHtml = (text: string) => {
       const map: Record<string, string> = {
         '&': '&',
@@ -2568,20 +1518,15 @@ function CodeResult({
       return text.replace(/[&<>"']/g, (m) => map[m]);
     };
 
-    // Escape the code first
     let escaped = escapeHtml(code);
 
-    // Syntax highlighting patterns (applied after escaping)
-    // Comments (single-line and multi-line)
-    escaped = escaped.replace(/(\/\/.*$)/gm, '<span class="text-slate-500 italic">$1</span>');
-    escaped = escaped.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="text-slate-500 italic">$1</span>');
+    escaped = escaped.replace(/(\/\/.*$)/gm, '<span class="text-gray-500 italic">$1</span>');
+    escaped = escaped.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="text-gray-500 italic">$1</span>');
     
-    // Strings (single, double, and template literals)
-    escaped = escaped.replace(/(&#039;[^&#]*?&#039;)/g, '<span class="text-emerald-400">$1</span>');
-    escaped = escaped.replace(/("[^&]*?")/g, '<span class="text-emerald-400">$1</span>');
-    escaped = escaped.replace(/(`[^`]*?`)/g, '<span class="text-emerald-400">$1</span>');
+    escaped = escaped.replace(/(&#039;[^&#]*?&#039;)/g, '<span class="text-emerald-600">$1</span>');
+    escaped = escaped.replace(/("[^&]*?")/g, '<span class="text-emerald-600">$1</span>');
+    escaped = escaped.replace(/(`[^`]*?`)/g, '<span class="text-emerald-600">$1</span>');
     
-    // Keywords
     const keywords = [
       'const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 
       'class', 'import', 'export', 'from', 'async', 'await', 'try', 'catch', 
@@ -2592,14 +1537,12 @@ function CodeResult({
     
     keywords.forEach(keyword => {
       const regex = new RegExp(`\\b(${keyword})\\b`, 'g');
-      escaped = escaped.replace(regex, '<span class="text-violet-400 font-medium">$1</span>');
+      escaped = escaped.replace(regex, '<span class="text-purple-600 font-medium">$1</span>');
     });
 
-    // Numbers
-    escaped = escaped.replace(/\b(\d+\.?\d*)\b/g, '<span class="text-amber-400">$1</span>');
+    escaped = escaped.replace(/\b(\d+\.?\d*)\b/g, '<span class="text-amber-600">$1</span>');
 
-    // Function calls
-    escaped = escaped.replace(/\b([a-zA-Z_]\w*)\s*(?=\()/g, '<span class="text-blue-400">$1</span>');
+    escaped = escaped.replace(/\b([a-zA-Z_]\w*)\s*(?=\()/g, '<span class="text-blue-600">$1</span>');
 
     return escaped;
   };
@@ -2620,153 +1563,84 @@ function CodeResult({
   };
 
   const language = getLanguageFromCode(result);
-
-  // Count lines for line numbers
   const lines = result.split('\n');
 
-  return (
-    <motion.div
-      key="result-code"
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-      className="w-full"
-    >
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-5">
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          className={`relative w-12 h-12 rounded-xl ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center shadow-lg`}
-        >
-          <div className={`absolute inset-0 rounded-xl ${TAB_COLORS[meta.color].bgActive} opacity-40 blur-md`} />
-          <meta.icon className="w-5 h-5 text-white relative z-10" />
-        </motion.div>
-        <div className="flex-1">
-          <motion.p
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-base font-semibold text-foreground"
-          >
-            {meta.title}
-          </motion.p>
-          <motion.p
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="text-xs text-muted-foreground flex items-center gap-1"
-          >
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-lg ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center`}>
+          <meta.icon className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-100">{meta.title}</h3>
+          <p className="text-xs text-slate-400 flex items-center gap-1">
             <Bot className="w-3 h-3" />
             Généré par UnifyFocus AI
-          </motion.p>
+          </p>
         </div>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5 }}
-          className="flex items-center gap-2"
-        >
-          <Badge variant="outline" className="rounded-lg text-xs bg-white/5 border-white/10 uppercase">
-            {language}
-          </Badge>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors"
-            title={isExpanded ? "Réduire" : "Agrandir"}
-          >
-            {isExpanded ? (
-              <Minimize2 className="w-4 h-4 text-muted-foreground" />
-            ) : (
-              <Maximize2 className="w-4 h-4 text-muted-foreground" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopy}
-            className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors"
-            title="Copier le code"
-          >
-            {copied ? (
-              <Check className="w-4 h-4 text-emerald-500" />
-            ) : (
-              <Copy className="w-4 h-4 text-muted-foreground" />
-            )}
-          </Button>
-        </motion.div>
       </div>
+      <div className="flex items-center gap-2">
+        <Badge variant="outline" className="rounded-md text-xs bg-slate-800 border-slate-700 text-slate-300">
+          {language}
+        </Badge>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="h-9 w-9 p-0"
+        >
+          {isExpanded ? (
+            <Minimize2 className="w-4 h-4 text-slate-400" />
+          ) : (
+            <Maximize2 className="w-4 h-4 text-slate-400" />
+          )}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleCopy}
+          className="h-9 w-9 p-0"
+        >
+          {copied ? (
+            <Check className="w-4 h-4 text-emerald-600" />
+          ) : (
+            <Copy className="w-4 h-4 text-slate-400" />
+          )}
+        </Button>
+      </div>
+    </div>
+  );
 
-      {/* Result card with professional code editor styling */}
-      <GlassCard variant="output" className="overflow-hidden" style={{ maxHeight: isExpanded ? 'none' : '600px', display: 'flex', flexDirection: 'column' }}>
-        <div className={`absolute top-0 left-0 right-0 h-1 ${TAB_COLORS[meta.color].bgActive} opacity-80`} />
-        
-        {/* Code editor container */}
-        <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-white/10">
+  return (
+    <ResultCard header={header} meta={meta} onRegenerate={onRegenerate} onNew={onNew}>
+      <div className="rounded-xl border border-slate-700 bg-slate-900/50 overflow-hidden">
+        <div className="flex-1 overflow-auto" style={{ maxHeight: isExpanded ? 'none' : '500px' }}>
           <div className="relative">
-            {/* Line numbers */}
-            <div className="absolute left-0 top-0 bottom-0 w-12 bg-slate-900/50 border-r border-white/5 flex flex-col items-end py-4 pr-3 select-none">
+            <div className="absolute left-0 top-0 bottom-0 w-12 bg-slate-800/50 border-r border-slate-700 flex flex-col items-end py-4 pr-3 select-none">
               {lines.map((_, i) => (
-                <span key={i} className="text-xs text-slate-600 font-mono leading-6 h-6">
+                <span key={i} className="text-xs text-slate-500 font-mono leading-6 h-6">
                   {i + 1}
                 </span>
               ))}
             </div>
             
-            {/* Code content */}
-            <pre className="pl-14 pr-5 py-4 font-mono text-sm leading-6 overflow-x-auto">
+            <pre className="pl-14 pr-5 py-4 font-mono text-sm leading-6 overflow-x-auto bg-transparent">
               <code
-                className="text-slate-200"
+                className="text-slate-300"
                 dangerouslySetInnerHTML={{ __html: highlightCode(result) }}
               />
             </pre>
           </div>
         </div>
         
-        {/* Footer with line count */}
-        <div className="border-t border-white/5 px-4 py-2 bg-slate-900/30">
-          <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+        <div className="border-t border-slate-700 px-4 py-2 bg-slate-800/50">
+          <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
             <span>{lines.length} ligne{lines.length > 1 ? 's' : ''}</span>
             <span>{result.length} caractère{result.length > 1 ? 's' : ''}</span>
           </div>
         </div>
-      </GlassCard>
-
-      {/* Action buttons */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="flex items-center gap-3 mt-5"
-      >
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onRegenerate}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium
-            bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20
-            transition-all duration-300 backdrop-blur-md"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Régénérer
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onNew}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium
-            bg-white/5 text-foreground border border-white/10 hover:bg-white/10 hover:border-white/20
-            transition-all duration-300 backdrop-blur-md"
-        >
-          <Plus className="w-4 h-4" />
-          Nouveau
-        </motion.button>
-      </motion.div>
-    </motion.div>
+      </div>
+    </ResultCard>
   );
 }
 
@@ -2775,8 +1649,6 @@ function CodeResult({
 // ---------------------------------------------------------------------------
 
 function FileAttachments({ files, onRemove, maxFiles }: FileAttachmentProps) {
-  const { toast } = useToast();
-
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
@@ -2792,21 +1664,18 @@ function FileAttachments({ files, onRemove, maxFiles }: FileAttachmentProps) {
   if (files.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap gap-2">
       {files.map((file) => {
         const Icon = getFileIcon(file.type);
         const isImage = file.type.startsWith("image/");
         const isVideo = file.type.startsWith("video/");
 
         return (
-          <motion.div
+          <div
             key={file.id}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="flex items-center gap-3 px-3 py-2.5 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 max-w-[320px] hover:border-white/20 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 rounded-lg border border-slate-700 max-w-[280px]"
           >
-            <div className="w-14 h-14 rounded-lg bg-white/5 overflow-hidden flex items-center justify-center shrink-0 border border-white/10">
+            <div className="w-10 h-10 rounded-md bg-slate-900/50 border border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
               {isImage ? (
                 <img
                   src={file.url}
@@ -2823,13 +1692,13 @@ function FileAttachments({ files, onRemove, maxFiles }: FileAttachmentProps) {
                   preload="metadata"
                 />
               ) : (
-                <Icon className="w-5 h-5 text-muted-foreground" />
+                <Icon className="w-4 h-4 text-slate-400" />
               )}
             </div>
 
-            <div className="flex-1 min-w-0 space-y-1">
-              <p className="text-xs font-medium truncate text-foreground">{file.name}</p>
-              <p className="text-[10px] text-muted-foreground">
+            <div className="flex-1 min-w-0 space-y-0.5">
+              <p className="text-xs font-medium truncate text-slate-200">{file.name}</p>
+              <p className="text-[10px] text-slate-400">
                 {formatFileSize(file.size)}
               </p>
             </div>
@@ -2837,12 +1706,12 @@ function FileAttachments({ files, onRemove, maxFiles }: FileAttachmentProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 shrink-0 rounded-lg hover:bg-white/10"
+              className="h-6 w-6 shrink-0 rounded-md hover:bg-slate-700"
               onClick={() => onRemove(file.id)}
             >
               <X className="w-3 h-3" />
             </Button>
-          </motion.div>
+          </div>
         );
       })}
     </div>
@@ -2853,105 +1722,6 @@ interface FileAttachmentProps {
   files: AttachedFile[];
   onRemove: (id: string) => void;
   maxFiles: number;
-}
-
-// ---------------------------------------------------------------------------
-// Drop Zone
-// ---------------------------------------------------------------------------
-
-function DropZone({ onFilesSelected, accept, disabled }: DropZoneProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        onFilesSelected(e.dataTransfer.files);
-      }
-    },
-    [onFilesSelected]
-  );
-
-  const handleClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      onFilesSelected(e.target.files);
-    }
-  };
-
-  return (
-    <>
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept={accept}
-        onChange={handleFileChange}
-        className="hidden"
-        disabled={disabled}
-      />
-      <motion.div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={handleClick}
-        whileHover={!disabled ? { scale: 1.01 } : {}}
-        whileTap={!disabled ? { scale: 0.99 } : {}}
-        className={`
-          relative border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer
-          transition-all duration-300 backdrop-blur-md
-          ${
-            isDragging
-              ? "border-violet-500/50 bg-violet-500/5"
-              : "border-white/10 hover:border-white/20 hover:bg-white/5"
-          }
-          ${disabled ? "opacity-50 cursor-not-allowed" : ""}
-        `}
-      >
-        <div className="flex flex-col items-center gap-3">
-          <div
-            className={`
-              w-14 h-14 rounded-xl flex items-center justify-center
-              ${isDragging ? "bg-violet-500/20" : "bg-white/5"}
-            `}
-          >
-            <Upload
-              className={`w-6 h-6 ${isDragging ? "text-violet-400" : "text-muted-foreground"}`}
-            />
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">
-              Glissez-déposez vos fichiers ici
-            </p>
-            <p className="text-xs text-muted-foreground">
-              ou cliquez pour parcourir (max {MAX_FILES} fichiers)
-            </p>
-          </div>
-        </div>
-      </motion.div>
-    </>
-  );
-}
-
-interface DropZoneProps {
-  onFilesSelected: (files: FileList | File[]) => void;
-  accept: string;
-  disabled: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -3175,21 +1945,18 @@ export function AiEditorView() {
       const data = await res.json();
 
       if (!res.ok) {
-        // Insufficient credits
         if (res.status === 402) {
           notifyInsufficientCredits();
           setIsGenerating(false);
           return;
         }
 
-        // Connection / provider errors (bad gateway, service unavailable, gateway timeout)
         if ([502, 503, 504].includes(res.status)) {
           notifyConnectionFailure(undefined, data.error || res.statusText);
           setIsGenerating(false);
           return;
         }
 
-        // Generic generation failure
         notifyGenerationFailure(data.error || "Erreur de génération");
         setIsGenerating(false);
         return;
@@ -3421,7 +2188,6 @@ export function AiEditorView() {
         } catch (error) {
           console.error("Streaming error:", error);
           const msg = error instanceof Error ? error.message : String(error);
-          // Use professional toast
           notifyGenerationFailure(msg);
           setStreamingContent("Erreur lors de la génération...");
         }
@@ -3433,7 +2199,7 @@ export function AiEditorView() {
 
   const renderOutput = () => {
     if (isGenerating) {
-      return <ProfessionalGeneratingAnimation tab={editorTab} subtype={selectedSubtool} streamingContent={streamingContent} />;
+      return <GeneratingAnimation tab={editorTab} subtype={selectedSubtool} />;
     }
 
     if (lastResult && lastResult.type === "text" && lastResult.result) {
@@ -3491,58 +2257,7 @@ export function AiEditorView() {
       );
     }
 
-    return <EmptyState tab={editorTab} />;
-  };
-
-  const renderOptions = () => {
-    switch (editorTab) {
-      case "text":
-        return (
-          <MusicOptions
-            genre={editorOptions.textStyle}
-            setGenre={(v) => setEditorOptions({ ...editorOptions, textStyle: v })}
-            ambiance={editorOptions.textLength}
-            setAmbiance={(v) => setEditorOptions({ ...editorOptions, textLength: v })}
-            duree={editorOptions.textTone}
-            setDuree={(v) => setEditorOptions({ ...editorOptions, textTone: v })}
-          />
-        );
-      case "image":
-        return (
-          <ImageOptions
-            style={editorOptions.imageStyle}
-            setStyle={(v) => setEditorOptions({ ...editorOptions, imageStyle: v })}
-            format={editorOptions.imageFormat}
-            setFormat={(v) => setEditorOptions({ ...editorOptions, imageFormat: v })}
-            quality={editorOptions.imageQuality}
-            setQuality={(v) => setEditorOptions({ ...editorOptions, imageQuality: v })}
-          />
-        );
-      case "video":
-        return (
-          <VideoOptions
-            duration={editorOptions.videoDuration}
-            setDuration={(v) => setEditorOptions({ ...editorOptions, videoDuration: v })}
-            style={editorOptions.videoStyle}
-            setStyle={(v) => setEditorOptions({ ...editorOptions, videoStyle: v })}
-            format={editorOptions.videoFormat}
-            setFormat={(v) => setEditorOptions({ ...editorOptions, videoFormat: v })}
-          />
-        );
-      case "code":
-        return (
-          <CodeOptions
-            language={editorOptions.codeLanguage}
-            setLanguage={(v) => setEditorOptions({ ...editorOptions, codeLanguage: v })}
-            framework={editorOptions.codeFramework}
-            setFramework={(v) => setEditorOptions({ ...editorOptions, codeFramework: v })}
-            complexity={editorOptions.codeComplexity}
-            setComplexity={(v) => setEditorOptions({ ...editorOptions, codeComplexity: v })}
-          />
-        );
-      default:
-        return null;
-    }
+    return <EmptyState tab={editorTab} description={activeSubTabConfig?.description || TAB_HELP_TEXT[editorTab]} />;
   };
 
   const tabConfig = TAB_CONFIG.find((t) => t.key === editorTab);
@@ -3550,186 +2265,94 @@ export function AiEditorView() {
   const colors = TAB_COLORS[tabColor as keyof typeof TAB_COLORS];
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background relative overflow-hidden">
-      {/* Animated Background */}
+    <div className="flex h-screen bg-slate-950 text-slate-100 relative">
       <AnimatedBackground />
-      
-      {/* Conversation Sidebar */}
-      <ConversationSidebar
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        onSelectConversation={handleSelectConversation}
-        onNewConversation={handleNewConversation}
-      />
-
-      {/* Top Bar */}
-      <header className="flex items-center justify-between px-4 sm:px-6 py-3 shrink-0 relative z-10">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Toggle sidebar"
-            className={`rounded-xl ${sidebarOpen ? "bg-white/10" : ""}`}
-          >
-            {sidebarOpen ? (
-              <ChevronRight className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCurrentView("dashboard")}
-            aria-label="Retour au tableau de bord"
-            className="rounded-xl"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {currentConversation && (
-            <Badge variant="outline" className="rounded-xl text-xs px-3 py-1.5 bg-white/5 border-white/10">
-              <MessageSquare className="w-3 h-3 mr-1" />
-              {currentConversation.title}
-            </Badge>
-          )}
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 rounded-xl max-w-[180px] bg-white/5 border-white/10">
-                <Sparkles className="w-4 h-4 text-gold" />
-                <span className="truncate">{getModelName(selectedModel)}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[250px] rounded-xl bg-card/90 backdrop-blur-xl border-white/10">
-              {AVAILABLE_MODELS.map((model) => (
-                <DropdownMenuItem
-                  key={model.id}
-                  onClick={() => setSelectedModel(model.id)}
-                  className={selectedModel === model.id ? "bg-white/10 rounded-lg" : ""}
-                >
-                  <div className="flex flex-col">
-                    <span className="font-medium">{model.name}</span>
-                    <span className="text-xs text-muted-foreground">{model.description}</span>
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
-            <Coins className="w-4 h-4 text-gold" />
-            <span className="text-sm font-medium">{user?.credits ?? 0}</span>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 relative z-10">
-        <div className="max-w-5xl mx-auto">
-          {/* Tab Navigation */}
-          <div className="flex items-center justify-center gap-3 py-4 flex-wrap">
-            {TAB_CONFIG.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = editorTab === tab.key;
-              return (
-                <ModernTabChip
-                  key={tab.key}
-                  active={isActive}
-                  onClick={() => {
-                    setEditorTab(tab.key);
-                    setLastResult(null);
-                  }}
-                  color={tab.color as keyof typeof TAB_COLORS}
-                  icon={Icon}
-                >
-                  {tab.label}
-                </ModernTabChip>
-              );
-            })}
-          </div>
+      <div className="flex-1 flex flex-col min-w-0 relative z-10">
+        {/* Top Header */}
+        <header className="bg-slate-900/50 border-b border-slate-800 px-6 py-4 backdrop-blur-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {/* Back button */}
+              <Button variant="ghost" size="icon" onClick={() => setCurrentView("dashboard")} className="rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white">
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              {/* Tab Selector */}
+              <TabSelector tabs={TAB_CONFIG} activeTab={editorTab} onSelect={(tab) => {
+        setEditorTab(tab as "text" | "image" | "video" | "code");
+        setLastResult(null);
+              }} />
 
-          {/* Sub-tabs */}
-          {currentSubTabs.length > 0 && (
-            <div className="flex items-center justify-center flex-wrap gap-2 pb-4">
-              {currentSubTabs.map((subTab) => {
-                const SubIcon = subTab.icon;
-                const isActive = selectedSubtool === subTab.key;
-                return (
-                  <SubTabButton
-                    key={subTab.key}
-                    active={isActive}
-                    onClick={() => {
-                      setSelectedSubtool(subTab.key);
-                      localStorage.setItem('selectedFeature', subTab.key);
-                    }}
-                    icon={SubIcon}
-                    label={subTab.label}
-                    credits={subTab.credits}
-                  />
-                );
-              })}
-            </div>
-          )}
-
-          {/* Help Text Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
-            <GlassCard variant="accent" className="p-4">
-              <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-xl ${colors.bg} flex items-center justify-center shrink-0`}>
-                  <Sparkles className={`w-5 h-5 ${colors.text}`} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-foreground">
-                    {activeSubTabConfig?.description || TAB_HELP_TEXT[editorTab]}
-                  </p>
-                  {(editorTab === "image" || editorTab === "video") && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {hasSourceFile
-                        ? `Source détectée : ${editorTab === "image" ? "image → image" : "vidéo → vidéo"}.`
-                        : `Ajoutez un fichier source pour transformer un contenu existant.`}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </GlassCard>
-          </motion.div>
-
-          {/* Options Panel */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-6"
-          >
-            {renderOptions()}
-          </motion.div>
-
-          <div className="space-y-6">
-            {/* Result Area */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="space-y-6"
-            >
+              {/* Current Tab Info (optional, can be removed if TabSelector is descriptive enough) */}
               <div>
-                <AnimatePresence mode="wait">{renderOutput()}</AnimatePresence>
+                <h1 className="text-lg font-semibold text-slate-100">
+                  {activeTabConfig?.label || "Éditeur AI"}
+                </h1>
+                <p className="text-sm text-slate-400">
+                  {activeSubTabConfig?.description || TAB_HELP_TEXT[editorTab]}
+                </p>
               </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2 rounded-lg bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <Sparkles className="w-4 h-4" />
+                    <span className="truncate">{getModelName(selectedModel)}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[250px] rounded-lg bg-slate-800/90 border-slate-700 text-slate-200 backdrop-blur-md">
+                  {AVAILABLE_MODELS.map((model) => (
+                    <DropdownMenuItem
+                      key={model.id}
+                      onClick={() => setSelectedModel(model.id)}
+                      className={`rounded-md hover:bg-slate-700 ${selectedModel === model.id ? "bg-slate-700" : ""}`}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">{model.name}</span>
+                        <span className="text-xs text-slate-400">{model.description}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 max-w-7xl mx-auto">
+            {/* Left Column: Actions & Inputs */}
+            <div className="flex flex-col gap-6">
+              {/* Sub-tools */}
+              {currentSubTabs.length > 0 && (
+                <div>
+                  <SubToolSelector 
+                    subtabs={currentSubTabs}
+                    activeSubtool={selectedSubtool}
+                    onSubtoolChange={(key) => {
+                      setSelectedSubtool(key);
+                      localStorage.setItem('selectedFeature', key);
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Input Area */}
-              <GlassCard variant="input" className="p-0 overflow-hidden">
+              <GlassCard>
                 {attachedFiles.length > 0 && (
-                  <div className="p-4 border-b border-white/10">
+                  <div className="p-4 border-b border-slate-700">
                     <FileAttachments
                       files={attachedFiles}
                       onRemove={handleRemoveFile}
@@ -3747,7 +2370,7 @@ export function AiEditorView() {
                       }
                     }}
                     placeholder={getPlaceholder()}
-                    className="min-h-[140px] bg-transparent border-0 resize-none focus:ring-0 text-foreground text-base p-0 placeholder:text-muted-foreground/50"
+                    className="min-h-[120px] bg-transparent border-0 resize-none focus:ring-0 text-slate-100 text-base p-0 placeholder:text-slate-500"
                     disabled={isGenerating}
                   />
                 </div>
@@ -3768,38 +2391,38 @@ export function AiEditorView() {
                           className="hidden"
                           disabled={isGenerating}
                         />
-                        <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors border border-white/10">
-                          <Paperclip className="w-5 h-5 text-muted-foreground" />
+                        <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center hover:bg-slate-800 transition-colors border border-slate-700">
+                          <Paperclip className="w-5 h-5 text-slate-400" />
                         </div>
                       </label>
                     )}
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-slate-400">
                       {prompt.length} / {MAX_CHARS}
                     </span>
                   </div>
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={handleGenerate}
                     disabled={!canGenerate}
                     className={`
-                      flex items-center gap-2.5 px-6 py-3 rounded-xl font-semibold
-                      shadow-lg transition-all duration-300
+                      flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium
+                      shadow-sm transition-all duration-200
                       ${
                         canGenerate
-                          ? `${colors.bgActive} ${colors.textActive} ${colors.glow} shadow-xl hover:shadow-2xl`
-                          : 'bg-white/5 text-muted-foreground cursor-not-allowed border border-white/10'
+                          ? `${colors.bgActive} text-white hover:opacity-90 shadow-lg shadow-${tabColor}-500/20`
+                          : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
                       }
                     `}
                   >
                     {isGenerating ? (
                       <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Génération...</span>
                       </>
                     ) : (
                       <>
-                        <Send className="w-5 h-5" />
+                        <Send className="w-4 h-4" />
                         <span>{generateButtonLabel}</span>
                       </>
                     )}
@@ -3808,7 +2431,7 @@ export function AiEditorView() {
 
                 {user?.role !== "admin" && (user?.credits ?? 0) < currentCredits && (
                   <div className="px-4 pb-4">
-                    <div className="flex items-center gap-2 text-xs text-destructive">
+                    <div className="flex items-center gap-2 text-xs text-red-500">
                       <Coins className="w-3 h-3" />
                       <span>Crédits insuffisants pour cette action</span>
                     </div>
@@ -3816,17 +2439,34 @@ export function AiEditorView() {
                 )}
                 {requiresSourceFile && !hasSourceFile && (
                   <div className="px-4 pb-4">
-                    <div className="flex items-center gap-2 text-xs text-amber-600">
+                    <div className="flex items-center gap-2 text-xs text-amber-500">
                       <Paperclip className="w-3 h-3" />
                       <span>Ajoutez un fichier source valide pour cette action.</span>
                     </div>
                   </div>
                 )}
               </GlassCard>
-            </motion.div>
+            </div>
+
+            {/* Right Column: Results */}
+            <div>
+              <div className="sticky top-6">
+                <AnimatePresence mode="wait">
+                  {renderOutput()}
+                </AnimatePresence>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Conversation Sidebar */}
+      <ConversationSidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onSelectConversation={handleSelectConversation}
+        onNewConversation={handleNewConversation}
+      />
     </div>
   );
 }

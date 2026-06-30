@@ -4,6 +4,7 @@ export type AppView =
   | "landing"
   | "dashboard"
   | "editor"
+  | "editor-dalle3"
   | "chat"
   | "profile"
   | "settings"

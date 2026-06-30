@@ -475,6 +475,50 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
     });
   };
 
+  const handleCopy = React.useCallback(async () => {
+    if (!selectedGeneration?.result) {
+      toast({ title: "Rien à copier", description: "Aucun résultat sélectionné." });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(selectedGeneration.result);
+      toast({ title: "Copié !", description: "Le résultat a été copié dans le presse-papiers." });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de copier le résultat.", variant: "destructive" });
+    }
+  }, [selectedGeneration, toast]);
+
+  const handleExport = React.useCallback(() => {
+    if (!selectedGeneration?.result) {
+      toast({ title: "Rien à exporter", description: "Aucun résultat sélectionné." });
+      return;
+    }
+
+    const { type, result } = selectedGeneration;
+    let blob: Blob;
+    let filename: string;
+
+    if (type === 'image' || type === 'video' || type === 'audio') {
+      // Assuming result is a data URL or a direct URL
+      // For simplicity, we'll just try to download it. A more robust solution would fetch and create a blob.
+      const link = document.createElement('a');
+      link.href = result;
+      link.download = `unifyfocus-${type}-${Date.now()}.${result.split('/')[1]?.split(';')[0] || 'txt'}`;
+      link.click();
+    } else {
+      // For text or code
+      blob = new Blob([result], { type: 'text/plain;charset=utf-8' });
+      filename = `unifyfocus-${type}-${Date.now()}.txt`;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+    toast({ title: "Exportation lancée", description: "Le fichier est en cours de téléchargement." });
+  }, [selectedGeneration, toast]);
+
   if (!isOpen) return null;
 
   return (
@@ -637,11 +681,11 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
                           </div>
 
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" className="flex-1 h-7 text-xs">
+                            <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={handleCopy}>
                               <Copy className="size-3 mr-1" />
                               Copier
                             </Button>
-                            <Button size="sm" variant="outline" className="flex-1 h-7 text-xs">
+                            <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={handleExport}>
                               <Download className="size-3 mr-1" />
                               Exporter
                             </Button>
@@ -773,11 +817,11 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
             Régénérer
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" size="sm">
+            <Button variant="outline" className="flex-1" size="sm" onClick={handleCopy}>
               <Copy className="size-4 mr-2" />
               Copier
             </Button>
-            <Button variant="outline" className="flex-1" size="sm">
+            <Button variant="outline" className="flex-1" size="sm" onClick={handleExport}>
               <Download className="size-4 mr-2" />
               Exporter
             </Button>

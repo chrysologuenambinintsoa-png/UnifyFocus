@@ -21,7 +21,6 @@ import {
   Save,
   Undo,
   Redo,
-  Menu,
   X,
   Sparkles,
   LayoutDashboard,
@@ -271,15 +270,6 @@ export function TopNav({ onNavigate, onOpenAuth, onOpenProperties, onOpenMobileS
                 }
               }}
             />
-
-            {/* Mobile Sidebar Toggle - Opens the tools sidebar (now includes Fichier/Édition/Affichage) */}
-            <button
-              className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
-              onClick={() => onOpenMobileSidebar?.()}
-            >
-              <span className="sr-only">Ouvrir le menu</span>
-              <Menu className="size-4" />
-            </button>
           </div>
 
           {/* Center Section - Quick Actions with Hover Cards (Desktop) */}
