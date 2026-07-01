@@ -60,6 +60,10 @@ export interface EditorOptions {
   codeLanguage: string;
   codeFramework: string;
   codeComplexity: string;
+  musicGenre: string;
+  musicDuration: string;
+  musicAmbiance: string;
+  musicTempo: string;
 }
 
 export interface ConversationMessage {
@@ -101,6 +105,7 @@ export type AIModel = {
   provider: string;
   description: string;
   maxTokens: number;
+  access: Record<"free" | "pro" | "enterprise", boolean>;
 };
 
 export const AVAILABLE_MODELS: AIModel[] = [
@@ -110,6 +115,7 @@ export const AVAILABLE_MODELS: AIModel[] = [
     provider: "OpenRouter",
     description: "Modèle haute performance d'OpenAI",
     maxTokens: 8192,
+    access: { free: false, pro: true, enterprise: true },
   },
   {
     id: "gpt-3.5-turbo",
@@ -117,6 +123,15 @@ export const AVAILABLE_MODELS: AIModel[] = [
     provider: "OpenRouter",
     description: "Modèle rapide et efficace",
     maxTokens: 4096,
+    access: { free: true, pro: true, enterprise: true },
+  },
+  {
+    id: "claude-3-5-sonnet",
+    name: "Claude 3.5 Sonnet",
+    provider: "Anthropic",
+    description: "Modèle premium pour les tâches complexes",
+    maxTokens: 16384,
+    access: { free: false, pro: true, enterprise: true },
   },
 ];
 
@@ -148,8 +163,8 @@ interface AppState {
   clearGenerations: () => void;
 
   // Editor
-  editorTab: "text" | "image" | "video" | "code";
-  setEditorTab: (tab: "text" | "image" | "video" | "code") => void;
+  editorTab: "text" | "image" | "video" | "code" | "music";
+  setEditorTab: (tab: "text" | "image" | "video" | "code" | "music") => void;
   isGenerating: boolean;
   setIsGenerating: (v: boolean) => void;
   editorOptions: EditorOptions;
@@ -255,6 +270,10 @@ export const useAppStore = create<AppState>((set) => ({
     codeLanguage: "javascript",
     codeFramework: "aucun",
     codeComplexity: "intermediaire",
+    musicGenre: "pop",
+    musicDuration: "1min",
+    musicAmbiance: "joyeuse",
+    musicTempo: "modéré",
   },
   setEditorOptions: (options) =>
     set((s) => ({ editorOptions: { ...s.editorOptions, ...options } })),

@@ -666,6 +666,14 @@ export function PropertiesPanel({ isOpen = true, onClose }: PropertiesPanelProps
                                   src={selectedGeneration.result}
                                   className="w-full max-h-64 rounded-md bg-black"
                                 />
+                              ) : selectedGeneration.type === "audio" ? (
+                                <audio
+                                  controls
+                                  src={selectedGeneration.result}
+                                  className="w-full"
+                                >
+                                  Votre navigateur ne prend pas en charge la lecture audio.
+                                </audio>
                               ) : (
                                 <p className="text-xs text-foreground whitespace-pre-wrap break-words">
                                   {selectedGeneration.result}

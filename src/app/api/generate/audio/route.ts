@@ -3,6 +3,13 @@ import { generateAudioAI } from "@/lib/ai.server";
 import { normalizePrompt, extractPromptIntent } from "@/lib/prompt";
 import { NextResponse } from "next/server";
 
+function getDailyQuotaLimit(user: { id: string; plan: string | null; role?: string | null } | null, type: "image" | "audio" | "video" | "upload") {
+  if (!user || user.role === "admin") return Number.POSITIVE_INFINITY;
+  if (user.plan === "enterprise") return type === "upload" ? 100 : 100;
+  if (user.plan === "pro") return type === "upload" ? 20 : 20;
+  return type === "upload" ? 5 : type === "image" ? 5 : 3;
+}
+
 function isFreePlanDailyQuotaExceeded(user: { plan: string | null; role?: string | null; id: string } | null, type: "audio" | "video") {
   if (!user || user.role === "admin") return false;
   if (user.plan !== "free") return false;
@@ -59,10 +66,11 @@ export async function POST(req: Request) {
 
     const isAdmin = user.role === "admin";
     if (!isAdmin) {
-      const dailyLimitReached = await isFreePlanDailyQuotaExceeded(user, "audio");
-      if (dailyLimitReached) {
+      const dailyLimit = getDailyQuotaLimit(user, "audio");
+      const currentCount = await db.generation.count({ where: { userId, type: "audio", createdAt: { gte: new Date(new Date().setHours(0,0,0,0)), lte: new Date(new Date().setHours(23,59,59,999)) } } });
+      if (currentCount >= dailyLimit) {
         return NextResponse.json(
-          { error: "Limite quotidienne de musique atteinte pour le plan gratuit (3/jour)." },
+          { error: `Limite quotidienne de musique atteinte pour votre plan (${dailyLimit}/jour).` },
           { status: 429 }
         );
       }
@@ -88,8 +96,8 @@ export async function POST(req: Request) {
 
     const effectivePrompt =
       subtype === "music-to-music"
-        ? `Transforme l'audio source selon le prompt suivant : ${normalizedPrompt}\n\n[Prompt Metadata]: ${JSON.stringify(promptIntent)}`
-        : `${normalizedPrompt}\n\n[Prompt Metadata]: ${JSON.stringify(promptIntent)}`;
+        ? `Transforme le fichier audio source en une nouvelle piste musicale instrumentale, sans paroles ni chant, en respectant cette description : ${normalizedPrompt}\n\n[Prompt Metadata]: ${JSON.stringify(promptIntent)}`
+        : `Génère une piste musicale instrumentale, sans paroles ni chant vocal, fidèle à cette description : ${normalizedPrompt}\n\n[Prompt Metadata]: ${JSON.stringify(promptIntent)}`;
 
     try {
       const result = await generateAudioAI(effectivePrompt, options ?? {});

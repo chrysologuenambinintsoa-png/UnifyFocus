@@ -184,8 +184,6 @@ export function TopNav({ onNavigate, onOpenAuth, onOpenProperties, onOpenMobileS
 
 
   const handleToolClick = (action: string) => {
-    const shouldOpenProperties = ["editor", "musique", "image", "video", "code"].includes(action);
-
     if (action === "chat") {
       setCurrentView("chat");
     } else if (action === "dashboard") {
@@ -197,10 +195,6 @@ export function TopNav({ onNavigate, onOpenAuth, onOpenProperties, onOpenMobileS
     } else {
       setEditorTab(action as "text" | "image" | "video" | "code");
       setCurrentView("editor");
-    }
-
-    if (shouldOpenProperties) {
-      onOpenProperties?.();
     }
   };
 

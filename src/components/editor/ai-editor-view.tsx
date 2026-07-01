@@ -230,6 +230,13 @@ const RESULT_TOAST_LABEL: Record<string, string> = {
   "code-debug": "code",
 };
 
+const MAIN_TAB_META: Record<string, ResultMeta> = {
+  music: { title: "Musique générée", icon: Music, color: "blue" },
+  image: { title: "Image générée", icon: ImageIcon, color: "purple" },
+  video: { title: "Vidéo générée", icon: Video, color: "orange" },
+  code: { title: "Code généré", icon: Code, color: "green" },
+};
+
 // Option lists for header controls
 const TEXT_STYLES = ["professionnel", "créatif", "décontracté"];
 const TEXT_LENGTHS = ["court", "moyen", "long"];
@@ -247,6 +254,11 @@ const CODE_LANGUAGES = ["javascript", "python", "typescript", "go"];
 const CODE_FRAMEWORKS = ["aucun", "react", "nextjs", "express"];
 const CODE_COMPLEXITY = ["débutant", "intermediaire", "avancé"];
 
+const MUSIC_GENRES = ["pop", "rock", "jazz", "classique", "électronique", "hip-hop", "rnb", "folk", "metal", "reggae"];
+const MUSIC_DURATIONS = ["30s", "1min", "2min", "3min", "5min"];
+const MUSIC_AMBIANCES = ["joyeuse", "triste", "énergique", "calme", "mystérieuse", "romantique", "épique", "détendue"];
+const MUSIC_TEMPOS = ["lent", "modéré", "rapide", "très rapide"];
+
 
 const MAX_CHARS = 2000;
 
@@ -259,6 +271,7 @@ const DEFAULT_RESULT_META: ResultMeta = {
 const getResultMeta = (subtype: string, tab: string): ResultMeta => {
   return (
     RESULT_DISPLAY_CONFIG[subtype] ||
+    MAIN_TAB_META[tab] ||
     RESULT_DISPLAY_CONFIG[`${tab}-generation`] ||
     DEFAULT_RESULT_META
   );
@@ -873,12 +886,34 @@ function HeaderOptions({ editorTab, editorOptions, setEditorOptions }: { editorT
     </>
   );
 
+  const renderMusicOptions = () => (
+    <>
+      <Select value={editorOptions.musicGenre} onValueChange={(v) => setEditorOptions({ musicGenre: v })}>
+        <SelectTrigger className="w-[120px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{MUSIC_GENRES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+      <Select value={editorOptions.musicDuration} onValueChange={(v) => setEditorOptions({ musicDuration: v })}>
+        <SelectTrigger className="w-[90px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{MUSIC_DURATIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+      <Select value={editorOptions.musicAmbiance} onValueChange={(v) => setEditorOptions({ musicAmbiance: v })}>
+        <SelectTrigger className="w-[130px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{MUSIC_AMBIANCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+      <Select value={editorOptions.musicTempo} onValueChange={(v) => setEditorOptions({ musicTempo: v })}>
+        <SelectTrigger className="w-[110px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{MUSIC_TEMPOS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+    </>
+  );
+
   return (
     <div className="ml-4 hidden md:flex items-center gap-2">
       {editorTab === "text" && renderTextOptions()}
       {editorTab === "image" && renderImageOptions()}
       {editorTab === "video" && renderVideoOptions()}
       {editorTab === "code" && renderCodeOptions()}
+      {editorTab === "music" && renderMusicOptions()}
     </div>
   );
 }
@@ -1023,22 +1058,13 @@ function TextResult({
   }, [result, toast]);
 
   const header = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
-          <img 
-            src={`/icons/result-${meta.color}.svg`} 
-            alt={meta.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div>
-          <h3 className="font-semibold text-slate-100">{meta.title}</h3>
-          <p className="text-xs text-slate-400 flex items-center gap-1">
-            <Bot className="w-3 h-3" />
-            Généré par UnifyFocus AI
-          </p>
-        </div>
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <h3 className="font-semibold text-slate-100">{meta.title}</h3>
+        <p className="text-xs text-slate-400 flex items-center gap-1">
+          <Bot className="w-3 h-3" />
+          Généré par UnifyFocus AI
+        </p>
       </div>
       <Button
         variant="ghost"
@@ -1219,22 +1245,13 @@ function ImageResult({
   }, [result, toast, imageSrcIsValid, showWatermark]);
 
   const header = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
-          <img 
-            src={`/icons/result-${meta.color}.svg`} 
-            alt={meta.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div>
-          <h3 className="font-semibold text-slate-100">{meta.title}</h3>
-          <p className="text-xs text-slate-400 flex items-center gap-1">
-            <Bot className="w-3 h-3" />
-            Généré par UnifyFocus AI
-          </p>
-        </div>
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <h3 className="font-semibold text-slate-100">{meta.title}</h3>
+        <p className="text-xs text-slate-400 flex items-center gap-1">
+          <Bot className="w-3 h-3" />
+          Généré par UnifyFocus AI
+        </p>
       </div>
       {imageSrcIsValid && (
         <Button
@@ -1376,22 +1393,13 @@ function VideoResult({
   }, [result, videoSrcIsValid, showWatermark, toast]);
 
   const header = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
-          <img 
-            src={`/icons/result-${meta.color}.svg`} 
-            alt={meta.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div>
-          <h3 className="font-semibold text-slate-100">{meta.title}</h3>
-          <p className="text-xs text-slate-400 flex items-center gap-1">
-            <Bot className="w-3 h-3" />
-            Généré par UnifyFocus AI
-          </p>
-        </div>
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <h3 className="font-semibold text-slate-100">{meta.title}</h3>
+        <p className="text-xs text-slate-400 flex items-center gap-1">
+          <Bot className="w-3 h-3" />
+          Généré par UnifyFocus AI
+        </p>
       </div>
       {videoSrcIsValid && (
         <Button
@@ -1453,6 +1461,51 @@ function VideoResult({
   );
 }
 
+function getAudioMimeType(source: string) {
+  const trimmed = source.trim();
+  if (trimmed.startsWith("data:audio/")) {
+    const separatorIndex = trimmed.indexOf(";");
+    return separatorIndex > 0 ? trimmed.slice(5, separatorIndex) : trimmed.slice(5);
+  }
+
+  try {
+    const url = new URL(trimmed);
+    const pathname = url.pathname;
+    const extension = pathname.split(".").pop()?.toLowerCase();
+    switch (extension) {
+      case "mp3":
+        return "audio/mpeg";
+      case "wav":
+        return "audio/wav";
+      case "ogg":
+        return "audio/ogg";
+      case "m4a":
+        return "audio/mp4";
+      case "flac":
+        return "audio/flac";
+      case "aac":
+        return "audio/aac";
+      case "webm":
+        return "audio/webm";
+      case "opus":
+        return "audio/ogg";
+      default:
+        return undefined;
+    }
+  } catch {
+    return undefined;
+  }
+}
+
+function isValidUrl(value: string) {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function AudioResult({
   result,
   meta,
@@ -1473,19 +1526,20 @@ function AudioResult({
   useEffect(() => {
     if (!result) {
       setAudioSrcIsValid(false);
+      setIsPlaying(false);
       return;
     }
+
     const trimmed = result.trim();
+    const mimeType = getAudioMimeType(trimmed);
     const isDataAudio = trimmed.startsWith("data:audio/");
-    if (isDataAudio) {
-      setAudioSrcIsValid(true);
-      return;
-    }
-    try {
-      new URL(trimmed);
-      setAudioSrcIsValid(true);
-    } catch {
-      setAudioSrcIsValid(false);
+    const isAudioUrl = Boolean(mimeType && isValidUrl(trimmed));
+
+    const valid = isDataAudio || isAudioUrl;
+    setAudioSrcIsValid(valid);
+
+    if (!valid) {
+      setIsPlaying(false);
     }
   }, [result]);
 
@@ -1514,8 +1568,11 @@ function AudioResult({
   const togglePlayback = useCallback(() => {
     if (!audioRef.current) return;
     if (audioRef.current.paused) {
-      void audioRef.current.play();
-      setIsPlaying(true);
+      void audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => {
+        setIsPlaying(false);
+      });
     } else {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -1529,22 +1586,13 @@ function AudioResult({
   }, []);
 
   const header = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
-          <img 
-            src={`/icons/result-${meta.color}.svg`} 
-            alt={meta.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div>
-          <h3 className="font-semibold text-slate-100">{meta.title}</h3>
-          <p className="text-xs text-slate-400 flex items-center gap-1">
-            <Bot className="w-3 h-3" />
-            Généré par UnifyFocus AI
-          </p>
-        </div>
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <h3 className="font-semibold text-slate-100">{meta.title}</h3>
+        <p className="text-xs text-slate-400 flex items-center gap-1">
+          <Bot className="w-3 h-3" />
+          Généré par UnifyFocus AI
+        </p>
       </div>
       {audioSrcIsValid && (
         <div className="flex items-center gap-2">
@@ -1611,12 +1659,18 @@ function AudioResult({
             <audio
               ref={audioRef}
               controls
-              src={result}
               className="w-full"
+              onError={() => {
+                setAudioSrcIsValid(false);
+                setIsPlaying(false);
+              }}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onEnded={() => setIsPlaying(false)}
-            />
+            >
+              <source src={result} type={getAudioMimeType(result) ?? undefined} />
+              Votre navigateur ne prend pas en charge la lecture audio.
+            </audio>
           </div>
         </div>
       ) : (
@@ -1723,27 +1777,17 @@ function CodeResult({
   const lines = result.split('\n');
 
   const header = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
-          <img 
-            src={`/icons/result-${meta.color}.svg`} 
-            alt={meta.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div>
-          <h3 className="font-semibold text-slate-100">{meta.title}</h3>
-          <p className="text-xs text-slate-400 flex items-center gap-1">
-            <Bot className="w-3 h-3" />
-            Généré par UnifyFocus AI
-          </p>
-        </div>
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <h3 className="font-semibold text-slate-100">{meta.title}</h3>
+        <p className="text-xs text-slate-400 flex items-center gap-1">
+          <Bot className="w-3 h-3" />
+          Généré par UnifyFocus AI
+        </p>
       </div>
       <div className="flex items-center gap-2">
         <Badge variant="outline" className="rounded-md text-xs bg-slate-800 border-slate-700 text-slate-300">
-          {language}
-        </Badge>
+          {language}</Badge>
         <Button
           variant="ghost"
           size="sm"
@@ -2043,6 +2087,13 @@ export function AiEditorView() {
           language: editorOptions.codeLanguage,
           framework: editorOptions.codeFramework,
           complexity: editorOptions.codeComplexity,
+        };
+      case "music":
+        return {
+          genre: editorOptions.musicGenre,
+          duration: editorOptions.musicDuration,
+          ambiance: editorOptions.musicAmbiance,
+          tempo: editorOptions.musicTempo,
         };
       default:
         return {};
@@ -2426,7 +2477,6 @@ export function AiEditorView() {
 
   return (
     <div className="flex h-screen overflow-x-hidden bg-slate-950 text-slate-100 relative">
-      <AnimatedBackground />
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10 overflow-x-hidden">
         {/* Top Header - Professional Glass Morphism */}

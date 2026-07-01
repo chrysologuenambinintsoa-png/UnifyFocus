@@ -67,10 +67,11 @@ export async function POST(req: Request) {
     }
 
     if (!isAdmin) {
-      const dailyLimitReached = await isFreePlanDailyQuotaExceeded(user, "video");
-      if (dailyLimitReached) {
+      const dailyLimit = getDailyQuotaLimit(user, "video");
+      const currentCount = await db.generation.count({ where: { userId, type: "video", createdAt: { gte: new Date(new Date().setHours(0,0,0,0)), lte: new Date(new Date().setHours(23,59,59,999)) } } });
+      if (currentCount >= dailyLimit) {
         return NextResponse.json(
-          { error: "Limite quotidienne de vidéos atteinte pour le plan gratuit (3/jour)." },
+          { error: `Limite quotidienne de vidéos atteinte pour votre plan (${dailyLimit}/jour).` },
           { status: 429 }
         );
       }

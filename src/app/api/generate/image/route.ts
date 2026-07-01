@@ -3,6 +3,13 @@ import { generateImageAI } from "@/lib/ai.server";
 import { normalizePrompt, extractPromptIntent } from "@/lib/prompt";
 import { NextResponse } from "next/server";
 
+function getDailyQuotaLimit(user: { id: string; plan: string | null; role?: string | null } | null, type: "image" | "audio" | "video" | "upload") {
+  if (!user || user.role === "admin") return Number.POSITIVE_INFINITY;
+  if (user.plan === "enterprise") return type === "upload" ? 100 : 100;
+  if (user.plan === "pro") return type === "upload" ? 20 : 20;
+  return type === "upload" ? 5 : type === "image" ? 5 : 3;
+}
+
 function isFreePlanDailyQuotaExceeded(user: { id: string; plan: string | null; role?: string | null } | null, type: "image" | "audio" | "video") {
   if (!user || user.role === "admin") return false;
   if (user.plan !== "free") return false;
@@ -75,10 +82,11 @@ export async function POST(req: Request) {
     }
 
     if (!isAdmin) {
-      const dailyLimitReached = await isFreePlanDailyQuotaExceeded(user, "image");
-      if (dailyLimitReached) {
+      const dailyLimit = getDailyQuotaLimit(user, "image");
+      const currentCount = await db.generation.count({ where: { userId, type: "image", createdAt: { gte: new Date(new Date().setHours(0,0,0,0)), lte: new Date(new Date().setHours(23,59,59,999)) } } });
+      if (currentCount >= dailyLimit) {
         return NextResponse.json(
-          { error: "Limite quotidienne d'images atteinte pour le plan gratuit (5/jour)." },
+          { error: `Limite quotidienne d'images atteinte pour votre plan (${dailyLimit}/jour).` },
           { status: 429 }
         );
       }

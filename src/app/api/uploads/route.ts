@@ -44,11 +44,12 @@ export async function POST(request: NextRequest) {
         const endOfDay = new Date(now);
         endOfDay.setHours(23, 59, 59, 999);
 
+        const dailyLimit = user.plan === "enterprise" ? 100 : user.plan === "pro" ? 20 : 5;
         const uploadCount = await countUserUploadsToday(uploadDir, userId);
 
-        if (uploadCount >= 5) {
+        if (uploadCount >= dailyLimit) {
           return NextResponse.json(
-            { error: "Limite quotidienne d'uploads atteinte pour le plan gratuit (5/jour)." },
+            { error: `Limite quotidienne d'uploads atteinte pour votre plan (${dailyLimit}/jour).` },
             { status: 429 }
           );
         }

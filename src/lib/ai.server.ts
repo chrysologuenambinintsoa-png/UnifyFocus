@@ -444,8 +444,11 @@ function parseAudioResponse(data: any) {
     data?.output?.[0]?.url ??
     data?.url;
 
-  if (typeof audio === "string") return audio;
-  return typeof data === "string" ? data : JSON.stringify(data);
+  if (typeof audio === "string" && (audio.startsWith("http") || audio.startsWith("data:audio/"))) {
+    return audio;
+  }
+
+  throw new Error("Réponse audio invalide reçue du fournisseur IA.");
 }
 
 function formatToSize(format: string | undefined) {
@@ -621,17 +624,16 @@ async function requestAudioFromProvider(
   options: { sourceAudio?: string }
 ) {
   if (provider === "DEAPI") {
-    // deAPI.ai requires several fields for audio generation; provide sensible defaults
+    // deAPI.ai audio generation should receive the music prompt only.
+    // Avoid passing `lyrics` or `caption` fields to prevent lyric-focused output.
     const body: Record<string, unknown> = {
       model: DEAPI_MODEL,
       prompt,
-      caption: prompt,
-      lyrics: prompt,
       // duration in seconds
       duration: 30,
-      // Model-generation controls - constrained to deAPI limits
-      inference_steps: 6, // deAPI expects <= 8
-      guidance_scale: 0.9, // deAPI expects <= 1
+      // Model-generation controls - deAPI minimum required values
+      inference_steps: 8,
+      guidance_scale: 1,
       // seed 0 indicates random seed
       seed: 0,
       // desired output format
