@@ -1,12 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { db } from "@/lib/db";
+
+async function countUserUploadsToday(uploadDir: string, userId: string) {
+  const entries = await fs.readdir(uploadDir);
+  const today = new Date();
+  const startOfDay = new Date(today);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const matchingFiles = await Promise.all(
+    entries
+      .filter((entry) => entry.startsWith(`${userId}_`))
+      .map(async (entry) => {
+        const fullPath = path.join(uploadDir, entry);
+        const stat = await fs.stat(fullPath);
+        return stat.mtime >= startOfDay ? entry : null;
+      })
+  );
+
+  return matchingFiles.filter(Boolean).length;
+}
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
+    const userId = formData.get("userId")?.toString();
     const uploadDir = path.resolve("./public/uploads");
     await fs.mkdir(uploadDir, { recursive: true });
+
+    if (userId) {
+      const user = await db.user.findUnique({ where: { id: userId } });
+      const isAdmin = user?.role === "admin";
+      if (!user) {
+        return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+      }
+
+      if (!isAdmin && user.plan === "free") {
+        const now = new Date();
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(now);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const uploadCount = await countUserUploadsToday(uploadDir, userId);
+
+        if (uploadCount >= 5) {
+          return NextResponse.json(
+            { error: "Limite quotidienne d'uploads atteinte pour le plan gratuit (5/jour)." },
+            { status: 429 }
+          );
+        }
+      }
+    }
 
     const urls: string[] = [];
 
@@ -17,7 +64,7 @@ export async function POST(request: NextRequest) {
         const file: any = value;
         const name = file.name || `${Date.now()}_${key}`;
         const safeName = name.replace(/[^a-zA-Z0-9_.-]/g, "_");
-        const filename = `${Date.now()}_${safeName}`;
+        const filename = `${userId || "anon"}_${Date.now()}_${safeName}`;
         const buffer = Buffer.from(await file.arrayBuffer());
         await fs.writeFile(path.join(uploadDir, filename), buffer);
         urls.push(`/uploads/${filename}`);

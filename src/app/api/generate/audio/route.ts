@@ -3,6 +3,34 @@ import { generateAudioAI } from "@/lib/ai.server";
 import { normalizePrompt, extractPromptIntent } from "@/lib/prompt";
 import { NextResponse } from "next/server";
 
+function isFreePlanDailyQuotaExceeded(user: { plan: string | null; role?: string | null; id: string } | null, type: "audio" | "video") {
+  if (!user || user.role === "admin") return false;
+  if (user.plan !== "free") return false;
+
+  const now = new Date();
+  const startOfDay = new Date(now);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const limits = {
+    audio: 3,
+    video: 3,
+  } as const;
+
+  return db.generation.count({
+    where: {
+      userId: user.id,
+      type: type === "audio" ? "audio" : "video",
+      createdAt: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
+    },
+  }).then((count) => count >= limits[type]);
+}
+
 export async function POST(req: Request) {
   try {
     const { userId, prompt, options, model, subtype } = await req.json();
@@ -25,15 +53,23 @@ export async function POST(req: Request) {
     }
 
     const user = await db.user.findUnique({ where: { id: userId } });
-    if (!user || user.credits < 1) {
-      return NextResponse.json(
-        { error: "Crédits insuffisants" },
-        { status: 402 }
-      );
+    if (!user) {
+      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+    }
+
+    const isAdmin = user.role === "admin";
+    if (!isAdmin) {
+      const dailyLimitReached = await isFreePlanDailyQuotaExceeded(user, "audio");
+      if (dailyLimitReached) {
+        return NextResponse.json(
+          { error: "Limite quotidienne de musique atteinte pour le plan gratuit (3/jour)." },
+          { status: 429 }
+        );
+      }
     }
 
     const creditCost = subtype === "text-generation" ? 1 : 2;
-    if (!user || user.credits < creditCost) {
+    if (!isAdmin && user.credits < creditCost) {
       return NextResponse.json(
         { error: `Crédits insuffisants (${creditCost} nécessaires)` },
         { status: 402 }

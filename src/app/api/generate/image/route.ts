@@ -3,6 +3,35 @@ import { generateImageAI } from "@/lib/ai.server";
 import { normalizePrompt, extractPromptIntent } from "@/lib/prompt";
 import { NextResponse } from "next/server";
 
+function isFreePlanDailyQuotaExceeded(user: { id: string; plan: string | null; role?: string | null } | null, type: "image" | "audio" | "video") {
+  if (!user || user.role === "admin") return false;
+  if (user.plan !== "free") return false;
+
+  const now = new Date();
+  const startOfDay = new Date(now);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const limits = {
+    image: 5,
+    audio: 3,
+    video: 3,
+  } as const;
+
+  return db.generation.count({
+    where: {
+      userId: user.id,
+      type,
+      createdAt: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
+    },
+  }).then((count) => count >= limits[type]);
+}
+
 export async function POST(req: Request) {
   try {
     const { userId, prompt, options, model, subtype } = await req.json();
@@ -41,11 +70,25 @@ export async function POST(req: Request) {
 
     const user = await db.user.findUnique({ where: { id: userId } });
     const isAdmin = user?.role === "admin";
-    if (!user || (!isAdmin && user.credits < 3)) {
-      return NextResponse.json(
-        { error: "Crédits insuffisants (3 nécessaires)" },
-        { status: 402 }
-      );
+    if (!user) {
+      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+    }
+
+    if (!isAdmin) {
+      const dailyLimitReached = await isFreePlanDailyQuotaExceeded(user, "image");
+      if (dailyLimitReached) {
+        return NextResponse.json(
+          { error: "Limite quotidienne d'images atteinte pour le plan gratuit (5/jour)." },
+          { status: 429 }
+        );
+      }
+
+      if (user.credits < 3) {
+        return NextResponse.json(
+          { error: "Crédits insuffisants (3 nécessaires)" },
+          { status: 402 }
+        );
+      }
     }
 
     const generation = await db.generation.create({

@@ -368,7 +368,7 @@ export function UsageView() {
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
       borderColor: "border-blue-500/30",
-      features: ["50 crédits/mois", "Générations standard", "Support communautaire"],
+      features: ["5 générations d'images/jour", "5 uploads/jour", "3 générations de musique/jour", "3 générations de vidéo/jour", "Support communautaire"],
       popular: false,
     },
     {
@@ -379,7 +379,7 @@ export function UsageView() {
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
       borderColor: "border-purple-500/30",
-      features: ["1000 crédits/mois", "Générations prioritaires", "Support prioritaire", "API access"],
+      features: ["1000 crédits/mois", "Générations prioritaires", "Priorité sur les files d'attente IA", "Accès aux générations avancées", "Support prioritaire", "Exports et réglages avancés"],
       popular: true,
     },
     {
@@ -390,7 +390,7 @@ export function UsageView() {
       color: "text-gold",
       bgColor: "bg-gold/10",
       borderColor: "border-gold/30",
-      features: ["5000 crédits/mois", "Générations illimitées", "Support 24/7", "API access", "Custom models"],
+      features: ["5000 crédits/mois", "API dédiée", "Personnalisation complète", "Support 24/7 avec account manager", "Priorité maximale et SLA", "Intégrations et workflows sur mesure"],
       popular: false,
     },
   ], []);
@@ -404,7 +404,7 @@ export function UsageView() {
       borderColor: "border-blue-500/30",
       credits: 50,
       price: "Gratuit",
-      features: ["50 crédits/mois", "Générations standard", "Support communautaire"],
+      features: ["5 générations d'images/jour", "5 uploads/jour", "3 générations de musique/jour", "3 générations de vidéo/jour", "Support communautaire"],
     };
     switch (user.plan) {
       case "pro":
@@ -415,7 +415,7 @@ export function UsageView() {
           borderColor: "border-purple-500/30",
           credits: 1000,
           price: "29€",
-          features: ["1000 crédits/mois", "Générations prioritaires", "Support prioritaire", "API access"],
+          features: ["1000 crédits/mois", "Générations prioritaires", "Priorité sur les files d'attente IA", "Accès aux générations avancées", "Support prioritaire", "Exports et réglages avancés"],
         };
       case "enterprise":
         return {
@@ -425,7 +425,7 @@ export function UsageView() {
           borderColor: "border-gold/30",
           credits: 5000,
           price: "99€",
-          features: ["5000 crédits/mois", "Générations illimitées", "Support 24/7", "API access", "Custom models"],
+          features: ["5000 crédits/mois", "API dédiée", "Personnalisation complète", "Support 24/7 avec account manager", "Priorité maximale et SLA", "Intégrations et workflows sur mesure"],
         };
       default:
         return {

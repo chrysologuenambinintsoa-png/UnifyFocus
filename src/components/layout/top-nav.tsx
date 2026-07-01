@@ -184,7 +184,7 @@ export function TopNav({ onNavigate, onOpenAuth, onOpenProperties, onOpenMobileS
 
 
   const handleToolClick = (action: string) => {
-    const shouldOpenProperties = ["editor", "text", "image", "video", "code"].includes(action);
+    const shouldOpenProperties = ["editor", "musique", "image", "video", "code"].includes(action);
 
     if (action === "chat") {
       setCurrentView("chat");
@@ -215,7 +215,7 @@ export function TopNav({ onNavigate, onOpenAuth, onOpenProperties, onOpenMobileS
 
   // Tool configuration for hover cards
   const toolConfig = [
-    { id: "text", icon: Music, label: "Musique", description: "Génération musicale", color: "blue" },
+    { id: "musique", icon: Music, label: "Musique", description: "Génération musicale", color: "blue" },
     { id: "image", icon: ImageIcon, label: "Image", description: "Création visuelle", color: "purple" },
     { id: "video", icon: Video, label: "Vidéo", description: "Production vidéo", color: "orange" },
     { id: "code", icon: Code, label: "Code", description: "Génération de code", color: "green" },

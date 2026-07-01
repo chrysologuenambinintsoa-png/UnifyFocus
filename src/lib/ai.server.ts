@@ -179,22 +179,79 @@ function normalizeErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
-async function deapiFetch(path: string, body: unknown) {
-  const response = await fetch(`${DEAPI_API_BASE}${path}`, {
-    method: "POST",
-    headers: {
-      ...DEAPI_HEADERS,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+async function deapiFetch(path: string, body: unknown, maxRetries: number = 2) {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    let timeoutId: NodeJS.Timeout | undefined;
+    try {
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      const response = await fetch(`${DEAPI_API_BASE}${path}`, {
+        method: "POST",
+        headers: {
+          ...DEAPI_HEADERS,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
 
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    throw new Error(`deAPI.ai request failed (${response.status}): ${text}`);
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        const errorMsg = `deAPI.ai request failed (${response.status}): ${text}`;
+        
+        // Don't retry on client errors (4xx) except 429 (rate limit)
+        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+          throw new Error(errorMsg);
+        }
+        
+        lastError = new Error(errorMsg);
+        if (attempt < maxRetries) {
+          console.log(`[AI] DEAPI request failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
+          continue;
+        }
+        throw lastError;
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (timeoutId) clearTimeout(timeoutId);
+      
+      // Don't retry on intentional aborts or non-retryable errors
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          lastError = new Error(`deAPI.ai request timed out after 30 seconds`);
+          if (attempt < maxRetries) {
+            console.log(`[AI] DEAPI request timeout (attempt ${attempt + 1}/${maxRetries + 1}), retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+            continue;
+          }
+          throw lastError;
+        }
+        
+        // Retry on network errors
+        if (error.message.includes('fetch failed') || error.message.includes('ECONNREFUSED') || error.message.includes('ENOTFOUND')) {
+          lastError = error;
+          if (attempt < maxRetries) {
+            console.log(`[AI] DEAPI network error (attempt ${attempt + 1}/${maxRetries + 1}), retrying...`, error.message);
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+            continue;
+          }
+          throw new Error(`deAPI.ai network error after ${maxRetries + 1} attempts: ${error.message}`);
+        }
+      }
+      
+      // For other errors, throw immediately
+      throw error;
+    }
   }
-
-  return await response.json();
+  
+  throw lastError ?? new Error("deAPI.ai request failed after retries");
 }
 
 // --- 3. Create a fetch helper for the new provider ---

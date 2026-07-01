@@ -719,14 +719,6 @@ export function DashboardView() {
                 onClick={handleChatClick}
                 badge="Populaire"
               />
-              <QuickActionCard
-                title="Studio DALL-E 3"
-                description="Éditeur d'images nouvelle génération"
-                icon={Palette}
-                gradient="from-fuchsia-500/10 to-fuchsia-500/5"
-                onClick={handleNavigateToDalle3}
-                badge="Nouveau"
-              />
             </div>
           </motion.section>
 

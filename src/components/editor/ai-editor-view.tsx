@@ -92,16 +92,21 @@ import {
 // ---------------------------------------------------------------------------
 
 const TAB_CONFIG = [
-  { key: "text" as const, label: "Musique", icon: Music, credits: 1, color: "blue", description: "Générez de la musique à partir de descriptions textuelles" },
+  { key: "music" as const, label: "Musique", icon: Music, credits: 1, color: "blue", description: "Générez de la musique à partir de descriptions textuelles" },
   { key: "image" as const, label: "Image", icon: ImageIcon, credits: 3, color: "purple", description: "Créez et transformez des images avec l'IA" },
   { key: "video" as const, label: "Vidéo", icon: Video, credits: 5, color: "orange", description: "Générez et éditez des vidéos automatiquement" },
   { key: "code" as const, label: "Code", icon: Code, credits: 2, color: "green", description: "Générez, expliquez et déboguez du code" },
 ] as const;
 
-const TEXT_SUBTABS = [
+const MUSIC_SUBTABS = [
   { key: "text-generation", label: "Générer", icon: Music, credits: 1, description: "Composez une musique unique - choisissez genre, ambiance et durée" },
   { key: "text-to-music", label: "Texte → Musique", icon: Music, credits: 2, description: "Transformez vos paroles ou descriptions en compositions musicales" },
   { key: "music-to-music", label: "Transformer", icon: Sparkles, credits: 2, description: "Réinventez un morceau en changeant son style ou son ambiance" },
+];
+
+const TEXT_SUBTABS: any[] = [
+  // Pour l'instant, la génération de texte pur n'est pas une fonctionnalité principale de l'éditeur,
+  // mais on garde la structure pour une future expansion.
 ];
 
 const IMAGE_SUBTABS = [
@@ -124,7 +129,7 @@ const CODE_SUBTABS = [
 ];
 
 const ALLOWED_FILE_TYPES: Record<"text" | "image" | "video" | "code", string[]> = {
-  text: [".txt", ".doc", ".docx", ".pdf", ".md", ".mp3", ".wav", ".ogg", ".m4a"],
+  text: [".txt", ".doc", ".docx", ".pdf", ".md"],
   image: [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"],
   video: [".mp4", ".avi", ".mov", ".wmv", ".webm"],
   code: [],
@@ -155,7 +160,7 @@ type ResultPayload = {
 };
 
 const PLACEHOLDERS: Record<string, string> = {
-  text: "Décrivez la musique que vous souhaitez générer (genre, tempo, ambiance...)...",
+  music: "Décrivez la musique que vous souhaitez générer (genre, tempo, ambiance...)...",
   "text-to-music": "Donnez les paroles, l'ambiance ou le style pour créer votre musique...",
   "music-to-music": "Décrivez la transformation musicale souhaitée ou le style de la piste cible...",
   image: "Décrivez l'image que vous souhaitez créer en détail...",
@@ -164,7 +169,7 @@ const PLACEHOLDERS: Record<string, string> = {
 };
 
 const API_ENDPOINTS: Record<string, string> = {
-  text: "/api/generate/text",
+  music: "/api/generate/audio",
   image: "/api/generate/image",
   video: "/api/generate/video",
   code: "/api/generate/code",
@@ -187,7 +192,7 @@ const SUBTAB_ENDPOINTS: Record<string, string> = {
 };
 
 const TAB_HELP_TEXT: Record<string, string> = {
-  text: "Génère de la musique à partir de votre prompt.",
+  music: "Génère de la musique à partir de votre prompt.",
   image: "Génère une nouvelle image ou transforme une image source.",
   video: "Génère une nouvelle vidéo ou transforme une vidéo source.",
   code: "Générez, expliquez ou déboguez du code dans n'importe quel langage.",
@@ -224,6 +229,24 @@ const RESULT_TOAST_LABEL: Record<string, string> = {
   "code-explain": "code",
   "code-debug": "code",
 };
+
+// Option lists for header controls
+const TEXT_STYLES = ["professionnel", "créatif", "décontracté"];
+const TEXT_LENGTHS = ["court", "moyen", "long"];
+const TEXT_TONES = ["informatif", "persuasif", "émotionnel"];
+
+const IMAGE_STYLES = ["photorealiste", "illustration", "dessin"];
+const IMAGE_FORMATS = ["1:1", "4:3", "16:9"];
+const IMAGE_QUALITIES = ["basse", "standard", "haute"];
+
+const VIDEO_DURATIONS = ["5s", "15s", "30s", "60s"];
+const VIDEO_STYLES = ["cinematique", "vlog", "animation"];
+const VIDEO_FORMATS = ["16:9", "9:16", "1:1"];
+
+const CODE_LANGUAGES = ["javascript", "python", "typescript", "go"];
+const CODE_FRAMEWORKS = ["aucun", "react", "nextjs", "express"];
+const CODE_COMPLEXITY = ["débutant", "intermediaire", "avancé"];
+
 
 const MAX_CHARS = 2000;
 
@@ -551,6 +574,7 @@ function GlassCard({
 function useEditorState(editorTab: string, selectedSubtool: string, setSelectedSubtool: (key: string) => void) {
   const currentSubTabs = useMemo(() => {
     switch (editorTab) {
+      case 'music': return MUSIC_SUBTABS;
       case 'text': return TEXT_SUBTABS;
       case 'image': return IMAGE_SUBTABS;
       case 'video': return VIDEO_SUBTABS;
@@ -647,13 +671,14 @@ function useFileAttachments(editorTab: string) {
   return { attachedFiles, handleFilesSelected, handleRemoveFile, clearFiles };
 }
 
-function SubToolSelector({ subtabs, activeSubtool, onSubtoolChange }: {
+function SubToolSelector({ subtabs, activeSubtool, onSubtoolChange, compact = false }: {
   subtabs: any[];
   activeSubtool: string;
   onSubtoolChange: (key: string) => void;
+  compact?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 p-1.5 rounded-xl bg-slate-900/20 border border-slate-800/50 backdrop-blur-sm">
+    <div className={`flex flex-nowrap items-center gap-2 overflow-x-auto min-w-0 w-full ${compact ? 'p-1 rounded-xl bg-slate-900/50 border border-slate-800/70 backdrop-blur-sm' : 'p-1.5 rounded-xl bg-slate-900/20 border border-slate-800/50 backdrop-blur-sm'}`}>
       {subtabs.map((subTab) => {
         const SubIcon = subTab.icon;
         const isActive = activeSubtool === subTab.key;
@@ -665,8 +690,8 @@ function SubToolSelector({ subtabs, activeSubtool, onSubtoolChange }: {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             className={`
-              relative flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-              transition-colors duration-300
+              shrink-0 relative flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-300
+              ${compact ? 'px-3 py-1.5 text-xs' : 'flex-1 px-4 py-2.5 text-sm'}
               ${isActive
                 ? 'text-white'
                 : 'text-slate-400 hover:text-white'
@@ -703,11 +728,11 @@ function ResultCard({ children, header, meta, onRegenerate, onNew }: {
           {children}
         </div>
       </GlassCard>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-nowrap items-center gap-3 overflow-x-auto pb-2 sm:overflow-visible sm:pb-0">
         <Button
           onClick={onRegenerate}
           variant="secondary"
-          className="flex-1 gap-2"
+          className="min-w-[140px] flex-1 gap-2 whitespace-nowrap"
         >
           <RefreshCw className="w-4 h-4" />
           Régénérer
@@ -715,7 +740,7 @@ function ResultCard({ children, header, meta, onRegenerate, onNew }: {
         <Button
           onClick={onNew}
           variant="secondary"
-          className="flex-1 gap-2"
+          className="min-w-[140px] flex-1 gap-2 whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
           Nouveau
@@ -739,7 +764,7 @@ function TabSelector({
   onSelect: (key: string) => void;
 }) {
   return (
-    <div className="flex items-center justify-center gap-2 flex-wrap">
+    <div className="flex flex-nowrap items-center justify-center gap-2 overflow-x-auto pb-2 sm:overflow-visible sm:pb-0 min-w-0 w-full">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.key;
@@ -752,7 +777,7 @@ function TabSelector({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className={`
-              relative px-5 py-2.5 rounded-xl font-medium transition-all duration-300
+              shrink-0 relative px-5 py-2.5 rounded-xl font-medium transition-all duration-300
               flex items-center gap-2 text-sm border
               ${isActive ? `${colors.bgActive} ${colors.textActive} shadow-lg shadow-${tab.color}-500/30 border-transparent` : `bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800`}
             `}
@@ -767,21 +792,137 @@ function TabSelector({
   );
 }
 
+function HeaderOptions({ editorTab, editorOptions, setEditorOptions }: { editorTab: string; editorOptions: any; setEditorOptions: (o: any) => void }) {
+  const renderTextOptions = () => (
+    <>
+      <Select value={editorOptions.textStyle} onValueChange={(v) => setEditorOptions({ textStyle: v })}>
+        <SelectTrigger className="w-[120px] bg-white/5 border-white/10 rounded-md text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {TEXT_STYLES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      <Select value={editorOptions.textLength} onValueChange={(v) => setEditorOptions({ textLength: v })}>
+        <SelectTrigger className="w-[100px] bg-white/5 border-white/10 rounded-md text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {TEXT_LENGTHS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      <Select value={editorOptions.textTone} onValueChange={(v) => setEditorOptions({ textTone: v })}>
+        <SelectTrigger className="w-[120px] bg-white/5 border-white/10 rounded-md text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {TEXT_TONES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </>
+  );
+
+  const renderImageOptions = () => (
+    <>
+      <Select value={editorOptions.imageStyle} onValueChange={(v) => setEditorOptions({ imageStyle: v })}>
+        <SelectTrigger className="w-[140px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{IMAGE_STYLES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+      <Select value={editorOptions.imageFormat} onValueChange={(v) => setEditorOptions({ imageFormat: v })}>
+        <SelectTrigger className="w-[90px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{IMAGE_FORMATS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+      <Select value={editorOptions.imageQuality} onValueChange={(v) => setEditorOptions({ imageQuality: v })}>
+        <SelectTrigger className="w-[100px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{IMAGE_QUALITIES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+    </>
+  );
+
+  const renderVideoOptions = () => (
+    <>
+      <Select value={editorOptions.videoDuration} onValueChange={(v) => setEditorOptions({ videoDuration: v })}>
+        <SelectTrigger className="w-[90px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{VIDEO_DURATIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+      <Select value={editorOptions.videoStyle} onValueChange={(v) => setEditorOptions({ videoStyle: v })}>
+        <SelectTrigger className="w-[130px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{VIDEO_STYLES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+      <Select value={editorOptions.videoFormat} onValueChange={(v) => setEditorOptions({ videoFormat: v })}>
+        <SelectTrigger className="w-[90px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{VIDEO_FORMATS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+    </>
+  );
+
+  const renderCodeOptions = () => (
+    <>
+      <Select value={editorOptions.codeLanguage} onValueChange={(v) => setEditorOptions({ codeLanguage: v })}>
+        <SelectTrigger className="w-[120px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{CODE_LANGUAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+      <Select value={editorOptions.codeFramework} onValueChange={(v) => setEditorOptions({ codeFramework: v })}>
+        <SelectTrigger className="w-[110px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{CODE_FRAMEWORKS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+      <Select value={editorOptions.codeComplexity} onValueChange={(v) => setEditorOptions({ codeComplexity: v })}>
+        <SelectTrigger className="w-[120px] bg-white/5 border-white/10 rounded-md text-sm"><SelectValue /></SelectTrigger>
+        <SelectContent>{CODE_COMPLEXITY.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+      </Select>
+    </>
+  );
+
+  return (
+    <div className="ml-4 hidden md:flex items-center gap-2">
+      {editorTab === "text" && renderTextOptions()}
+      {editorTab === "image" && renderImageOptions()}
+      {editorTab === "video" && renderVideoOptions()}
+      {editorTab === "code" && renderCodeOptions()}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Empty State
 // ---------------------------------------------------------------------------
 
 function EmptyState({ tab, description }: { tab: string; description?: string }) {
-  const tabConfig = TAB_CONFIG.find((t) => t.key === tab);
-  const Icon = tabConfig?.icon || Sparkles;
-  const color = tabConfig?.color || "blue";
-  const colors = TAB_COLORS[color as keyof typeof TAB_COLORS];
+  const icons = useMemo(() => [
+    { icon: Music, color: "blue" as keyof typeof TAB_COLORS },
+    { icon: ImageIcon, color: "purple" as keyof typeof TAB_COLORS },
+    { icon: Video, color: "orange" as keyof typeof TAB_COLORS },
+    { icon: Code, color: "green" as keyof typeof TAB_COLORS },
+  ], []);
+
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % icons.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [icons.length]);
+
+  const { icon: ActiveIcon, color: activeColor } = icons[activeIndex];
+  const colors = TAB_COLORS[activeColor];
 
   return (
     <GlassCard>
       <div className="flex flex-col items-center justify-center py-16 px-4">
-        <div className={`w-20 h-20 rounded-2xl ${colors.bgActive} bg-opacity-10 flex items-center justify-center mb-6`}>
-          <Icon className={`w-10 h-10 ${colors.text}`} />
+        <div className="relative w-20 h-20 rounded-2xl flex items-center justify-center mb-6 overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeIndex}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className={`absolute inset-0 flex items-center justify-center ${colors.bgActive} bg-opacity-10`}
+            >
+              <ActiveIcon className={`w-10 h-10 ${colors.text}`} />
+            </motion.div>
+          </AnimatePresence>
         </div>
         
         <h3 className="text-xl font-semibold text-slate-100 mb-2">
@@ -802,8 +943,8 @@ function EmptyState({ tab, description }: { tab: string; description?: string })
               <div className="w-12 h-12 rounded-xl bg-slate-800/50 border border-slate-700 flex items-center justify-center mb-2 mx-auto">
                 <item.icon className="w-6 h-6 text-slate-400" />
               </div>
-              <p className="text-sm font-medium text-gray-900">{item.label}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+              <p className="text-sm font-medium text-slate-200">{item.label}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -884,8 +1025,12 @@ function TextResult({
   const header = (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center`}>
-          <meta.icon className="w-5 h-5 text-white" />
+        <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+          <img 
+            src={`/icons/result-${meta.color}.svg`} 
+            alt={meta.title}
+            className="w-full h-full object-cover"
+          />
         </div>
         <div>
           <h3 className="font-semibold text-slate-100">{meta.title}</h3>
@@ -1076,8 +1221,12 @@ function ImageResult({
   const header = (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center`}>
-          <meta.icon className="w-5 h-5 text-white" />
+        <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+          <img 
+            src={`/icons/result-${meta.color}.svg`} 
+            alt={meta.title}
+            className="w-full h-full object-cover"
+          />
         </div>
         <div>
           <h3 className="font-semibold text-slate-100">{meta.title}</h3>
@@ -1229,8 +1378,12 @@ function VideoResult({
   const header = (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center`}>
-          <meta.icon className="w-5 h-5 text-white" />
+        <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+          <img 
+            src={`/icons/result-${meta.color}.svg`} 
+            alt={meta.title}
+            className="w-full h-full object-cover"
+          />
         </div>
         <div>
           <h3 className="font-semibold text-slate-100">{meta.title}</h3>
@@ -1378,8 +1531,12 @@ function AudioResult({
   const header = (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center`}>
-          <meta.icon className="w-5 h-5 text-white" />
+        <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+          <img 
+            src={`/icons/result-${meta.color}.svg`} 
+            alt={meta.title}
+            className="w-full h-full object-cover"
+          />
         </div>
         <div>
           <h3 className="font-semibold text-slate-100">{meta.title}</h3>
@@ -1568,8 +1725,12 @@ function CodeResult({
   const header = (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg ${TAB_COLORS[meta.color].bgActive} flex items-center justify-center`}>
-          <meta.icon className="w-5 h-5 text-white" />
+        <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+          <img 
+            src={`/icons/result-${meta.color}.svg`} 
+            alt={meta.title}
+            className="w-full h-full object-cover"
+          />
         </div>
         <div>
           <h3 className="font-semibold text-slate-100">{meta.title}</h3>
@@ -1758,8 +1919,6 @@ export function AiEditorView() {
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('selectedFeature');
@@ -1791,11 +1950,11 @@ export function AiEditorView() {
   const { attachedFiles, handleFilesSelected, handleRemoveFile, clearFiles } = useFileAttachments(editorTab);
 
   const activeTabConfig = useMemo(
-    () => TAB_CONFIG.find((t) => t.key === editorTab)!,
+    () => TAB_CONFIG.find((t) => t.key === editorTab) ?? TAB_CONFIG[0],
     [editorTab]
   );
 
-  const currentCredits = activeSubTabConfig?.credits || activeTabConfig.credits;
+  const currentCredits = activeSubTabConfig?.credits ?? activeTabConfig?.credits ?? 0;
 
   const hasSourceFile = useMemo(() => {
     if (attachedFiles.length === 0) return false;
@@ -2204,7 +2363,7 @@ export function AiEditorView() {
 
     if (lastResult && lastResult.type === "text" && lastResult.result) {
       return (
-        <TextResult
+        <CodeResult
           result={lastResult.result}
           meta={getResultMeta(lastResult.subtype, editorTab)}
           onRegenerate={handleRegenerate}
@@ -2263,92 +2422,96 @@ export function AiEditorView() {
   const tabConfig = TAB_CONFIG.find((t) => t.key === editorTab);
   const tabColor = tabConfig?.color || "blue";
   const colors = TAB_COLORS[tabColor as keyof typeof TAB_COLORS];
+  const ActiveTabIcon = tabConfig?.icon || Music;
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 relative">
+    <div className="flex h-screen overflow-x-hidden bg-slate-950 text-slate-100 relative">
       <AnimatedBackground />
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 relative z-10">
-        {/* Top Header */}
-        <header className="bg-slate-900/50 border-b border-slate-800 px-6 py-4 backdrop-blur-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {/* Back button */}
-              <Button variant="ghost" size="icon" onClick={() => setCurrentView("dashboard")} className="rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              {/* Tab Selector */}
-              <TabSelector tabs={TAB_CONFIG} activeTab={editorTab} onSelect={(tab) => {
-        setEditorTab(tab as "text" | "image" | "video" | "code");
-        setLastResult(null);
-              }} />
+      <div className="flex-1 flex flex-col min-w-0 relative z-10 overflow-x-hidden">
+        {/* Top Header - Professional Glass Morphism */}
+        <header className="relative border-b border-slate-800/60 bg-slate-900/80 px-6 py-4 backdrop-blur-2xl">
+          {/* Subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/50 via-slate-800/30 to-slate-900/50 pointer-events-none" />
 
-              {/* Current Tab Info (optional, can be removed if TabSelector is descriptive enough) */}
-              <div>
-                <h1 className="text-lg font-semibold text-slate-100">
-                  {activeTabConfig?.label || "Éditeur AI"}
-                </h1>
-                <p className="text-sm text-slate-400">
-                  {activeSubTabConfig?.description || TAB_HELP_TEXT[editorTab]}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
+          <div className="relative flex flex-col items-center justify-center gap-4">
+            {/* Center Section - Model Selector */}
+            <div className="flex items-center justify-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2 rounded-lg bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
-                    <Sparkles className="w-4 h-4" />
-                    <span className="truncate">{getModelName(selectedModel)}</span>
-                  </Button>
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 rounded-xl border-slate-700/50 bg-slate-800/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 transition-all shadow-lg shadow-black/20"
+                    >
+                      <div className="relative">
+                        <Sparkles className="w-4 h-4" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-500 opacity-50 blur-md" />
+                      </div>
+                      <span className="truncate font-medium">{getModelName(selectedModel)}</span>
+                      <ChevronRight className="w-3 h-3 opacity-60" />
+                    </Button>
+                  </motion.div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[250px] rounded-lg bg-slate-800/90 border-slate-700 text-slate-200 backdrop-blur-md">
+                <DropdownMenuContent align="center" className="w-[280px] rounded-xl border-slate-700/50 bg-slate-800/95 text-slate-200 backdrop-blur-2xl shadow-2xl">
+                  <div className="p-2 border-b border-slate-700/50">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">Modèles disponibles</p>
+                  </div>
                   {AVAILABLE_MODELS.map((model) => (
                     <DropdownMenuItem
                       key={model.id}
                       onClick={() => setSelectedModel(model.id)}
-                      className={`rounded-md hover:bg-slate-700 ${selectedModel === model.id ? "bg-slate-700" : ""}`}
+                      className={`rounded-lg hover:bg-slate-700/50 transition-all ${selectedModel === model.id ? "bg-slate-700/70 border border-slate-600" : ""}`}
                     >
-                      <div className="flex flex-col">
-                        <span className="font-medium">{model.name}</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold text-sm">{model.name}</span>
                         <span className="text-xs text-slate-400">{model.description}</span>
                       </div>
+                      {selectedModel === model.id && (
+                        <motion.div
+                          layoutId="selectedModel"
+                          className="ml-auto"
+                        >
+                          <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50" />
+                        </motion.div>
+                      )}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white"
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
             </div>
+
+            {/* Sub-tools selector - Only in header */}
+            {currentSubTabs.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="w-full"
+              >
+                <SubToolSelector
+                  subtabs={currentSubTabs}
+                  activeSubtool={selectedSubtool}
+                  onSubtoolChange={(key) => {
+                    setSelectedSubtool(key);
+                    localStorage.setItem('selectedFeature', key);
+                  }}
+                  compact
+                />
+              </motion.div>
+            )}
           </div>
         </header>
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 max-w-7xl mx-auto w-full">
             {/* Left Column: Actions & Inputs */}
             <div className="flex flex-col gap-6">
-              {/* Sub-tools */}
-              {currentSubTabs.length > 0 && (
-                <div>
-                  <SubToolSelector 
-                    subtabs={currentSubTabs}
-                    activeSubtool={selectedSubtool}
-                    onSubtoolChange={(key) => {
-                      setSelectedSubtool(key);
-                      localStorage.setItem('selectedFeature', key);
-                    }}
-                  />
-                </div>
-              )}
-
               {/* Input Area */}
               <GlassCard>
                 {attachedFiles.length > 0 && (
@@ -2375,8 +2538,8 @@ export function AiEditorView() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between px-4 pb-4">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-nowrap items-center justify-between gap-2 px-4 pb-4 overflow-x-auto min-w-0 w-full">
+                  <div className="flex flex-nowrap items-center gap-2 min-w-0">
                     {attachedFiles.length < MAX_FILES && (
                       <label className="cursor-pointer">
                         <input
@@ -2406,7 +2569,7 @@ export function AiEditorView() {
                     onClick={handleGenerate}
                     disabled={!canGenerate}
                     className={`
-                      flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium
+                      shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium
                       shadow-sm transition-all duration-200
                       ${
                         canGenerate
@@ -2459,14 +2622,6 @@ export function AiEditorView() {
           </div>
         </div>
       </div>
-
-      {/* Conversation Sidebar */}
-      <ConversationSidebar
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        onSelectConversation={handleSelectConversation}
-        onNewConversation={handleNewConversation}
-      />
     </div>
   );
 }
