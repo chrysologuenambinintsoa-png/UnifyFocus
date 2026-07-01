@@ -203,12 +203,18 @@ async function deapiFetch(path: string, body: unknown, maxRetries: number = 2) {
       if (!response.ok) {
         const text = await response.text().catch(() => "");
         const errorMsg = `deAPI.ai request failed (${response.status}): ${text}`;
-        
+
+        // Handle deprecated video route fallback when the provider still calls /api/v2/video.
+        if (response.status === 404 && path === "/api/v2/video") {
+          console.log("[AI] deAPI route /api/v2/video not found, retrying with /api/v2/videos/generations");
+          return await deapiFetch("/api/v2/videos/generations", body, maxRetries);
+        }
+
         // Don't retry on client errors (4xx) except 429 (rate limit)
         if (response.status >= 400 && response.status < 500 && response.status !== 429) {
           throw new Error(errorMsg);
         }
-        
+
         lastError = new Error(errorMsg);
         if (attempt < maxRetries) {
           console.log(`[AI] DEAPI request failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying...`);
@@ -653,10 +659,18 @@ async function requestVideoFromProvider(
   options: { duration?: string; sourceVideo?: string }
 ) {
   if (provider === "DEAPI") {
-    const data = await deapiFetchAndPoll("/api/v2/video", {
+    const duration = parseDuration(options.duration) || 5;
+    const data = await deapiFetchAndPoll("/api/v2/videos/generations", {
       model: DEAPI_VIDEO_MODEL,
       prompt,
-      duration: parseDuration(options.duration),
+      width: 512,
+      height: 512,
+      steps: 4,
+      guidance: 1,
+      seed: -1,
+      frames: 49,
+      fps: 24,
+      duration,
       source_video: options.sourceVideo,
     });
     return parseVideoResponse(data);

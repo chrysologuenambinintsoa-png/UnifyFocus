@@ -253,7 +253,7 @@ export const useAppStore = create<AppState>((set) => ({
   clearGenerations: () => set({ generations: [] }),
 
   // Editor
-  editorTab: "text",
+  editorTab: "music",
   setEditorTab: (tab) => set({ editorTab: tab }),
   isGenerating: false,
   setIsGenerating: (v) => set({ isGenerating: v }),

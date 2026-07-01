@@ -1,7 +1,9 @@
 "use client";
+import dynamic from "next/dynamic";
+const CustomVideoPlayer = dynamic(() => import("./custom-video-player"), { ssr: false });
 import { useTranslation } from "@/lib/i18n";
 
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -586,7 +588,7 @@ function GlassCard({
 
 function useEditorState(editorTab: string, selectedSubtool: string, setSelectedSubtool: (key: string) => void) {
   const currentSubTabs = useMemo(() => {
-    switch (editorTab) {
+    switch (editorTab as "music" | "text" | "image" | "video" | "code") {
       case 'music': return MUSIC_SUBTABS;
       case 'text': return TEXT_SUBTABS;
       case 'image': return IMAGE_SUBTABS;
@@ -996,8 +998,8 @@ function GeneratingAnimation({ tab, subtype }: { tab: string; subtype?: string }
   const color = tabConfig?.color || "blue";
   const colors = TAB_COLORS[color as keyof typeof TAB_COLORS];
 
-  const isMusicMode = tab === "text" && subtype && ["text-generation", "text-to-music", "music-to-music"].includes(subtype);
-  const actionLabel = isMusicMode ? "musique" : tab === "text" ? "texte" : tab === "image" ? "image" : tab === "video" ? "vidéo" : "code";
+  const isMusicMode = tab === "music" && subtype && ["text-generation", "text-to-music", "music-to-music"].includes(subtype);
+  const actionLabel = isMusicMode || tab === "music" ? "musique" : tab === "text" ? "texte" : tab === "image" ? "image" : tab === "video" ? "vidéo" : "code";
 
   return (
     <GlassCard>
@@ -1393,47 +1395,92 @@ function VideoResult({
   }, [result, videoSrcIsValid, showWatermark, toast]);
 
   const header = (
-    <div className="flex items-center justify-between gap-4">
-      <div>
-        <h3 className="font-semibold text-slate-100">{meta.title}</h3>
-        <p className="text-xs text-slate-400 flex items-center gap-1">
-          <Bot className="w-3 h-3" />
-          Généré par UnifyFocus AI
-        </p>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="space-y-2">
+        <div className="flex items-center gap-3 text-sm text-slate-400">
+          <div className={`inline-flex h-10 w-10 items-center justify-center rounded-3xl ${TAB_COLORS[meta.color].bgActive}`}>
+            <Video className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <p className="text-base font-semibold text-slate-100">{meta.title}</p>
+            <p className="text-xs text-slate-400">Généré par UnifyFocus AI</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+          <span className="inline-flex items-center gap-2 rounded-full bg-slate-800/80 px-3 py-1">Lecture instantanée</span>
+          <span className="inline-flex items-center gap-2 rounded-full bg-slate-800/80 px-3 py-1">Contrôles natifs</span>
+        </div>
       </div>
-      {videoSrcIsValid && (
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setIsViewerOpen(true)}
+          disabled={!videoSrcIsValid}
+          className="min-w-[130px]"
+        >
+          <Maximize2 className="w-4 h-4" />
+          Agrandir
+        </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={handleDownload}
-          disabled={isRecording}
-          className="h-9 w-9 p-0"
+          disabled={!videoSrcIsValid || isRecording}
+          className="min-w-[130px]"
         >
           {isRecording ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Download className="w-4 h-4 text-slate-400" />
           )}
+          Télécharger
         </Button>
-      )}
+      </div>
     </div>
   );
 
   return (
     <ResultCard header={header} meta={meta} onRegenerate={onRegenerate} onNew={onNew}>
       {videoSrcIsValid ? (
-        <div className="relative overflow-hidden rounded-xl bg-black cursor-pointer group" onClick={() => setIsViewerOpen(true)}>
-          <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-xl backdrop-blur-sm">
-            <div className="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md text-white text-sm flex items-center gap-2 border border-white/20">
-              <Maximize2 className="w-4 h-4" />
-              <span>Agrandir</span>
+        <div className="rounded-[32px] border border-slate-700/70 bg-slate-950/95 shadow-2xl shadow-black/30 overflow-hidden">
+          <div className="border-b border-slate-800/70 bg-slate-900/80 px-5 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-100">Visionnage rapide</p>
+                <p className="text-xs text-slate-400">Play, pause et contrôle du son en un clic.</p>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-slate-800/80 px-3 py-1 text-xs text-slate-300">
+                <Video className="w-3.5 h-3.5" />
+                Direct
+              </div>
             </div>
           </div>
-          <video
-            controls
-            src={result}
-            className="w-full max-h-[480px] rounded-xl object-contain"
-          />
+          <div className="bg-black p-4">
+            {/* Use CustomVideoPlayer to handle CORS/data URLs and proxy fallback */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <div className="w-full">
+              {/* lazy-load the player to avoid increasing bundle size for other pages */}
+              <React.Suspense fallback={<div className="w-full h-56 bg-black" />}>
+                {/* @ts-ignore */}
+                <CustomVideoPlayer src={result} />
+              </React.Suspense>
+            </div>
+          </div>
+          <div className="border-t border-slate-800/70 bg-slate-900/80 px-5 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-slate-100">Lecture prête</p>
+                <p className="text-xs text-slate-400">Utilise le lecteur natif du navigateur pour une expérience fluide.</p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+                <span className="rounded-full bg-slate-800/80 px-2.5 py-1">Format vidéo</span>
+                <span className="rounded-full bg-slate-800/80 px-2.5 py-1">Lecture instantanée</span>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center p-10">
@@ -1976,7 +2023,9 @@ export function AiEditorView() {
 
   const getPlaceholder = useCallback(() => {
     const placeholders: Record<string, string> = {
-      'text-generation': 'Décrivez la musique que vous souhaitez générer...',
+      'text-generation': 'Décrivez la musique que vous souhaitez générer (genre, tempo, ambiance...)...',
+      'text-to-music': 'Donnez les paroles, l\'ambiance ou le style pour créer votre musique...',
+      'music-to-music': 'Décrivez la transformation musicale souhaitée ou le style de la piste cible...',
       'text-to-image': 'Décrivez l\'image que vous souhaitez créer en détail...',
       'image-to-image': 'Joignez une image et décrivez les transformations souhaitées...',
       'image-to-text': 'Joignez une image pour en extraire le texte...',
@@ -2188,8 +2237,7 @@ export function AiEditorView() {
 
       if (
         currentConversation &&
-        editorTab === "text" &&
-        !["text-generation", "text-to-music", "music-to-music"].includes(selectedSubtool)
+        (editorTab === "text" || editorTab === "code")
       ) {
         setMessages((prev) => [
           ...prev,
@@ -2199,7 +2247,7 @@ export function AiEditorView() {
       }
 
       const resultType = RESULT_TOAST_LABEL[selectedSubtool] ??
-        (editorTab === "text" ? "texte" : editorTab === "image" ? "image" : editorTab === "video" ? "vidéo" : "code");
+        (editorTab === "music" ? "musique" : editorTab === "text" ? "texte" : editorTab === "image" ? "image" : editorTab === "video" ? "vidéo" : "code");
       toast({
         title: "Génération terminée !",
         description: `Votre ${resultType} a été généré avec succès.`,
@@ -2338,8 +2386,7 @@ export function AiEditorView() {
     if (
       isGenerating &&
       (editorTab === "code" ||
-        (editorTab === "text" &&
-          !["text-generation", "text-to-music", "music-to-music"].includes(selectedSubtool)))
+        (editorTab === "text"))
     ) {
       setStreamingContent("");
       

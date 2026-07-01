@@ -1,3 +1,25 @@
+import { NextResponse } from "next/server";
+
+export async function GET(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const target = url.searchParams.get("url");
+    if (!target) return NextResponse.json({ error: "url query required" }, { status: 400 });
+
+    const res = await fetch(target, { method: "GET" });
+    if (!res.ok) return NextResponse.json({ error: `Upstream responded ${res.status}` }, { status: 502 });
+
+    const contentType = res.headers.get("content-type") || "application/octet-stream";
+
+    const headers: Record<string,string> = {
+      "Content-Type": contentType,
+    };
+
+    return new NextResponse(res.body, { headers });
+  } catch (err) {
+    return NextResponse.json({ error: (err instanceof Error) ? err.message : String(err) }, { status: 500 });
+  }
+}
 import { NextRequest, NextResponse } from "next/server";
 
 function isAllowedHost(url: URL) {

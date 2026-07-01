@@ -2,12 +2,12 @@ import { db } from "@/lib/db";
 import { getSessionUser, requireAdmin, logAdminAction } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const currentUser = await getSessionUser();
   const authError = requireAdmin(currentUser);
   if (authError) return authError;
 
-  const userId = params.id;
+  const { id: userId } = await params;
   const body = await req.json();
   const { role, isBlocked } = body;
 
@@ -55,12 +55,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   });
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id?: string }> }) {
   const currentUser = await getSessionUser();
   const authError = requireAdmin(currentUser);
   if (authError) return authError;
 
-  const userId = params.id;
+  const { id: userId } = await params;
+
+  if (!userId) {
+    return NextResponse.json(
+      { error: "Identifiant utilisateur manquant." },
+      { status: 400 }
+    );
+  }
 
   if (userId === currentUser?.id) {
     return NextResponse.json(
